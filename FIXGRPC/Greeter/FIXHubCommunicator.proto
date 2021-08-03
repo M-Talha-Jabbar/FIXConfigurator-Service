@@ -1,0 +1,67 @@
+syntax = "proto3";
+
+option objc_class_prefix = "HLW";
+
+package FIXMonitorServer;
+
+service FIXHubCommunicator {
+  rpc ResetSender	(SenderRequest) returns (RequestReply) {}
+  rpc ResetTarget (TargetRequest) returns (RequestReply) {}
+  rpc Connect (ConnectRequest) returns (RequestReply) {}
+  rpc Disconnect (DisconnectRequest) returns (RequestReply) {}
+  rpc SetSenderSequence (SetSenderSequenceRequest) returns (RequestReply) {}
+  rpc SetTargetSequence (SetTargetSequenceRequest) returns (RequestReply) {}
+  rpc EngineDB (GetEngineDbRequest) returns (DbRequestReply) {}
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse) {}
+  rpc Watch(HealthCheckRequest) returns (stream HealthCheckResponse);
+
+
+}
+
+message HealthCheckRequest {
+  string service = 1;
+}
+message SenderRequest {
+  string SenderCompId = 1;
+  string TargetCompId = 2;
+}
+message TargetRequest {
+  string SenderCompId = 1;
+  string TargetCompId = 2;
+}
+message ConnectRequest{
+  string SenderCompId = 1;
+  string TargetCompId = 2;
+}
+message DisconnectRequest{
+  string SenderCompId = 1;
+  string TargetCompId = 2;
+}
+message SetSenderSequenceRequest{
+  string SenderCompId = 1;
+  string TargetCompId = 2;
+  int32 InSeq = 3;
+}
+message SetTargetSequenceRequest{
+  string SenderCompId = 1;
+  string TargetCompId = 2;
+  int32 OutSeq = 3;
+}
+message GetEngineDbRequest{
+}
+
+message RequestReply {
+  string message = 1;
+}
+message DbRequestReply{
+  int32 Db = 1;
+}
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+    SERVICE_UNKNOWN = 3;  // Used only by the Watch method.
+  }
+  ServingStatus status = 1;
+}

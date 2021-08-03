@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.5</TargetFramework>
+    <AssemblyName>GrpcFixHub</AssemblyName>
+    <RootNamespace>GrpcFixHub</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="FIXHubCommunicator.proto" />
+    <None Remove="FIXMonitorCommunicator.proto" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" Version="3.15.6" />
+    <PackageReference Include="Grpc" Version="2.36.4" />
+    <PackageReference Include="Grpc.Tools" Version="2.36.4" PrivateAssets="All" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="FIXHubCommunicator.proto" GrpcServices="Both" />
+  </ItemGroup>
+
+</Project>

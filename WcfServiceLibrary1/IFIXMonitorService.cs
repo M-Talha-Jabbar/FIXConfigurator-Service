@@ -1,0 +1,107 @@
+﻿using FIXMonitorBusinessLogicLayer.DataModels;
+using FIXMonitorBusinessLogicLayer.KeyedCollections;
+using System.Collections.Generic;
+using System.Runtime.Serialization;
+using System.ServiceModel;
+
+namespace FIXMonitorService
+{
+    // NOTE: You can use the "Rename" command on the "Refactor" menu to change the interface name "IFIXMonitorService" in both code and config file together.
+    [ServiceContract(CallbackContract = typeof(IFIXMonitorServiceCallback), SessionMode = SessionMode.Required)]
+    public interface IFIXMonitorService
+    {
+        [OperationContract]
+        string GetData(int value);
+
+        [OperationContract]
+        CompositeType GetDataUsingDataContract(CompositeType composite);
+
+        [OperationContract]
+        void AddFIXConfiguration(FIXConfiguration fixConfiguration);
+
+        [OperationContract]
+        IEnumerable<FIXConfiguration> GetFIXConfigurations();
+
+        [OperationContract]
+        FixSessionKeyedCollection GetFixSessions(string FixEngineID);
+
+        [OperationContract]
+        bool ConnectToFIX(FIXSession fixSession);
+
+        [OperationContract]
+        bool DisconnectToFIX(FIXSession fixSession);
+
+        [OperationContract]
+        bool ResetSequenceNumber(FIXSession fixSession);
+
+        [OperationContract]
+        bool SetSequenceNumber(FIXSession fixSession);
+
+        [OperationContract]
+        FixEnginesKeyedCollection GetFixEngines();
+
+        [OperationContract]
+        FIXEngine ConnectToFixEngine(FIXEngine fixEngine);
+
+        [OperationContract]
+        FIXEngine DisconnectToFixEngine(FIXEngine fixEngine);
+
+        [OperationContract]
+        FIXSession ConnectToFixSession(string engineID, FIXSession fixSession);
+
+        [OperationContract(IsOneWay = true)]
+        void Subscribe(string connectionId);
+
+        [OperationContract]
+        bool IsSubscribed(string connectionId);
+
+        [OperationContract]
+        IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID);
+
+        [OperationContract]
+        List<AlertFlag> GetAlertCache();
+        [OperationContract]
+        bool RemoveAlertCache(string orderId);
+        // TODO: Add your service operations here
+    }
+
+    public interface IFIXMonitorServiceCallback
+    {
+       
+        [OperationContract]
+        void SendFixMessagesToClient(FIXMessage fixMessage, string engineID, string sessionID);
+
+        [OperationContract]
+        void SendFixSessionToClient(FIXSession fixMessage, string engineID, string commandType);
+
+        [OperationContract]
+        void Heartbeat();
+
+        [OperationContract]
+        void SendAlertFlag(AlertFlag flag);
+    }
+
+    // Use a data contract as illustrated in the sample below to add composite types to service operations.
+    // You can add XSD files into the project. After building the project, you can directly use the data types defined there, with the namespace "FIXMonitorService.ContractType".
+    [DataContract]
+    public class CompositeType
+    {
+        bool boolValue = true;
+        string stringValue = "Hello ";
+
+        [DataMember]
+        public bool BoolValue
+        {
+            get { return boolValue; }
+            set { boolValue = value; }
+        }
+
+        [DataMember]
+        public string StringValue
+        {
+            get { return stringValue; }
+            set { stringValue = value; }
+        }
+
+    }
+}
