@@ -2,6 +2,7 @@
 using System.Configuration;
 using System.ServiceModel;
 using FIXMonitorBusinessLogicLayer;
+using Topshelf;
 
 namespace FIXMonitorServiceHost
 {
@@ -9,33 +10,14 @@ namespace FIXMonitorServiceHost
     {
         static void Main(string[] args)
         {
-            FIXMonitorDataCacheWrapper.GetInstance();
-            string address = ConfigurationManager.AppSettings["baseAddress"].ToString();
-            Uri baseAddress = new Uri(address);
-
-            // Create the ServiceHost.
-            using (ServiceHost host = new ServiceHost(typeof(FIXMonitorService.FIXMonitorService)))
+            HostFactory.Run(x =>
             {
-                host.Open();
-                // Enable metadata publishing.
-                //ServiceMetadataBehavior smb = new ServiceMetadataBehavior();
-                //smb.HttpGetEnabled = true;
-                //smb.MetadataExporter.PolicyVersion = PolicyVersion.Policy15;
-                //host.Description.Behaviors.Add(smb);
-
-                //// Open the ServiceHost to start listening for messages. Since
-                //// no endpoints are explicitly configured, the runtime will create
-                //// one endpoint per base address for each service contract implemented
-                //// by the service.
-                //host.Open();
-
-                Console.WriteLine("The service is ready at {0}", baseAddress);
-                Console.WriteLine("Press <Enter> to stop the service.");
-                Console.ReadLine();
-
-                // Close the ServiceHost.
-                host.Close();
+                x.Service<TopShelfFIXMonitorWindowService>();
+                x.EnableServiceRecovery(r => r.RestartService(TimeSpan.FromSeconds(10)));
+                x.SetServiceName("FIXMonitorWindowService");
+                x.StartAutomatically();
             }
+                );
         }
     }
 }
