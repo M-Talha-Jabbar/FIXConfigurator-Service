@@ -79,11 +79,11 @@ namespace proto {
         public const byte _STOPPED_ = (byte)7 + 0;
         public const byte _REJECTED_ = (byte)8 + 0;
         public const byte _SUSPENDED_ = (byte)9 + 0;
-        public const byte _PENDING_NEW_ = _A_;
-        public const byte _CALCULATED_ = _B_;
-        public const byte _EXPIRED_ = _C_;
-        public const byte _ACCEPTED_FOR_BIDDING_ = _D_;
-        public const byte _PENDING_REPLACE_ = _E_;
+        public const byte _PENDING_NEW_ = (byte)9 + 1;
+        public const byte _CALCULATED_ = (byte)9 + 2;
+        public const byte _EXPIRED_ = (byte)9 + 3;
+        public const byte _ACCEPTED_FOR_BIDDING_ = (byte)9 + 4;
+        public const byte _PENDING_REPLACE_ = (byte)9 + 5;
 
         public static OrderStatus NEW = new OrderStatus(_NEW_);
         public static OrderStatus PARTIALLY_FILLED = new OrderStatus(_PARTIALLY_FILLED_);
