@@ -20,17 +20,17 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
         public string BackUpIPAddress { get; set; }
 
-        public int Port { get; set; }
+        public ulong Port { get; set; }
 
-        public int BackUpPort { get; set; }
+        public ulong BackUpPort { get; set; }
 
         public bool Validate { get; set; }
 
         public bool HandleResend { get; set; }
 
-        public int HeartBeartInterval { get; set; }
+        public ulong HeartBeartulongerval { get; set; }
 
-        public int MaxLatency { get; set; }
+        public ulong MaxLatency { get; set; }
 
         public bool ResetConnection { get; set; }
 
@@ -50,9 +50,9 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
         public bool AutoReconnect { get; set; }
 
-        public int ReconnectDelay { get; set; }
+        public ulong ReconnectDelay { get; set; }
 
-        public int ConnectRetry { get; set; }
+        public ulong ConnectRetry { get; set; }
 
         public string LogonRawData { get; set; }
 
@@ -66,85 +66,83 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
         public string TaskReset { get; set; }
 
-        public int InSecNum { get; set; }
+        public ulong InSecNum { get; set; }
 
-        public int OutSecNum { get; set; }
+        public ulong OutSecNum { get; set; }
 
         public DateTime LastUpdated { get; set; }
 
         public List<FIXMessage> FixMessages { get; set; } = new List<FIXMessage>();
 
-
-        public static HashEntry[] getHashFromObject(FIXSession obj)
+        public static implicit operator FIXSession(proto.Config config)
         {
-            var properties = TypeDescriptor.GetProperties(obj);
-            HashEntry[] engineHashEntries = new HashEntry[properties.Count - 1];
-            int i = 0;
-            Console.WriteLine("===========================");
-            foreach (PropertyDescriptor descriptor in properties)
+            return new FIXSession
             {
-                string name = descriptor.Name.ToUpper();
-                string value = JsonConvert.SerializeObject(descriptor.GetValue(obj));
-                Console.WriteLine("{0}={1}", name, value);
-                engineHashEntries[i++] = new HashEntry(name, new RedisValue(value));
-                if (i == properties.Count - 1) break;
-            }
-            Console.WriteLine("===========================");
-            return engineHashEntries;
+                ConnectionID = config.ConnectionID,
 
-        }
+                Status = config.Status.ToString(),
 
-        public static void setObjectFromHash(FIXSession obj, HashEntry[] engineHashEntries)
-        {
-            Dictionary<string, int> indexes = new Dictionary<string, int>();
-            for (int k = 0; k < engineHashEntries.Length; k++)
-            {
-                indexes.Add(engineHashEntries[k].Name.ToString().ToUpper(), k);
-            }
+                SenderCompID = config.SenderCompID,
 
-            int i = 0;
-            Console.WriteLine("===========================");
-            foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(obj))
-            {
-                string name = descriptor.Name;
+                TargetCompID = config.TargetCompID,
 
-                if (!indexes.ContainsKey(name.ToUpper())) continue;
+                IPAddress = config.IPAddress,
 
-                i = indexes[name.ToUpper()];
-                if (name.ToUpper() == engineHashEntries[i].Name.ToString().ToUpper())
-                {
-                    int numericItem;
-                    bool boolItem;
-                    DateTime dtItem;
-                    var val = engineHashEntries[i].Value.ToString();
-                    if (Int32.TryParse(val, out numericItem))
-                    {
-                        descriptor.SetValue(obj, numericItem);
-                    }
-                    else if (Boolean.TryParse(val, out boolItem))
-                    {
-                        descriptor.SetValue(obj, boolItem);
-                    }
-                    else if (DateTime.TryParse(val, out dtItem))
-                    {
-                        descriptor.SetValue(obj, dtItem);
-                    }
-                    else
-                    {
-                        var trimValue = engineHashEntries[i].Value.ToString().Trim('"');
-                        var arr = trimValue.Split('\0');
-                        descriptor.SetValue(obj,arr[arr.Length-1]);
-                    }
-                }
-                i++;
-                if (i == 4) break;
-            }
-            Console.WriteLine("===========================");
-            if (!indexes.ContainsKey("ipaddress".ToUpper()))
-            {
-                obj.IPAddress = "127.0.0.1";
-            }
+                BackUpIPAddress = config.BackUpIPAddress,
 
+                //Port = config.Port,
+
+                //BackUpPort = config.BackUpPort,
+
+                //Validate = config.Validate,
+
+                //HandleResend = config.HandleResend,
+
+                //HeartBeartulongerval = config.HeartBeatulongerval,
+
+                //MaxLatency = config.MaxLatency,
+
+                //ResetConnection = config.ResetConnection,
+
+                //EnableConnection = config.EnableConnection,
+
+                FIXVersion = config.FIXVersion,
+
+                InternalFIXVersion = config.InternalFIXVersion,
+
+                Mode = config.Mode,
+
+                //DBEnabled = config.DBEnabled,
+
+                //LatencyEnabled = config.LatencyEnabled,
+
+                //AutoConnect = config.AutoConnect,
+
+                //AutoReconnect = config.AutoReconnect,
+
+                //ReconnectDelay = config.ReconnectDelay,
+
+                //ConnectRetry = config.ConnectRetry,
+
+                //LogonRawData = config.LogonRawData,
+
+                //MilliSecondTime = config.MilliSecondTime,
+
+                //QEnabled = config.QEnabled,
+
+                //SessionStart = config.SessionStart,
+
+                //SessionEnd = config.SessionEnd,
+
+                TaskReset = config.TaskReset,
+
+                //InSecNum = config.InSecNum,
+
+                //OutSecNum = config.OutSecNum,
+
+                //LastUpdated = config.LastUpdated
+
+            };
         }
 
     }

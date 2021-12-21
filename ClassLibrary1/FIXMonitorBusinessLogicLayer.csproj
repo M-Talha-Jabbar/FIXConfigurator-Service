@@ -168,6 +168,10 @@
     <WCFMetadata Include="Connected Services\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\FastBinaryEncoding\FastBinaryEncoding.csproj">
+      <Project>{85ef643e-89a6-4bf6-b468-7c45a572c9b7}</Project>
+      <Name>FastBinaryEncoding</Name>
+    </ProjectReference>
     <ProjectReference Include="..\RedisCacheService\RedisCacheService.csproj">
       <Project>{c7ef21ff-b278-4f92-89c4-b08d107d5d1f}</Project>
       <Name>RedisCacheService</Name>

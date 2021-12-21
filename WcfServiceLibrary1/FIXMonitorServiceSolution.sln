@@ -5,8 +5,6 @@ VisualStudioVersion = 15.0.28307.1433
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RedisCacheService", "..\RedisCacheService\RedisCacheService.csproj", "{C7EF21FF-B278-4F92-89C4-B08D107D5D1F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Greeter", "..\FIXGRPC\Greeter\Greeter.csproj", "{78CA265B-A0DC-4F83-9A22-03199485EB59}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FIXMonitorBusinessLogicLayer", "..\ClassLibrary1\FIXMonitorBusinessLogicLayer.csproj", "{F16540A8-95C0-48A8-A615-726C31707FE3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FIXMonitorServiceHost", "..\FIXMonitorServiceHost\FIXMonitorServiceHost.csproj", "{F565CBE3-7294-4A55-AE15-11880146D5B3}"
@@ -25,10 +23,6 @@ Global
 		{C7EF21FF-B278-4F92-89C4-B08D107D5D1F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C7EF21FF-B278-4F92-89C4-B08D107D5D1F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C7EF21FF-B278-4F92-89C4-B08D107D5D1F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{78CA265B-A0DC-4F83-9A22-03199485EB59}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{78CA265B-A0DC-4F83-9A22-03199485EB59}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{78CA265B-A0DC-4F83-9A22-03199485EB59}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{78CA265B-A0DC-4F83-9A22-03199485EB59}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F16540A8-95C0-48A8-A615-726C31707FE3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F16540A8-95C0-48A8-A615-726C31707FE3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F16540A8-95C0-48A8-A615-726C31707FE3}.Release|Any CPU.ActiveCfg = Release|Any CPU
