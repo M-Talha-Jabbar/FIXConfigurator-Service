@@ -14,6 +14,7 @@ using StackExchange.Redis;
 using FIXMonitorBusinessLogicLayer.IComparers;
 using static FIXMonitorServer.FIXHubCommunicator;
 using FBE;
+using CoreLogging;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -25,12 +26,18 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private Dictionary<string, Channel> fixEnginesChannels;
         private Dictionary<string, List<int>> session_dbs;
         private Dictionary<string, FIXHubCommunicatorClient> fixEnginesGrcpClients;
-        private Dictionary<string, string> fixMsgTypes = new Dictionary<string, string>();
-        private Dictionary<string, string> fixTagValues = new Dictionary<string, string>();
+        public static Dictionary<string, string> fixMsgTypes = new Dictionary<string, string>();
+        public static Dictionary<string, string> fixTagValues = new Dictionary<string, string>();
         Observable observable = new Observable();
 
         private readonly bool sendSampleFixUpdate = Convert.ToBoolean(System.Configuration.ConfigurationManager.AppSettings["sendSampleFixUpdate"].ToString());
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
+
+        private Dictionary<string, long> engineStreamLastPosition;
+        private Dictionary<string, List<FIXMessage>> sessionFixMessages;
+        private long streamLastPosition = 0;
+        private List<RedisValue> readMessagesIDs;
+
         public FixHandler()
         {
             test();
@@ -40,6 +47,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEnginesGrcpClients = new Dictionary<string, FIXHubCommunicatorClient>();
             fixEnginesChannels = new Dictionary<string, Channel>();
             session_dbs = new Dictionary<string, List<int>>();
+            readMessagesIDs = new List<RedisValue>();
+            engineStreamLastPosition = new Dictionary<string, long>();
+            sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
             //ConnectToGRPCServer();
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
             GenerateDictionary(fixMsgTypes, msgTypes);
@@ -94,8 +104,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             sw.Close();
 
         }
-
-        const char FIX_MESSAGE_DELIMITER = '|';
 
         private void CheckGRPCStatusAsync()
         {
@@ -201,6 +209,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     string key = engine[0].Value;
                     var engine_data = client.HashGetAll(key);
                     FIXEngine FIXEngine = CreateFixEngine(db, engine_data);
+                    ReadAllExistingFixMessages(client, FIXEngine);
+
                     GetSessionsForEngine(muxer, db, client, FIXEngine);
                     muxer.GetSubscriber().Subscribe(CacheKeyEvent,
                                 (channel, message) => GetFixMessagesFromRedis(muxer, channel, message, FIXEngine));
@@ -210,14 +220,32 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             //fixEngines.Add(new FIXEngine() { engineID = "ATS_FIX", engineName = "ATS_FIX", ipAddress = "192.168.0.1", port = 4044 });
         }
 
+        private void ReadAllExistingFixMessages(IDatabase client, FIXEngine FIXEngine)
+        {
+            var stream = client.StreamReadAsync(redisStreamName, engineStreamLastPosition[FIXEngine.engineName]);
+            stream.Wait();
+            var result = stream.Result;
+            ProcessAndSendMessages(result, "", FIXEngine, false);
+        }
+
         private FIXEngine CreateFixEngine(int db, HashEntry[] engine_data)
         {
-            FIXEngine FIXEngine = new FIXEngine();
-            FIXEngine.fixSessions = new FixSessionKeyedCollection();
-            FIXEngine.setObjectFromHash(FIXEngine, engine_data);
-            fixEnginesDB.Add($"{FIXEngine.ipAddress}:{FIXEngine.port}", db);
-            fixEngines.Add(FIXEngine);
-            return FIXEngine;
+            FIXEngine fixEngine = new FIXEngine();
+            var engine = proto.Engine.Default;
+
+
+
+
+            var recieve = new FBE.proto.EngineModel();
+            recieve.Attach(engine_data[1].Value);
+            recieve.Deserialize(out engine);
+            fixEngine = engine;
+            fixEngine.fixSessions = new FixSessionKeyedCollection();
+            
+            fixEnginesDB.Add($"{fixEngine.ipAddress}:{fixEngine.port}", db);
+            fixEngines.Add(fixEngine);
+            engineStreamLastPosition.Add(fixEngine.engineName, 0);
+            return fixEngine;
         }
 
         private void GetSessionsForEngine(ConnectionMultiplexer muxer, int db, IDatabase client, FIXEngine FIXEngine)
@@ -281,6 +309,20 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             try
             {
+
+                if(key == redisStreamName)
+                {
+                    streamLastPosition = engineStreamLastPosition[fixEngine.engineName];
+                    var client = muxer.GetDatabase(db);
+                    var stream = client.StreamReadAsync(key, engineStreamLastPosition[fixEngine.engineName]);
+                    stream.Wait();
+                    var messages = stream.Result;
+                    ProcessAndSendMessages(messages,key,fixEngine);
+                    client.StreamAcknowledgeAsync(key, "",readMessagesIDs.ToArray()).Wait();
+                    readMessagesIDs.Clear();
+                    return;
+                }
+
                 var hash = RedisCacheClient.getHashSet(muxer, key, db);
                 hash.Wait();
                 var result = hash.Result;
@@ -299,22 +341,22 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     return;
                 }
 
-                Array.Sort(result, new FixMessageSorter(this));
-                //foreach (var item in hash.Result)
+                //Array.Sort(result, new FixMessageSorter(this));
+                ////foreach (var item in hash.Result)
+                ////{
+                //if (result == null || result.Length == 0)
                 //{
-                if (result == null || result.Length == 0)
-                {
-                    return;
-                }
-                var item = result.Last();
-                //Console.WriteLine("Name: " + item.Name + " Value: " + item.Value);
+                //    return;
+                //}
+                //var item = result.Last();
+                ////Console.WriteLine("Name: " + item.Name + " Value: " + item.Value);
 
-                var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.ipAddress && x.port == fixEngine.port);
-                var session = engine.fixSessions.Single(y => y.ConnectionID == key);
-                FIXMessage fixMessage = getObjectFromFixMessage(item.Value.ToString());
-                Console.WriteLine("TIME : " + fixMessage.sendingTime);
-                observable.SendFixMessageUpdate(fixMessage, engine.engineID, session.ConnectionID);
-                CoreLogging.Logging.LogMessage($"Fix Message sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
+                //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.ipAddress && x.port == fixEngine.port);
+                //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
+                //FIXMessage fixMessage = getObjectFromFixMessage(item.Value.ToString());
+                //Console.WriteLine("TIME : " + fixMessage.sendingTime);
+                //observable.SendFixMessageUpdate(fixMessage, engine.engineID, session.ConnectionID);
+                //CoreLogging.Logging.LogMessage($"Fix Message sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
             }
             catch (Exception e)
             {
@@ -325,6 +367,36 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             Console.WriteLine("FINISHED READING...");
         }
 
+        private void ProcessAndSendMessages(StreamEntry[] messages, string key, FIXEngine fixEngine, bool IsSendMessage = true)
+        {
+            foreach (var message in messages)
+            {
+                UpdateStreamPosition(message,fixEngine.engineName);
+                for (int i = 0; i < message.Values.Length; i++)
+                {
+                    var val = message.Values[i];
+                    byte[] buffer = val.Value;
+                    proto.Body body = proto.Body.Default;
+                    var recieve = new FBE.proto.BodyModel();
+                    recieve.Attach(buffer);
+                    recieve.Deserialize(out body);
+                    FIXMessage fixMessage = body;
+                    var _key = body.ConnectionID;
+                    //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.ipAddress && x.port == fixEngine.port);
+                    //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
+                    if (IsSendMessage)
+                    {
+                        observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
+                    }
+                    else
+                    {
+                        if (!sessionFixMessages.ContainsKey(_key)) sessionFixMessages.Add(_key, new List<FIXMessage>());
+                        sessionFixMessages[_key].Add(fixMessage);
+                    }
+
+                }
+            }
+        }
 
         public void LoadFIXSessions()
         {
@@ -332,16 +404,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             string fixMessage = "8=FIX.4.4|9=75|35=A|34=1092|49=TESTBUY1|52=20180920-18:24:59.643|56=TESTSELL1|98=0|108=60|10=178|";
             FIXMessage fixMessageObj = new FIXMessage();
             fixMessageObj.fixMessage = fixMessage;
-            fixMessageObj.keyValuePair = ParseAndStoreFixMessage(fixMessage);
-            fixMessageObj.messageType = fixMsgTypes[GetFixTagValue(fixMessage, "35")];
-            fixMessageObj.sendingTime = GetFixTagValue(fixMessage, "52");
+            fixMessageObj.keyValuePair = FIXMessage.ParseAndStoreFixMessage(fixMessage);
+            fixMessageObj.messageType = fixMsgTypes[FIXMessage.GetFixTagValue(fixMessage, "35")];
+            fixMessageObj.sendingTime = FIXMessage.GetFixTagValue(fixMessage, "52");
 
             string fixMessage1 = "8=FIX.4.4|9=75|35=A|34=1092|49=TESTBUY1|52=20190920-18:24:59.643|56=TESTSELL1|98=0|108=60|10=178|";
             FIXMessage fixMessageObj1 = new FIXMessage();
             fixMessageObj1.fixMessage = fixMessage1;
-            fixMessageObj1.keyValuePair = ParseAndStoreFixMessage(fixMessage1);
-            fixMessageObj1.messageType = fixMsgTypes[GetFixTagValue(fixMessage1, "35")];
-            fixMessageObj1.sendingTime = GetFixTagValue(fixMessage1, "52");
+            fixMessageObj1.keyValuePair = FIXMessage.ParseAndStoreFixMessage(fixMessage1);
+            fixMessageObj1.messageType = fixMsgTypes[FIXMessage.GetFixTagValue(fixMessage1, "35")];
+            fixMessageObj1.sendingTime = FIXMessage.GetFixTagValue(fixMessage1, "52");
 
 
             fixEngines[0].fixSessions.Add(new FIXSession() { ConnectionID = "t-trader_VLCY", SenderCompID = "Trader", TargetCompID = "VLCY", InSecNum = 3, OutSecNum = 2, LastUpdated = DateTime.Now, Status = "connected", FixMessages = new List<FIXMessage>() { fixMessageObj } });
@@ -594,7 +666,15 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 throw new Exception($"Engine Already Exists with IP : {fixEngine.ipAddress} and Port : {fixEngine.port}");
             }
 
-            var engineHash = FIXEngine.getHashFromObject(fixEngine);
+            //var engineHash = FIXEngine.getHashFromObject(fixEngine);
+            proto.Engine engine = fixEngine;
+            var send = new FBE.proto.EngineModel();
+            send.Serialize(engine);
+
+            HashEntry[] engineHash = new HashEntry[1];
+            engineHash[0] = new HashEntry("Engine", send.Buffer.Data);
+            
+
             var client = muxer.GetDatabase(db);
 
             var setEngine = client.HashSetAsync(fixEngine.engineName.ToUpper(), engineHash);
@@ -664,26 +744,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return fixSession;
         }
 
-        public List<Tuple<string, string, string>> ParseAndStoreFixMessage(string fixMessage)
-        {
-            List<Tuple<string, string, string>> listOfKeyValuePair = new List<Tuple<string, string, string>>();
-            string[] keyValuePairs = fixMessage.Split(new char[] { FIX_MESSAGE_DELIMITER, '\u0001' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < keyValuePairs.Length; i++)
-            {
-                string[] keyValuePair = keyValuePairs[i].Trim().Split('=');
-                Tuple<string, string, string> tuple;
-                if (fixTagValues.ContainsKey(keyValuePair[0]))
-                {
-                    tuple = Tuple.Create(keyValuePair[0], fixTagValues[keyValuePair[0]], keyValuePair[1]);
-                }
-                else
-                {
-                    tuple = Tuple.Create(keyValuePair[0], keyValuePair[0], keyValuePair[1]);
-                }
-                listOfKeyValuePair.Add(tuple);
-            }
-            return listOfKeyValuePair;
-        }
+        
 
         public Task SendSampleFixMessages()
         {
@@ -727,19 +788,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             observable.SendFixMessageUpdate(fixMessage, engineID, sessionID);
         }
 
-        public string GetFixTagValue(string fixMessage, string tag)
-        {
-            string[] keyValuePairs = fixMessage.Split(new char[] { FIX_MESSAGE_DELIMITER, '\u0001' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < keyValuePairs.Length; i++)
-            {
-                string[] keyValuePair = keyValuePairs[i].Trim().Split('=');
-                if (keyValuePair[0].Trim() == tag.Trim())
-                {
-                    return keyValuePair[1];
-                }
-            }
-            return "";
-        }
+        
 
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)
         {
@@ -751,9 +800,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             FIXMessage fixMessageObj = new FIXMessage();
             fixMessageObj.fixMessage = fixMessage;
             //Console.WriteLine("FIX MESSAGE : " + fixMessage);
-            fixMessageObj.keyValuePair = ParseAndStoreFixMessage(fixMessage);
-            fixMessageObj.messageType = fixMsgTypes[GetFixTagValue(fixMessage, "35")];
-            fixMessageObj.sendingTime = GetFixTagValue(fixMessage, "52");
+            fixMessageObj.keyValuePair = FIXMessage.ParseAndStoreFixMessage(fixMessage);
+            fixMessageObj.messageType = fixMsgTypes[FIXMessage.GetFixTagValue(fixMessage, "35")];
+            fixMessageObj.sendingTime = FIXMessage.GetFixTagValue(fixMessage, "52");
             //Console.WriteLine("SENDING TIME : " + fixMessageObj.sendingTime);
 
             return fixMessageObj;
@@ -827,6 +876,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
+        private void UpdateStreamPosition(StreamEntry item, string engineName)
+        {
+            string[] timestamp_seq = item.Id.ToString().Split('-');
+            readMessagesIDs.Add(item.Id);
+            string lastTimeStamp = timestamp_seq[0];
+            engineStreamLastPosition[engineName] = long.Parse(lastTimeStamp);
+        }
+
         public void test()
         {
             try
@@ -835,7 +892,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 FIXSession session = new FIXSession();
                 var config = proto.Config.Default;
-                config.SessionStart = DateTime.Now.ToShortTimeString();
+                config.SessionStart = (ulong)DateTime.Now.TimeOfDay.TotalMilliseconds;
                 config.TargetCompID = "HELLO";
                 config.Port = 900;
                 config.Status = proto.MessageStatus.CONNECTED;

@@ -19,9 +19,9 @@ namespace proto {
 
     public struct OrderStatus : IComparable, IComparable<OrderStatus>, IEquatable<OrderStatus>
     {
-        public byte Value { get; internal set; }
+        public ulong Value { get; internal set; }
 
-        public OrderStatus(byte value) : this()
+        public OrderStatus(ulong value) : this()
         {
             Value = value;
         }
@@ -70,20 +70,20 @@ namespace proto {
 
         public static FBE.FieldModelValueType<OrderStatus> CreateFieldModel(FBE.Buffer buffer, long offset) { return new FBE.proto.FieldModelOrderStatus(buffer, offset); }
 
-        public const byte _NEW_ = (byte)0 + 0;
-        public const byte _PARTIALLY_FILLED_ = (byte)1 + 0;
-        public const byte _FILLED_ = (byte)2 + 0;
-        public const byte _DONE_FOR_DAY_ = (byte)3 + 0;
-        public const byte _CANCELED_ = (byte)4 + 0;
-        public const byte _PENDING_CANCEL_ = (byte)6 + 0;
-        public const byte _STOPPED_ = (byte)7 + 0;
-        public const byte _REJECTED_ = (byte)8 + 0;
-        public const byte _SUSPENDED_ = (byte)9 + 0;
-        public const byte _PENDING_NEW_ = (byte)9 + 1;
-        public const byte _CALCULATED_ = (byte)9 + 2;
-        public const byte _EXPIRED_ = (byte)9 + 3;
-        public const byte _ACCEPTED_FOR_BIDDING_ = (byte)9 + 4;
-        public const byte _PENDING_REPLACE_ = (byte)9 + 5;
+        public const ulong _NEW_ = (ulong)0UL + 0;
+        public const ulong _PARTIALLY_FILLED_ = (ulong)1UL + 0;
+        public const ulong _FILLED_ = (ulong)2UL + 0;
+        public const ulong _DONE_FOR_DAY_ = (ulong)3UL + 0;
+        public const ulong _CANCELED_ = (ulong)4UL + 0;
+        public const ulong _PENDING_CANCEL_ = (ulong)6UL + 0;
+        public const ulong _STOPPED_ = (ulong)7UL + 0;
+        public const ulong _REJECTED_ = (ulong)8UL + 0;
+        public const ulong _SUSPENDED_ = (ulong)9UL + 0;
+        public const ulong _PENDING_NEW_ = (ulong)10UL + 0;
+        public const ulong _CALCULATED_ = (ulong)11UL + 0;
+        public const ulong _EXPIRED_ = (ulong)12UL + 0;
+        public const ulong _ACCEPTED_FOR_BIDDING_ = (ulong)13UL + 0;
+        public const ulong _PENDING_REPLACE_ = (ulong)14UL + 0;
 
         public static OrderStatus NEW = new OrderStatus(_NEW_);
         public static OrderStatus PARTIALLY_FILLED = new OrderStatus(_PARTIALLY_FILLED_);
@@ -133,7 +133,7 @@ namespace proto {
         public FieldModelOrderStatus(Buffer buffer, long offset) : base(buffer, offset) {}
 
         // Get the field size
-        public override long FBESize => 1;
+        public override long FBESize => 8;
 
         // Clone the field model
         public override FieldModelValueType<OrderStatus> Clone() { return new FieldModelOrderStatus(_buffer, _offset); }
@@ -148,7 +148,7 @@ namespace proto {
                 return;
             }
 
-            value = new OrderStatus((byte)ReadUInt8(FBEOffset));
+            value = new OrderStatus((ulong)ReadUInt64(FBEOffset));
         }
 
         // Set the value
@@ -222,20 +222,26 @@ namespace proto {
 
         public const byte _CONNECT_ = (byte)1 + 0;
         public const byte _DISCONNECT_ = (byte)2 + 0;
-        public const byte _SET_SEQUENCE_ = (byte)3 + 0;
-        public const byte _RESET_SEQUENCE_ = (byte)4 + 0;
+        public const byte _SET_SENDER_SEQUENCE_ = (byte)3 + 0;
+        public const byte _SET_TARGET_SEQUENCE_ = (byte)4 + 0;
+        public const byte _RESET_TARGET_SEQUENCE_ = (byte)5 + 0;
+        public const byte _RESET_SENDER_SEQUENCE_ = (byte)6 + 0;
 
         public static Action CONNECT = new Action(_CONNECT_);
         public static Action DISCONNECT = new Action(_DISCONNECT_);
-        public static Action SET_SEQUENCE = new Action(_SET_SEQUENCE_);
-        public static Action RESET_SEQUENCE = new Action(_RESET_SEQUENCE_);
+        public static Action SET_SENDER_SEQUENCE = new Action(_SET_SENDER_SEQUENCE_);
+        public static Action SET_TARGET_SEQUENCE = new Action(_SET_TARGET_SEQUENCE_);
+        public static Action RESET_TARGET_SEQUENCE = new Action(_RESET_TARGET_SEQUENCE_);
+        public static Action RESET_SENDER_SEQUENCE = new Action(_RESET_SENDER_SEQUENCE_);
 
         public override string ToString()
         {
             if (this == CONNECT) return "CONNECT";
             if (this == DISCONNECT) return "DISCONNECT";
-            if (this == SET_SEQUENCE) return "SET_SEQUENCE";
-            if (this == RESET_SEQUENCE) return "RESET_SEQUENCE";
+            if (this == SET_SENDER_SEQUENCE) return "SET_SENDER_SEQUENCE";
+            if (this == SET_TARGET_SEQUENCE) return "SET_TARGET_SEQUENCE";
+            if (this == RESET_TARGET_SEQUENCE) return "RESET_TARGET_SEQUENCE";
+            if (this == RESET_SENDER_SEQUENCE) return "RESET_SENDER_SEQUENCE";
             return "<unknown>";
         }
     }
@@ -340,9 +346,9 @@ namespace proto {
 
         public static FBE.FieldModelValueType<MessageStatus> CreateFieldModel(FBE.Buffer buffer, long offset) { return new FBE.proto.FieldModelMessageStatus(buffer, offset); }
 
-        public const byte _CONNECTED_ = (byte)'1' + 0;
-        public const byte _DISCONNECTED_ = (byte)'2' + 0;
-        public const byte _UNAVAILABLE_ = (byte)'3' + 0;
+        public const byte _CONNECTED_ = (byte)1 + 0;
+        public const byte _DISCONNECTED_ = (byte)2 + 0;
+        public const byte _UNAVAILABLE_ = (byte)3 + 0;
 
         public static MessageStatus CONNECTED = new MessageStatus(_CONNECTED_);
         public static MessageStatus DISCONNECTED = new MessageStatus(_DISCONNECTED_);
@@ -457,8 +463,8 @@ namespace proto {
 
         public static FBE.FieldModelValueType<Signature> CreateFieldModel(FBE.Buffer buffer, long offset) { return new FBE.proto.FieldModelSignature(buffer, offset); }
 
-        public const byte _FIXHUB_ = (byte)'1' + 0;
-        public const byte _FIXMONITOR_ = (byte)'2' + 0;
+        public const byte _FIXHUB_ = (byte)1 + 0;
+        public const byte _FIXMONITOR_ = (byte)2 + 0;
 
         public static Signature FIXHUB = new Signature(_FIXHUB_);
         public static Signature FIXMONITOR = new Signature(_FIXMONITOR_);
@@ -1468,30 +1474,30 @@ namespace proto {
         public string BackUpIPAddress;
         public ulong Port;
         public ulong BackUpPort;
-        public string Validate;
-        public string HandleResend;
+        public bool Validate;
+        public bool HandleResend;
         public ulong HeartBeatInterval;
         public ulong MaxLatency;
-        public ulong ResetConnection;
-        public ulong EnableConnection;
+        public bool ResetConnection;
+        public bool EnableConnection;
         public string FIXVersion;
         public string InternalFIXVersion;
         public string Mode;
-        public ulong DBEnabled;
-        public ulong LatencyEnabled;
-        public ulong AutoConnect;
-        public ulong AutoReconnect;
+        public bool DBEnabled;
+        public bool LatencyEnabled;
+        public bool AutoConnect;
+        public bool AutoReconnect;
         public ulong ReconnectDelay;
         public ulong ConnectRetry;
         public string LogonRawData;
-        public ulong MilliSecondTime;
-        public ulong QEnabled;
-        public string SessionStart;
-        public string SessionEnd;
+        public bool MilliSecondTime;
+        public bool QEnabled;
+        public ulong SessionStart;
+        public ulong SessionEnd;
         public string TaskReset;
         public ulong InSecNum;
         public ulong OutSecNum;
-        public string LastUpdated;
+        public ulong LastUpdated;
 
         public const long FBETypeConst = 3;
         public long FBEType => FBETypeConst;
@@ -1506,33 +1512,33 @@ namespace proto {
             , BackUpIPAddress = ""
             , Port = (ulong)0UL
             , BackUpPort = (ulong)0UL
-            , Validate = ""
-            , HandleResend = ""
+            , Validate = false
+            , HandleResend = false
             , HeartBeatInterval = (ulong)0UL
             , MaxLatency = (ulong)0UL
-            , ResetConnection = (ulong)0UL
-            , EnableConnection = (ulong)0UL
+            , ResetConnection = false
+            , EnableConnection = false
             , FIXVersion = ""
             , InternalFIXVersion = ""
             , Mode = ""
-            , DBEnabled = (ulong)0UL
-            , LatencyEnabled = (ulong)0UL
-            , AutoConnect = (ulong)0UL
-            , AutoReconnect = (ulong)0UL
+            , DBEnabled = false
+            , LatencyEnabled = false
+            , AutoConnect = false
+            , AutoReconnect = false
             , ReconnectDelay = (ulong)0UL
             , ConnectRetry = (ulong)0UL
             , LogonRawData = ""
-            , MilliSecondTime = (ulong)0UL
-            , QEnabled = (ulong)0UL
-            , SessionStart = ""
-            , SessionEnd = ""
+            , MilliSecondTime = false
+            , QEnabled = false
+            , SessionStart = (ulong)0UL
+            , SessionEnd = (ulong)0UL
             , TaskReset = ""
             , InSecNum = (ulong)0UL
             , OutSecNum = (ulong)0UL
-            , LastUpdated = ""
+            , LastUpdated = (ulong)0UL
         };
 
-        public Config(string ConnectionID, MessageStatus Status, string SenderCompID, string TargetCompID, string IPAddress, string BackUpIPAddress, ulong Port, ulong BackUpPort, string Validate, string HandleResend, ulong HeartBeatInterval, ulong MaxLatency, ulong ResetConnection, ulong EnableConnection, string FIXVersion, string InternalFIXVersion, string Mode, ulong DBEnabled, ulong LatencyEnabled, ulong AutoConnect, ulong AutoReconnect, ulong ReconnectDelay, ulong ConnectRetry, string LogonRawData, ulong MilliSecondTime, ulong QEnabled, string SessionStart, string SessionEnd, string TaskReset, ulong InSecNum, ulong OutSecNum, string LastUpdated)
+        public Config(string ConnectionID, MessageStatus Status, string SenderCompID, string TargetCompID, string IPAddress, string BackUpIPAddress, ulong Port, ulong BackUpPort, bool Validate, bool HandleResend, ulong HeartBeatInterval, ulong MaxLatency, bool ResetConnection, bool EnableConnection, string FIXVersion, string InternalFIXVersion, string Mode, bool DBEnabled, bool LatencyEnabled, bool AutoConnect, bool AutoReconnect, ulong ReconnectDelay, ulong ConnectRetry, string LogonRawData, bool MilliSecondTime, bool QEnabled, ulong SessionStart, ulong SessionEnd, string TaskReset, ulong InSecNum, ulong OutSecNum, ulong LastUpdated)
         {
             this.ConnectionID = ConnectionID;
             this.Status = Status;
@@ -1623,30 +1629,30 @@ namespace proto {
             sb.Append(",BackUpIPAddress="); if (BackUpIPAddress != null) sb.Append("\"").Append(BackUpIPAddress).Append("\""); else sb.Append("null");
             sb.Append(",Port="); sb.Append(Port);
             sb.Append(",BackUpPort="); sb.Append(BackUpPort);
-            sb.Append(",Validate="); if (Validate != null) sb.Append("\"").Append(Validate).Append("\""); else sb.Append("null");
-            sb.Append(",HandleResend="); if (HandleResend != null) sb.Append("\"").Append(HandleResend).Append("\""); else sb.Append("null");
+            sb.Append(",Validate="); sb.Append(Validate ? "true" : "false");
+            sb.Append(",HandleResend="); sb.Append(HandleResend ? "true" : "false");
             sb.Append(",HeartBeatInterval="); sb.Append(HeartBeatInterval);
             sb.Append(",MaxLatency="); sb.Append(MaxLatency);
-            sb.Append(",ResetConnection="); sb.Append(ResetConnection);
-            sb.Append(",EnableConnection="); sb.Append(EnableConnection);
+            sb.Append(",ResetConnection="); sb.Append(ResetConnection ? "true" : "false");
+            sb.Append(",EnableConnection="); sb.Append(EnableConnection ? "true" : "false");
             sb.Append(",FIXVersion="); if (FIXVersion != null) sb.Append("\"").Append(FIXVersion).Append("\""); else sb.Append("null");
             sb.Append(",InternalFIXVersion="); if (InternalFIXVersion != null) sb.Append("\"").Append(InternalFIXVersion).Append("\""); else sb.Append("null");
             sb.Append(",Mode="); if (Mode != null) sb.Append("\"").Append(Mode).Append("\""); else sb.Append("null");
-            sb.Append(",DBEnabled="); sb.Append(DBEnabled);
-            sb.Append(",LatencyEnabled="); sb.Append(LatencyEnabled);
-            sb.Append(",AutoConnect="); sb.Append(AutoConnect);
-            sb.Append(",AutoReconnect="); sb.Append(AutoReconnect);
+            sb.Append(",DBEnabled="); sb.Append(DBEnabled ? "true" : "false");
+            sb.Append(",LatencyEnabled="); sb.Append(LatencyEnabled ? "true" : "false");
+            sb.Append(",AutoConnect="); sb.Append(AutoConnect ? "true" : "false");
+            sb.Append(",AutoReconnect="); sb.Append(AutoReconnect ? "true" : "false");
             sb.Append(",ReconnectDelay="); sb.Append(ReconnectDelay);
             sb.Append(",ConnectRetry="); sb.Append(ConnectRetry);
             sb.Append(",LogonRawData="); if (LogonRawData != null) sb.Append("\"").Append(LogonRawData).Append("\""); else sb.Append("null");
-            sb.Append(",MilliSecondTime="); sb.Append(MilliSecondTime);
-            sb.Append(",QEnabled="); sb.Append(QEnabled);
-            sb.Append(",SessionStart="); if (SessionStart != null) sb.Append("\"").Append(SessionStart).Append("\""); else sb.Append("null");
-            sb.Append(",SessionEnd="); if (SessionEnd != null) sb.Append("\"").Append(SessionEnd).Append("\""); else sb.Append("null");
+            sb.Append(",MilliSecondTime="); sb.Append(MilliSecondTime ? "true" : "false");
+            sb.Append(",QEnabled="); sb.Append(QEnabled ? "true" : "false");
+            sb.Append(",SessionStart="); sb.Append(SessionStart);
+            sb.Append(",SessionEnd="); sb.Append(SessionEnd);
             sb.Append(",TaskReset="); if (TaskReset != null) sb.Append("\"").Append(TaskReset).Append("\""); else sb.Append("null");
             sb.Append(",InSecNum="); sb.Append(InSecNum);
             sb.Append(",OutSecNum="); sb.Append(OutSecNum);
-            sb.Append(",LastUpdated="); if (LastUpdated != null) sb.Append("\"").Append(LastUpdated).Append("\""); else sb.Append("null");
+            sb.Append(",LastUpdated="); sb.Append(LastUpdated);
             sb.Append(")");
             return sb.ToString();
         }
@@ -1672,30 +1678,30 @@ namespace proto {
         public readonly FieldModelReferenceType<string> BackUpIPAddress;
         public readonly FieldModelValueType<ulong> Port;
         public readonly FieldModelValueType<ulong> BackUpPort;
-        public readonly FieldModelReferenceType<string> Validate;
-        public readonly FieldModelReferenceType<string> HandleResend;
+        public readonly FieldModelValueType<bool> Validate;
+        public readonly FieldModelValueType<bool> HandleResend;
         public readonly FieldModelValueType<ulong> HeartBeatInterval;
         public readonly FieldModelValueType<ulong> MaxLatency;
-        public readonly FieldModelValueType<ulong> ResetConnection;
-        public readonly FieldModelValueType<ulong> EnableConnection;
+        public readonly FieldModelValueType<bool> ResetConnection;
+        public readonly FieldModelValueType<bool> EnableConnection;
         public readonly FieldModelReferenceType<string> FIXVersion;
         public readonly FieldModelReferenceType<string> InternalFIXVersion;
         public readonly FieldModelReferenceType<string> Mode;
-        public readonly FieldModelValueType<ulong> DBEnabled;
-        public readonly FieldModelValueType<ulong> LatencyEnabled;
-        public readonly FieldModelValueType<ulong> AutoConnect;
-        public readonly FieldModelValueType<ulong> AutoReconnect;
+        public readonly FieldModelValueType<bool> DBEnabled;
+        public readonly FieldModelValueType<bool> LatencyEnabled;
+        public readonly FieldModelValueType<bool> AutoConnect;
+        public readonly FieldModelValueType<bool> AutoReconnect;
         public readonly FieldModelValueType<ulong> ReconnectDelay;
         public readonly FieldModelValueType<ulong> ConnectRetry;
         public readonly FieldModelReferenceType<string> LogonRawData;
-        public readonly FieldModelValueType<ulong> MilliSecondTime;
-        public readonly FieldModelValueType<ulong> QEnabled;
-        public readonly FieldModelReferenceType<string> SessionStart;
-        public readonly FieldModelReferenceType<string> SessionEnd;
+        public readonly FieldModelValueType<bool> MilliSecondTime;
+        public readonly FieldModelValueType<bool> QEnabled;
+        public readonly FieldModelValueType<ulong> SessionStart;
+        public readonly FieldModelValueType<ulong> SessionEnd;
         public readonly FieldModelReferenceType<string> TaskReset;
         public readonly FieldModelValueType<ulong> InSecNum;
         public readonly FieldModelValueType<ulong> OutSecNum;
-        public readonly FieldModelReferenceType<string> LastUpdated;
+        public readonly FieldModelValueType<ulong> LastUpdated;
 
         public FieldModelConfig(Buffer buffer, long offset) : base(buffer, offset)
         {
@@ -1707,30 +1713,30 @@ namespace proto {
             BackUpIPAddress = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, IPAddress.FBEOffset + IPAddress.FBESize);
             Port = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, BackUpIPAddress.FBEOffset + BackUpIPAddress.FBESize);
             BackUpPort = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, Port.FBEOffset + Port.FBESize);
-            Validate = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, BackUpPort.FBEOffset + BackUpPort.FBESize);
-            HandleResend = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, Validate.FBEOffset + Validate.FBESize);
+            Validate = FieldModelValueType<bool>.CreateFieldModel(BaseTypes.BOOL, buffer, BackUpPort.FBEOffset + BackUpPort.FBESize);
+            HandleResend = FieldModelValueType<bool>.CreateFieldModel(BaseTypes.BOOL, buffer, Validate.FBEOffset + Validate.FBESize);
             HeartBeatInterval = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, HandleResend.FBEOffset + HandleResend.FBESize);
             MaxLatency = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, HeartBeatInterval.FBEOffset + HeartBeatInterval.FBESize);
-            ResetConnection = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, MaxLatency.FBEOffset + MaxLatency.FBESize);
-            EnableConnection = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, ResetConnection.FBEOffset + ResetConnection.FBESize);
+            ResetConnection = FieldModelValueType<bool>.CreateFieldModel(BaseTypes.BOOL, buffer, MaxLatency.FBEOffset + MaxLatency.FBESize);
+            EnableConnection = FieldModelValueType<bool>.CreateFieldModel(BaseTypes.BOOL, buffer, ResetConnection.FBEOffset + ResetConnection.FBESize);
             FIXVersion = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, EnableConnection.FBEOffset + EnableConnection.FBESize);
             InternalFIXVersion = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, FIXVersion.FBEOffset + FIXVersion.FBESize);
             Mode = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, InternalFIXVersion.FBEOffset + InternalFIXVersion.FBESize);
-            DBEnabled = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, Mode.FBEOffset + Mode.FBESize);
-            LatencyEnabled = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, DBEnabled.FBEOffset + DBEnabled.FBESize);
-            AutoConnect = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, LatencyEnabled.FBEOffset + LatencyEnabled.FBESize);
-            AutoReconnect = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, AutoConnect.FBEOffset + AutoConnect.FBESize);
+            DBEnabled = FieldModelValueType<bool>.CreateFieldModel(BaseTypes.BOOL, buffer, Mode.FBEOffset + Mode.FBESize);
+            LatencyEnabled = FieldModelValueType<bool>.CreateFieldModel(BaseTypes.BOOL, buffer, DBEnabled.FBEOffset + DBEnabled.FBESize);
+            AutoConnect = FieldModelValueType<bool>.CreateFieldModel(BaseTypes.BOOL, buffer, LatencyEnabled.FBEOffset + LatencyEnabled.FBESize);
+            AutoReconnect = FieldModelValueType<bool>.CreateFieldModel(BaseTypes.BOOL, buffer, AutoConnect.FBEOffset + AutoConnect.FBESize);
             ReconnectDelay = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, AutoReconnect.FBEOffset + AutoReconnect.FBESize);
             ConnectRetry = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, ReconnectDelay.FBEOffset + ReconnectDelay.FBESize);
             LogonRawData = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, ConnectRetry.FBEOffset + ConnectRetry.FBESize);
-            MilliSecondTime = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, LogonRawData.FBEOffset + LogonRawData.FBESize);
-            QEnabled = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, MilliSecondTime.FBEOffset + MilliSecondTime.FBESize);
-            SessionStart = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, QEnabled.FBEOffset + QEnabled.FBESize);
-            SessionEnd = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, SessionStart.FBEOffset + SessionStart.FBESize);
+            MilliSecondTime = FieldModelValueType<bool>.CreateFieldModel(BaseTypes.BOOL, buffer, LogonRawData.FBEOffset + LogonRawData.FBESize);
+            QEnabled = FieldModelValueType<bool>.CreateFieldModel(BaseTypes.BOOL, buffer, MilliSecondTime.FBEOffset + MilliSecondTime.FBESize);
+            SessionStart = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, QEnabled.FBEOffset + QEnabled.FBESize);
+            SessionEnd = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, SessionStart.FBEOffset + SessionStart.FBESize);
             TaskReset = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, SessionEnd.FBEOffset + SessionEnd.FBESize);
             InSecNum = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, TaskReset.FBEOffset + TaskReset.FBESize);
             OutSecNum = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, InSecNum.FBEOffset + InSecNum.FBESize);
-            LastUpdated = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, OutSecNum.FBEOffset + OutSecNum.FBESize);
+            LastUpdated = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, OutSecNum.FBEOffset + OutSecNum.FBESize);
         }
 
         // Get the field size
@@ -2163,13 +2169,13 @@ namespace proto {
             if ((fbeCurrentSize + Validate.FBESize) <= fbeStructSize)
                 Validate.Get(out fbeValue.Validate);
             else
-                fbeValue.Validate = "";
+                fbeValue.Validate = false;
             fbeCurrentSize += Validate.FBESize;
 
             if ((fbeCurrentSize + HandleResend.FBESize) <= fbeStructSize)
                 HandleResend.Get(out fbeValue.HandleResend);
             else
-                fbeValue.HandleResend = "";
+                fbeValue.HandleResend = false;
             fbeCurrentSize += HandleResend.FBESize;
 
             if ((fbeCurrentSize + HeartBeatInterval.FBESize) <= fbeStructSize)
@@ -2187,13 +2193,13 @@ namespace proto {
             if ((fbeCurrentSize + ResetConnection.FBESize) <= fbeStructSize)
                 ResetConnection.Get(out fbeValue.ResetConnection);
             else
-                fbeValue.ResetConnection = (ulong)0UL;
+                fbeValue.ResetConnection = false;
             fbeCurrentSize += ResetConnection.FBESize;
 
             if ((fbeCurrentSize + EnableConnection.FBESize) <= fbeStructSize)
                 EnableConnection.Get(out fbeValue.EnableConnection);
             else
-                fbeValue.EnableConnection = (ulong)0UL;
+                fbeValue.EnableConnection = false;
             fbeCurrentSize += EnableConnection.FBESize;
 
             if ((fbeCurrentSize + FIXVersion.FBESize) <= fbeStructSize)
@@ -2217,25 +2223,25 @@ namespace proto {
             if ((fbeCurrentSize + DBEnabled.FBESize) <= fbeStructSize)
                 DBEnabled.Get(out fbeValue.DBEnabled);
             else
-                fbeValue.DBEnabled = (ulong)0UL;
+                fbeValue.DBEnabled = false;
             fbeCurrentSize += DBEnabled.FBESize;
 
             if ((fbeCurrentSize + LatencyEnabled.FBESize) <= fbeStructSize)
                 LatencyEnabled.Get(out fbeValue.LatencyEnabled);
             else
-                fbeValue.LatencyEnabled = (ulong)0UL;
+                fbeValue.LatencyEnabled = false;
             fbeCurrentSize += LatencyEnabled.FBESize;
 
             if ((fbeCurrentSize + AutoConnect.FBESize) <= fbeStructSize)
                 AutoConnect.Get(out fbeValue.AutoConnect);
             else
-                fbeValue.AutoConnect = (ulong)0UL;
+                fbeValue.AutoConnect = false;
             fbeCurrentSize += AutoConnect.FBESize;
 
             if ((fbeCurrentSize + AutoReconnect.FBESize) <= fbeStructSize)
                 AutoReconnect.Get(out fbeValue.AutoReconnect);
             else
-                fbeValue.AutoReconnect = (ulong)0UL;
+                fbeValue.AutoReconnect = false;
             fbeCurrentSize += AutoReconnect.FBESize;
 
             if ((fbeCurrentSize + ReconnectDelay.FBESize) <= fbeStructSize)
@@ -2259,25 +2265,25 @@ namespace proto {
             if ((fbeCurrentSize + MilliSecondTime.FBESize) <= fbeStructSize)
                 MilliSecondTime.Get(out fbeValue.MilliSecondTime);
             else
-                fbeValue.MilliSecondTime = (ulong)0UL;
+                fbeValue.MilliSecondTime = false;
             fbeCurrentSize += MilliSecondTime.FBESize;
 
             if ((fbeCurrentSize + QEnabled.FBESize) <= fbeStructSize)
                 QEnabled.Get(out fbeValue.QEnabled);
             else
-                fbeValue.QEnabled = (ulong)0UL;
+                fbeValue.QEnabled = false;
             fbeCurrentSize += QEnabled.FBESize;
 
             if ((fbeCurrentSize + SessionStart.FBESize) <= fbeStructSize)
                 SessionStart.Get(out fbeValue.SessionStart);
             else
-                fbeValue.SessionStart = "";
+                fbeValue.SessionStart = (ulong)0UL;
             fbeCurrentSize += SessionStart.FBESize;
 
             if ((fbeCurrentSize + SessionEnd.FBESize) <= fbeStructSize)
                 SessionEnd.Get(out fbeValue.SessionEnd);
             else
-                fbeValue.SessionEnd = "";
+                fbeValue.SessionEnd = (ulong)0UL;
             fbeCurrentSize += SessionEnd.FBESize;
 
             if ((fbeCurrentSize + TaskReset.FBESize) <= fbeStructSize)
@@ -2301,7 +2307,7 @@ namespace proto {
             if ((fbeCurrentSize + LastUpdated.FBESize) <= fbeStructSize)
                 LastUpdated.Get(out fbeValue.LastUpdated);
             else
-                fbeValue.LastUpdated = "";
+                fbeValue.LastUpdated = (ulong)0UL;
             fbeCurrentSize += LastUpdated.FBESize;
         }
 
@@ -2455,6 +2461,476 @@ namespace proto {
             if (fbeFullSize < model.FBESize)
             {
                 value = Config.Default;
+                return 0;
+            }
+
+            model.Get(out value);
+            return fbeFullSize;
+        }
+
+        // Move to the next struct value
+        public void Next(long prev)
+        {
+            model.FBEShift(prev);
+        }
+    }
+
+} // namespace proto
+} // namespace FBE
+
+namespace proto {
+
+    public struct Engine : IComparable, IComparable<Engine>, IEquatable<Engine>
+    {
+        public string engineID;
+        public string engineName;
+        public string ipAddress;
+        public string port;
+        public string redisIpAddress;
+        public string redisIpPort;
+
+        public const long FBETypeConst = 4;
+        public long FBEType => FBETypeConst;
+
+        public static Engine Default => new Engine
+        {
+            engineID = ""
+            , engineName = ""
+            , ipAddress = ""
+            , port = ""
+            , redisIpAddress = ""
+            , redisIpPort = ""
+        };
+
+        public Engine(string engineID, string engineName, string ipAddress, string port, string redisIpAddress, string redisIpPort)
+        {
+            this.engineID = engineID;
+            this.engineName = engineName;
+            this.ipAddress = ipAddress;
+            this.port = port;
+            this.redisIpAddress = redisIpAddress;
+            this.redisIpPort = redisIpPort;
+        }
+
+        public Engine Clone()
+        {
+            // Serialize the struct to the FBE stream
+            var writer = new FBE.proto.EngineModel();
+            writer.Serialize(this);
+
+            // Deserialize the struct from the FBE stream
+            var reader = new FBE.proto.EngineModel();
+            reader.Attach(writer.Buffer);
+            reader.Deserialize(out var result);
+            return result;
+        }
+
+        public int CompareTo(object other)
+        {
+            int result = 0;
+            return result;
+        }
+
+        public int CompareTo(Engine other)
+        {
+            int result = 0;
+            return result;
+        }
+
+        public override bool Equals(object other)
+        {
+            if (!(other is Engine))
+                return false;
+            return true;
+        }
+
+        public bool Equals(Engine other)
+        {
+            return true;
+        }
+
+        public override int GetHashCode()
+        {
+            int hash = 17;
+            return hash;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            sb.Append("Engine(");
+            sb.Append("engineID="); if (engineID != null) sb.Append("\"").Append(engineID).Append("\""); else sb.Append("null");
+            sb.Append(",engineName="); if (engineName != null) sb.Append("\"").Append(engineName).Append("\""); else sb.Append("null");
+            sb.Append(",ipAddress="); if (ipAddress != null) sb.Append("\"").Append(ipAddress).Append("\""); else sb.Append("null");
+            sb.Append(",port="); if (port != null) sb.Append("\"").Append(port).Append("\""); else sb.Append("null");
+            sb.Append(",redisIpAddress="); if (redisIpAddress != null) sb.Append("\"").Append(redisIpAddress).Append("\""); else sb.Append("null");
+            sb.Append(",redisIpPort="); if (redisIpPort != null) sb.Append("\"").Append(redisIpPort).Append("\""); else sb.Append("null");
+            sb.Append(")");
+            return sb.ToString();
+        }
+
+        public static FBE.FieldModelValueType<Engine> CreateFieldModel(FBE.Buffer buffer, long offset) { return new FBE.proto.FieldModelEngine(buffer, offset); }
+    }
+
+} // namespace proto
+
+namespace FBE {
+namespace proto {
+
+    using global::proto;
+
+    // Fast Binary Encoding Engine field model
+    public class FieldModelEngine : FieldModelValueType<Engine>
+    {
+        public readonly FieldModelReferenceType<string> engineID;
+        public readonly FieldModelReferenceType<string> engineName;
+        public readonly FieldModelReferenceType<string> ipAddress;
+        public readonly FieldModelReferenceType<string> port;
+        public readonly FieldModelReferenceType<string> redisIpAddress;
+        public readonly FieldModelReferenceType<string> redisIpPort;
+
+        public FieldModelEngine(Buffer buffer, long offset) : base(buffer, offset)
+        {
+            engineID = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, 4 + 4);
+            engineName = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, engineID.FBEOffset + engineID.FBESize);
+            ipAddress = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, engineName.FBEOffset + engineName.FBESize);
+            port = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, ipAddress.FBEOffset + ipAddress.FBESize);
+            redisIpAddress = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, port.FBEOffset + port.FBESize);
+            redisIpPort = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, redisIpAddress.FBEOffset + redisIpAddress.FBESize);
+        }
+
+        // Get the field size
+        public override long FBESize => 4;
+        // Get the field body size
+        public long FBEBody
+        {
+            get
+            {
+                long fbeResult = 4 + 4
+                    + engineID.FBESize
+                    + engineName.FBESize
+                    + ipAddress.FBESize
+                    + port.FBESize
+                    + redisIpAddress.FBESize
+                    + redisIpPort.FBESize
+                    ;
+                return fbeResult;
+            }
+        }
+        // Get the field extra size
+        public override long FBEExtra
+        {
+            get
+            {
+                if ((_buffer.Offset + FBEOffset + FBESize) > _buffer.Size)
+                    return 0;
+
+                uint fbeStructOffset = ReadUInt32(FBEOffset);
+                if ((fbeStructOffset == 0) || ((_buffer.Offset + fbeStructOffset + 4) > _buffer.Size))
+                    return 0;
+
+                _buffer.Shift(fbeStructOffset);
+
+                long fbeResult = FBEBody
+                    + engineID.FBEExtra
+                    + engineName.FBEExtra
+                    + ipAddress.FBEExtra
+                    + port.FBEExtra
+                    + redisIpAddress.FBEExtra
+                    + redisIpPort.FBEExtra
+                    ;
+
+                _buffer.Unshift(fbeStructOffset);
+
+                return fbeResult;
+            }
+        }
+        // Get the field type
+        public const long FBETypeConst = 4;
+        public long FBEType => FBETypeConst;
+
+        // Clone the field model
+        public override FieldModelValueType<Engine> Clone() { return new FieldModelEngine(_buffer, _offset); }
+
+        // Check if the struct value is valid
+        public override bool Verify() { return Verify(true); }
+        public bool Verify(bool fbeVerifyType)
+        {
+            if ((_buffer.Offset + FBEOffset + FBESize) > _buffer.Size)
+                return true;
+
+            uint fbeStructOffset = ReadUInt32(FBEOffset);
+            if ((fbeStructOffset == 0) || ((_buffer.Offset + fbeStructOffset + 4 + 4) > _buffer.Size))
+                return false;
+
+            uint fbeStructSize = ReadUInt32(fbeStructOffset);
+            if (fbeStructSize < (4 + 4))
+                return false;
+
+            uint fbeStructType = ReadUInt32(fbeStructOffset + 4);
+            if (fbeVerifyType && (fbeStructType != FBEType))
+                return false;
+
+            _buffer.Shift(fbeStructOffset);
+            bool fbeResult = VerifyFields(fbeStructSize);
+            _buffer.Unshift(fbeStructOffset);
+            return fbeResult;
+        }
+
+        // Check if the struct fields are valid
+        public bool VerifyFields(long fbeStructSize)
+        {
+            long fbeCurrentSize = 4 + 4;
+
+            if ((fbeCurrentSize + engineID.FBESize) > fbeStructSize)
+                return true;
+            if (!engineID.Verify())
+                return false;
+            fbeCurrentSize += engineID.FBESize;
+
+            if ((fbeCurrentSize + engineName.FBESize) > fbeStructSize)
+                return true;
+            if (!engineName.Verify())
+                return false;
+            fbeCurrentSize += engineName.FBESize;
+
+            if ((fbeCurrentSize + ipAddress.FBESize) > fbeStructSize)
+                return true;
+            if (!ipAddress.Verify())
+                return false;
+            fbeCurrentSize += ipAddress.FBESize;
+
+            if ((fbeCurrentSize + port.FBESize) > fbeStructSize)
+                return true;
+            if (!port.Verify())
+                return false;
+            fbeCurrentSize += port.FBESize;
+
+            if ((fbeCurrentSize + redisIpAddress.FBESize) > fbeStructSize)
+                return true;
+            if (!redisIpAddress.Verify())
+                return false;
+            fbeCurrentSize += redisIpAddress.FBESize;
+
+            if ((fbeCurrentSize + redisIpPort.FBESize) > fbeStructSize)
+                return true;
+            if (!redisIpPort.Verify())
+                return false;
+            fbeCurrentSize += redisIpPort.FBESize;
+
+            return true;
+        }
+
+        // Get the struct value (begin phase)
+        public long GetBegin()
+        {
+            if ((_buffer.Offset + FBEOffset + FBESize) > _buffer.Size)
+                return 0;
+
+            uint fbeStructOffset = ReadUInt32(FBEOffset);
+            Debug.Assert(((fbeStructOffset > 0) && ((_buffer.Offset + fbeStructOffset + 4 + 4) <= _buffer.Size)), "Model is broken!");
+            if ((fbeStructOffset == 0) || ((_buffer.Offset + fbeStructOffset + 4 + 4) > _buffer.Size))
+                return 0;
+
+            uint fbeStructSize = ReadUInt32(fbeStructOffset);
+            Debug.Assert((fbeStructSize >= (4 + 4)), "Model is broken!");
+            if (fbeStructSize < (4 + 4))
+                return 0;
+
+            _buffer.Shift(fbeStructOffset);
+            return fbeStructOffset;
+        }
+
+        // Get the struct value (end phase)
+        public void GetEnd(long fbeBegin)
+        {
+            _buffer.Unshift(fbeBegin);
+        }
+
+        // Get the struct value
+        public override void Get(out Engine fbeValue) { Get(out fbeValue, Engine.Default); }
+        public override void Get(out Engine fbeValue, Engine defaults)
+        {
+            long fbeBegin = GetBegin();
+            if (fbeBegin == 0)
+            {
+                fbeValue = defaults;
+                return;
+            }
+
+            uint fbeStructSize = ReadUInt32(0);
+            GetFields(out fbeValue, fbeStructSize);
+            GetEnd(fbeBegin);
+        }
+
+        // Get the struct fields values
+        public void GetFields(out Engine fbeValue, long fbeStructSize)
+        {
+            long fbeCurrentSize = 4 + 4;
+
+            fbeValue = Engine.Default;
+
+            if ((fbeCurrentSize + engineID.FBESize) <= fbeStructSize)
+                engineID.Get(out fbeValue.engineID);
+            else
+                fbeValue.engineID = "";
+            fbeCurrentSize += engineID.FBESize;
+
+            if ((fbeCurrentSize + engineName.FBESize) <= fbeStructSize)
+                engineName.Get(out fbeValue.engineName);
+            else
+                fbeValue.engineName = "";
+            fbeCurrentSize += engineName.FBESize;
+
+            if ((fbeCurrentSize + ipAddress.FBESize) <= fbeStructSize)
+                ipAddress.Get(out fbeValue.ipAddress);
+            else
+                fbeValue.ipAddress = "";
+            fbeCurrentSize += ipAddress.FBESize;
+
+            if ((fbeCurrentSize + port.FBESize) <= fbeStructSize)
+                port.Get(out fbeValue.port);
+            else
+                fbeValue.port = "";
+            fbeCurrentSize += port.FBESize;
+
+            if ((fbeCurrentSize + redisIpAddress.FBESize) <= fbeStructSize)
+                redisIpAddress.Get(out fbeValue.redisIpAddress);
+            else
+                fbeValue.redisIpAddress = "";
+            fbeCurrentSize += redisIpAddress.FBESize;
+
+            if ((fbeCurrentSize + redisIpPort.FBESize) <= fbeStructSize)
+                redisIpPort.Get(out fbeValue.redisIpPort);
+            else
+                fbeValue.redisIpPort = "";
+            fbeCurrentSize += redisIpPort.FBESize;
+        }
+
+        // Set the struct value (begin phase)
+        public long SetBegin()
+        {
+            Debug.Assert(((_buffer.Offset + FBEOffset + FBESize) <= _buffer.Size), "Model is broken!");
+            if ((_buffer.Offset + FBEOffset + FBESize) > _buffer.Size)
+                return 0;
+
+            uint fbeStructSize = (uint)FBEBody;
+            uint fbeStructOffset = (uint)(_buffer.Allocate(fbeStructSize) - _buffer.Offset);
+            Debug.Assert(((fbeStructOffset > 0) && ((_buffer.Offset + fbeStructOffset + fbeStructSize) <= _buffer.Size)), "Model is broken!");
+            if ((fbeStructOffset == 0) || ((_buffer.Offset + fbeStructOffset + fbeStructSize) > _buffer.Size))
+                return 0;
+
+            Write(FBEOffset, fbeStructOffset);
+            Write(fbeStructOffset, fbeStructSize);
+            Write(fbeStructOffset + 4, (uint)FBEType);
+
+            _buffer.Shift(fbeStructOffset);
+            return fbeStructOffset;
+        }
+
+        // Set the struct value (end phase)
+        public void SetEnd(long fbeBegin)
+        {
+            _buffer.Unshift(fbeBegin);
+        }
+
+        // Set the struct value
+        public override void Set(Engine fbeValue)
+        {
+            long fbeBegin = SetBegin();
+            if (fbeBegin == 0)
+                return;
+
+            SetFields(fbeValue);
+            SetEnd(fbeBegin);
+        }
+
+        // Set the struct fields values
+        public void SetFields(Engine fbeValue)
+        {
+            engineID.Set(fbeValue.engineID);
+            engineName.Set(fbeValue.engineName);
+            ipAddress.Set(fbeValue.ipAddress);
+            port.Set(fbeValue.port);
+            redisIpAddress.Set(fbeValue.redisIpAddress);
+            redisIpPort.Set(fbeValue.redisIpPort);
+        }
+    }
+
+} // namespace proto
+} // namespace FBE
+
+namespace FBE {
+namespace proto {
+
+    using global::proto;
+
+    // Fast Binary Encoding Engine model
+    public class EngineModel : Model
+    {
+        public readonly FieldModelEngine model;
+
+        public EngineModel() { model = new FieldModelEngine(Buffer, 4); }
+        public EngineModel(Buffer buffer) : base(buffer) { model = new FieldModelEngine(Buffer, 4); }
+
+        // Get the model size
+        public long FBESize => model.FBESize + model.FBEExtra;
+        // Get the model type
+        public const long FBETypeConst = FieldModelEngine.FBETypeConst;
+        public long FBEType => FBETypeConst;
+
+        // Check if the struct value is valid
+        public bool Verify()
+        {
+            if ((Buffer.Offset + model.FBEOffset - 4) > Buffer.Size)
+                return false;
+
+            uint fbeFullSize = ReadUInt32(model.FBEOffset - 4);
+            if (fbeFullSize < model.FBESize)
+                return false;
+
+            return model.Verify();
+        }
+
+        // Create a new model (begin phase)
+        public long CreateBegin()
+        {
+            long fbeBegin = Buffer.Allocate(4 + model.FBESize);
+            return fbeBegin;
+        }
+
+        // Create a new model (end phase)
+        public long CreateEnd(long fbeBegin)
+        {
+            long fbeEnd = Buffer.Size;
+            uint fbeFullSize = (uint)(fbeEnd - fbeBegin);
+            Write(model.FBEOffset - 4, fbeFullSize);
+            return fbeFullSize;
+        }
+
+        // Serialize the struct value
+        public long Serialize(Engine value)
+        {
+            long fbeBegin = CreateBegin();
+            model.Set(value);
+            long fbeFullSize = CreateEnd(fbeBegin);
+            return fbeFullSize;
+        }
+
+        // Deserialize the struct value
+        public long Deserialize(out Engine value)
+        {
+            if ((Buffer.Offset + model.FBEOffset - 4) > Buffer.Size)
+            {
+                value = Engine.Default;
+                return 0;
+            }
+
+            uint fbeFullSize = ReadUInt32(model.FBEOffset - 4);
+            Debug.Assert((fbeFullSize >= model.FBESize), "Model is broken!");
+            if (fbeFullSize < model.FBESize)
+            {
+                value = Engine.Default;
                 return 0;
             }
 

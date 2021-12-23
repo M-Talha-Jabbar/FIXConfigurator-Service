@@ -28,7 +28,7 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
         public bool HandleResend { get; set; }
 
-        public ulong HeartBeartulongerval { get; set; }
+        public ulong HeartBeatInterval { get; set; }
 
         public ulong MaxLatency { get; set; }
 
@@ -90,21 +90,21 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
                 BackUpIPAddress = config.BackUpIPAddress,
 
-                //Port = config.Port,
+                Port = config.Port,
 
-                //BackUpPort = config.BackUpPort,
+                BackUpPort = config.BackUpPort,
 
-                //Validate = config.Validate,
+                Validate = config.Validate,
 
-                //HandleResend = config.HandleResend,
+                HandleResend = config.HandleResend,
 
-                //HeartBeartulongerval = config.HeartBeatulongerval,
+                HeartBeatInterval = config.HeartBeatInterval,
 
-                //MaxLatency = config.MaxLatency,
+                MaxLatency = config.MaxLatency,
 
-                //ResetConnection = config.ResetConnection,
+                ResetConnection = config.ResetConnection,
 
-                //EnableConnection = config.EnableConnection,
+                EnableConnection = config.EnableConnection,
 
                 FIXVersion = config.FIXVersion,
 
@@ -112,35 +112,35 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
                 Mode = config.Mode,
 
-                //DBEnabled = config.DBEnabled,
+                DBEnabled = config.DBEnabled,
 
-                //LatencyEnabled = config.LatencyEnabled,
+                LatencyEnabled = config.LatencyEnabled,
 
-                //AutoConnect = config.AutoConnect,
+                AutoConnect = config.AutoConnect,
 
-                //AutoReconnect = config.AutoReconnect,
+                AutoReconnect = config.AutoReconnect,
 
-                //ReconnectDelay = config.ReconnectDelay,
+                ReconnectDelay = config.ReconnectDelay,
 
-                //ConnectRetry = config.ConnectRetry,
+                ConnectRetry = config.ConnectRetry,
 
-                //LogonRawData = config.LogonRawData,
+                LogonRawData = config.LogonRawData,
 
-                //MilliSecondTime = config.MilliSecondTime,
+                MilliSecondTime = config.MilliSecondTime,
 
-                //QEnabled = config.QEnabled,
+                QEnabled = config.QEnabled,
 
-                //SessionStart = config.SessionStart,
+                SessionStart = new DateTime((long)config.SessionStart),
 
-                //SessionEnd = config.SessionEnd,
+                SessionEnd = new DateTime((long)config.SessionEnd),
 
                 TaskReset = config.TaskReset,
 
-                //InSecNum = config.InSecNum,
+                InSecNum = config.InSecNum,
 
-                //OutSecNum = config.OutSecNum,
+                OutSecNum = config.OutSecNum,
 
-                //LastUpdated = config.LastUpdated
+                LastUpdated = new DateTime((long)config.LastUpdated)
 
             };
         }

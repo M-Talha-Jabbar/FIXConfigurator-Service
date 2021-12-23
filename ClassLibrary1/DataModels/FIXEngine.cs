@@ -14,51 +14,35 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
         public string ipAddress { get; set; }
         public string redisIpAddress { get; set; }
         public string redisIpPort { get; set; }
-        public int port { get; set; }
+        public string port { get; set; }
         public FixSessionKeyedCollection fixSessions { get; set; } = new FixSessionKeyedCollection();
 
-        public static HashEntry[] getHashFromObject(FIXEngine obj)
+        public static implicit operator FIXEngine(proto.Engine engine)
         {
-            HashEntry[] engineHashEntries = new HashEntry[6];
-            int i = 0;
-            Console.WriteLine("===========================");
-            foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(obj))
+            return new FIXEngine
             {
-                string name = descriptor.Name;
-                string value = JsonConvert.SerializeObject(descriptor.GetValue(obj));
-                Console.WriteLine("{0}={1}", name, value);
-                engineHashEntries[i++] = new HashEntry(name, new RedisValue(value));
-                if (i == 6) break;
-            }
-            Console.WriteLine("===========================");
-            return engineHashEntries;
-
+                engineID = engine.engineID,
+                engineName = engine.engineName,
+                ipAddress = engine.ipAddress,
+                redisIpAddress = engine.redisIpAddress,
+                redisIpPort = engine.redisIpPort,
+                port = engine.port,
+                fixSessions = new FixSessionKeyedCollection()
+            };
         }
 
-        public static void setObjectFromHash(FIXEngine obj, HashEntry[] engineHashEntries)
+        public static implicit operator proto.Engine(FIXEngine engine)
         {
-            int i = 0;
-            Console.WriteLine("===========================");
-            foreach (PropertyDescriptor descriptor in TypeDescriptor.GetProperties(obj))
+            return new proto.Engine
             {
-                string name = descriptor.Name;
-
-                if (name == engineHashEntries[i].Name)
-                {
-                    int port;
-                    if (Int32.TryParse(engineHashEntries[i].Value.ToString(), out port))
-                    {
-                        descriptor.SetValue(obj, port);
-                    }
-                    else
-                        descriptor.SetValue(obj, engineHashEntries[i].Value.ToString().Trim('"'));
-                }
-                i++;
-                if (i == 6) break;
-            }
-            Console.WriteLine("Engine Name : " + obj.engineName);
-            Console.WriteLine("===========================");
-
+                engineID = engine.engineID,
+                engineName = engine.engineName,
+                ipAddress = engine.ipAddress,
+                redisIpAddress = engine.redisIpAddress,
+                redisIpPort = engine.redisIpPort,
+                port = engine.port
+            };
         }
+
     }
 }

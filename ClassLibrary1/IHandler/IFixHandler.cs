@@ -19,10 +19,10 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         FIXEngine ConnectToFixEngine(FIXEngine fixEngine);
         FIXEngine DisconnectToFixEngine(FIXEngine fixEngine);
         FIXSession ConnectToFixSession(string engineID, FIXSession fixSession);
-        List<Tuple<string, string, string>> ParseAndStoreFixMessage(string fixMessage);
+        //List<Tuple<string, string, string>> ParseAndStoreFixMessage(string fixMessage);
         void SendFixSessionUpdates(FIXSession fixSession, string engineID, string updateType);
         void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID);
-        string GetFixTagValue(string fixMessage, string tag);
+        //string GetFixTagValue(string fixMessage, string tag);
         FixSessionKeyedCollection GetFixSession(string FixEngineID);
         FIXMessage getObjectFromFixMessage(string msg);
         void SessionUpdates(string key, HashEntry[] result,FIXEngine fixEngine);

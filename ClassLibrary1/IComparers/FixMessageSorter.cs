@@ -1,4 +1,5 @@
-﻿using FIXMonitorBusinessLogicLayer.Handler;
+﻿using FIXMonitorBusinessLogicLayer.DataModels;
+using FIXMonitorBusinessLogicLayer.Handler;
 using FIXMonitorBusinessLogicLayer.IHandler;
 using StackExchange.Redis;
 using System;
@@ -12,19 +13,18 @@ namespace FIXMonitorBusinessLogicLayer.IComparers
 {
     class FixMessageSorter : IComparer<HashEntry>
     {
-        IFixHandler fixHandler;
 
         public FixMessageSorter(IFixHandler fixHandler)
         {
-            this.fixHandler = fixHandler;
+
         }
 
         public int Compare(HashEntry x, HashEntry y)
         {
             var xVal =  x.Value;
-            var xTime = fixHandler.GetFixTagValue(xVal, "52");
+            var xTime = FIXMessage.GetFixTagValue(xVal, "52");
             var yVal = y.Value;
-            var yTime = fixHandler.GetFixTagValue(yVal, "52");
+            var yTime = FIXMessage.GetFixTagValue(yVal, "52");
 
             return (new CaseInsensitiveComparer()).Compare(xTime, yTime);
 
