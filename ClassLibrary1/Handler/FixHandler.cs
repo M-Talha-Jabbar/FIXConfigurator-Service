@@ -15,6 +15,7 @@ using FIXMonitorBusinessLogicLayer.IComparers;
 using static FIXMonitorServer.FIXHubCommunicator;
 using FBE;
 using CoreLogging;
+using proto;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -40,8 +41,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public FixHandler()
         {
-            test();
-
             fixEngines = new FixEnginesKeyedCollection();
             fixEnginesDB = new Dictionary<string, int>();
             fixEnginesGrcpClients = new Dictionary<string, FIXHubCommunicatorClient>();
@@ -141,7 +140,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         if (!isServerListening)
                         {
                             var muxer = RedisConnectorHelper.GetConnection(fixEngine.redisIpAddress);
-                            var db = fixEnginesDB[$"{fixEngine.ipAddress}:{fixEngine.port}"];
+                            var db = fixEnginesDB[$"{fixEngine.engineID}"];
                             var clientDb = muxer.GetDatabase(db);
                             GetSessionsForEngine(muxer, db, clientDb, fixEngine);
                             isServerListening = true;
@@ -233,16 +232,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             FIXEngine fixEngine = new FIXEngine();
             var engine = proto.Engine.Default;
 
-
-
-
             var recieve = new FBE.proto.EngineModel();
-            recieve.Attach(engine_data[1].Value);
+            recieve.Attach(engine_data[0].Value);
             recieve.Deserialize(out engine);
             fixEngine = engine;
             fixEngine.fixSessions = new FixSessionKeyedCollection();
             
-            fixEnginesDB.Add($"{fixEngine.ipAddress}:{fixEngine.port}", db);
+            fixEnginesDB.Add($"{fixEngine.engineID}", db);
             fixEngines.Add(fixEngine);
             engineStreamLastPosition.Add(fixEngine.engineName, 0);
             return fixEngine;
@@ -265,11 +261,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
                 var state = client.HashGetAll(key);
                 SessionUpdates(key, state, FIXEngine);
-
+                SendPreviousMessageUpdates(session, FIXEngine.engineID);
             }
         }
 
-        private static FIXSession createFixSession(IDatabase client, FIXEngine FIXEngine, RedisKey item, string conId)
+        private FIXSession createFixSession(IDatabase client, FIXEngine FIXEngine, RedisKey item, string conId)
         {
             FIXSession session = new FIXSession();
             var sessionHash = client.HashGetAll(item.ToString());
@@ -283,11 +279,25 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             //FIXSession.setObjectFromHash(session, sessionHash);
 
             session = config;
-
+            //SendPreviousMessageUpdates(session);
             session.FixMessages = new List<FIXMessage>();
             FIXEngine.fixSessions.Add(session);
             session.ConnectionID = conId;
             return session;
+        }
+
+        private void SendPreviousMessageUpdates(FIXSession session, string engineID)
+        {
+            var _key = session.ConnectionID;
+            if (sessionFixMessages.ContainsKey(_key))
+            {
+                session.FixMessages = sessionFixMessages[_key];
+                sessionFixMessages.Remove(session.ConnectionID);
+                foreach (var message in session.FixMessages)
+                {
+                    SendFixMessageUpdates(message, engineID, session.ConnectionID);
+                }
+            }
         }
 
         public void GetFixMessagesFromRedis(ConnectionMultiplexer muxer, RedisChannel channel, RedisValue message, FIXEngine fixEngine)
@@ -297,7 +307,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             int db = 0;
             if (fixEngines.Count > 0)
             {
-                string dbkey = $"{fixEngine.ipAddress}:{fixEngine.port}";
+                string dbkey = $"{fixEngine.engineID}";
                 if(fixEnginesDB.ContainsKey(dbkey))
                     db = fixEnginesDB[dbkey];
                 else
@@ -312,7 +322,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 if(key == redisStreamName)
                 {
-                    streamLastPosition = engineStreamLastPosition[fixEngine.engineName];
                     var client = muxer.GetDatabase(db);
                     var stream = client.StreamReadAsync(key, engineStreamLastPosition[fixEngine.engineName]);
                     stream.Wait();
@@ -340,7 +349,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     return;
                 }
-
+                #region old
                 //Array.Sort(result, new FixMessageSorter(this));
                 ////foreach (var item in hash.Result)
                 ////{
@@ -351,12 +360,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 //var item = result.Last();
                 ////Console.WriteLine("Name: " + item.Name + " Value: " + item.Value);
 
-                //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.ipAddress && x.port == fixEngine.port);
+                //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.redisIpAddress && x.port == fixEngine.redisIpPort);
                 //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
                 //FIXMessage fixMessage = getObjectFromFixMessage(item.Value.ToString());
                 //Console.WriteLine("TIME : " + fixMessage.sendingTime);
                 //observable.SendFixMessageUpdate(fixMessage, engine.engineID, session.ConnectionID);
                 //CoreLogging.Logging.LogMessage($"Fix Message sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
+                #endregion
+
             }
             catch (Exception e)
             {
@@ -382,7 +393,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     recieve.Deserialize(out body);
                     FIXMessage fixMessage = body;
                     var _key = body.ConnectionID;
-                    //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.ipAddress && x.port == fixEngine.port);
+                    //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.redisIpAddress && x.port == fixEngine.redisIpPort);
                     //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
                     if (IsSendMessage)
                     {
@@ -430,7 +441,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
 
                 var engine = fixEngines.FirstOrDefault(x => x.fixSessions.FirstOrDefault(y => y.IPAddress + ":" + y.Port == fixSession.IPAddress + ":" + fixSession.Port && y.ConnectionID == fixSession.ConnectionID) != null);
-                ip = engine.ipAddress + ":" + engine.port;
+                ip = engine.redisIpAddress + ":" + engine.redisIpPort;
                 if (fixEnginesGrcpClients.ContainsKey(ip))
                 {
                     return fixEnginesGrcpClients[ip];
@@ -462,161 +473,134 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public int GetDBForEngine(FIXSession fixSession, FIXEngine engine)
         {
+            return engine.redisDB;
 
+            //FIXHubCommunicatorClient fixGrpcClient = null;
 
-            FIXHubCommunicatorClient fixGrpcClient = null;
+            //if (fixSession == null)
+            //{
+            //    string ip = engine.ipAddress + ":" + engine.port;
 
-            if (fixSession == null)
-            {
-                string ip = engine.ipAddress + ":" + engine.port;
+            //    if (fixEnginesGrcpClients.ContainsKey(ip))
+            //    {
 
-                if (fixEnginesGrcpClients.ContainsKey(ip))
-                {
+            //        fixGrpcClient = fixEnginesGrcpClients[ip];
+            //    }
+            //    else
+            //    {
+            //        Channel channel = new Channel(ip, ChannelCredentials.Insecure);
+            //        //channel.ConnectAsync();
+            //        var client = new FIXHubCommunicator.FIXHubCommunicatorClient(channel);
+            //        fixEnginesGrcpClients.Add(ip, client);
+            //        fixEnginesChannels.Add(ip, channel);
+            //        fixGrpcClient = client;
+            //    }
+            //}
+            //else
+            //{
 
-                    fixGrpcClient = fixEnginesGrcpClients[ip];
-                }
-                else
-                {
-                    Channel channel = new Channel(ip, ChannelCredentials.Insecure);
-                    //channel.ConnectAsync();
-                    var client = new FIXHubCommunicator.FIXHubCommunicatorClient(channel);
-                    fixEnginesGrcpClients.Add(ip, client);
-                    fixEnginesChannels.Add(ip, channel);
-                    fixGrpcClient = client;
-                }
-            }
-            else
-            {
+            //    fixGrpcClient = ConnectToGRPCServer(fixSession);
+            //}
+            //try
+            //{
+            //    var task = Task.Run(async () => fixGrpcClient.EngineDB(
+            //    new GetEngineDbRequest
+            //    {
 
-                fixGrpcClient = ConnectToGRPCServer(fixSession);
-            }
-            try
-            {
-                var task = Task.Run(async () => fixGrpcClient.EngineDB(
-                new GetEngineDbRequest
-                {
+            //    }
+            //    ));
 
-                }
-                ));
-
-                task.Wait();
-                var result = task.Result;
-                Console.WriteLine("MESSAGE : " + result.Db);
-                return result.Db;
-            }
-            catch (Exception e)
-            {
-                CoreLogging.Logging.LogMessage($"Attemp to get DB failed with message {e.InnerException.Message}");
-                string ip = $"{engine.ipAddress}:{engine.port}";
-                fixEnginesGrcpClients.Remove(ip);
-                return -1;
-            }
+            //    task.Wait();
+            //    var result = task.Result;
+            //    Console.WriteLine("MESSAGE : " + result.Db);
+            //    return result.Db;
+            //}
+            //catch (Exception e)
+            //{
+            //    CoreLogging.Logging.LogMessage($"Attemp to get DB failed with message {e.InnerException.Message}");
+            //    string ip = $"{engine.ipAddress}:{engine.port}";
+            //    fixEnginesGrcpClients.Remove(ip);
+            //    return -1;
+            //}
 
         }
 
         public bool ConnectFixSessionAsync(FIXSession fixSession)
         {
-            var fixGrpcClient = ConnectToGRPCServer(fixSession);
-
-            //var task = Task.Run(async () => await fixGrpcClient.ConnectAsync(
-            //    new ConnectRequest
-            //    {
-            //        SenderCompId = fixSession.SenderCompID,
-            //        TargetCompId = fixSession.TargetCompID
-            //    }
-            //    ));
-            //task.Wait();
-            var task = fixGrpcClient.ConnectAsync(
-                new ConnectRequest
-                {
-                    SenderCompId = fixSession.SenderCompID,
-                    TargetCompId = fixSession.TargetCompID
-                });
-            //var result = task.Message;
-            Console.WriteLine("CONNECT REQUEST SENT ...");
-
             Thread thread = new Thread(
                 unused => isConnected(fixSession.ConnectionID, fixSession)
                 );
             thread.Start();
-
-            //isConnected(fixSession.ConnectionID, fixSession);
-            return true;
+            thread.Join();
+            return PerformGivenActionToRedis(fixSession, proto.Action.CONNECT);
         }
 
         public bool DisconnectFixSession(FIXSession fixSession)
         {
-            var fixGrpcClient = ConnectToGRPCServer(fixSession);
-            //var task = Task.Run(async () => await fixGrpcClient.DisconnectAsync(
-            //    new DisconnectRequest
-            //    {
-            //        SenderCompId = fixSession.SenderCompID,
-            //        TargetCompId = fixSession.TargetCompID
-            //    }
-            //    ));
-            var task = fixGrpcClient.DisconnectAsync(
-                    new DisconnectRequest
-                    {
-                        SenderCompId = fixSession.SenderCompID,
-                        TargetCompId = fixSession.TargetCompID
-                    }
-                );
-            //var result = task.Result.Message;
-            Console.WriteLine("DISCONNECT REQUEST SENT...");
-
             Thread thread = new Thread(
                 unused => isConnected(fixSession.ConnectionID, fixSession)
                 );
             thread.Start();
+            thread.Join();
+            return PerformGivenActionToRedis(fixSession, proto.Action.DISCONNECT);
+        }
 
-            //isConnected(fixSession.ConnectionID, fixSession);
-            return true;
+        public bool PerformGivenActionToRedis(FIXSession fixSession, proto.Action action)
+        {
+            var engine = fixEngines.FirstOrDefault(x => x.fixSessions.FirstOrDefault(y => y.IPAddress + ":" + y.Port == fixSession.IPAddress + ":" + fixSession.Port && y.ConnectionID == fixSession.ConnectionID) != null);
+            var ip = engine.redisIpAddress + ":" + engine.redisIpPort;
+
+            var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
+            int db = fixEnginesDB[$"{engine.engineID}"];
+            var database = muxer.GetDatabase(db);
+            //If the data is not consistent then we will read the data first and then update the data ... 
+
+            Header header = new Header()
+            {
+                Action = action,
+                ConnectionID = fixSession.ConnectionID,
+                InSecNum = fixSession.InSecNum,
+                OutSecNum = fixSession.OutSecNum,
+                SenderID = fixSession.SenderCompID,
+                TargetID = fixSession.TargetCompID,
+                Signature = Signature.FIXMONITOR
+            };
+
+            FBE.proto.HeaderModel headerModel = new FBE.proto.HeaderModel();
+            headerModel.Serialize(header);
+            bool isVerified = headerModel.Verify();
+
+            if(isVerified)
+            {
+                database.StreamAddAsync("Statuses", fixSession.ConnectionID, headerModel.Buffer.Data).Wait();
+                //database.HashSetAsync(fixSession.ConnectionID + "-Status", "Status" , headerModel.Buffer.Data).Wait();
+            }
+
+            return isVerified;
         }
 
         public bool SetSequenceNumber(FIXSession fixSession)
         {
-            var fixGrpcClient = ConnectToGRPCServer(fixSession);
-            var sender = fixGrpcClient.SetSenderSequence(
-               new SetSenderSequenceRequest
-               {
-                   SenderCompId = fixSession.SenderCompID,
-                   TargetCompId = fixSession.TargetCompID,
-                   InSeq = 00 //fixSession.InSecNum
-               }
-               );
-            Console.WriteLine(sender.Message);
-            var target = fixGrpcClient.SetTargetSequence(
-                new SetTargetSequenceRequest
-                {
-                    SenderCompId = fixSession.SenderCompID,
-                    TargetCompId = fixSession.TargetCompID,
-                    OutSeq = 00 //fixSession.OutSecNum
-                }
+            Thread thread = new Thread(
+                unused => isConnected(fixSession.ConnectionID, fixSession)
                 );
-            Console.WriteLine(target.Message);
-            return true;
+            thread.Start();
+            thread.Join();
+            bool isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.SET_SENDER_SEQUENCE);
+            isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.SET_TARGET_SEQUENCE);
+            return isCompleted;
         }
 
         public bool ResetSequenceNumber(FIXSession fixSession)
         {
-            var fixGrpcClient = ConnectToGRPCServer(fixSession);
-            var sender = fixGrpcClient.ResetSender(
-                new SenderRequest
-                {
-                    SenderCompId = fixSession.SenderCompID,
-                    TargetCompId = fixSession.TargetCompID
-                }
+            Thread thread = new Thread(
+                unused => isConnected(fixSession.ConnectionID, fixSession)
                 );
-            Console.WriteLine(sender.Message);
-            var target = fixGrpcClient.ResetTarget(
-                new TargetRequest
-                {
-                    SenderCompId = fixSession.SenderCompID,
-                    TargetCompId = fixSession.TargetCompID
-                }
-                );
-            Console.WriteLine(target.Message);
-            return true;
+            thread.Start();
+            thread.Join();
+            bool isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.RESET_SENDER_SEQUENCE);
+            isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.RESET_TARGET_SEQUENCE);
+            return isCompleted;
         }
 
         public List<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID)
@@ -644,13 +628,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             if (db == -1)
             {
                 fixEngines.Remove(fixEngine);
-                throw new Exception($"cant connect to IP : {fixEngine.ipAddress} and Port : {fixEngine.port}");
+                //throw new Exception($"cant connect to IP : {fixEngine.redisIpAddress} and Port : {fixEngine.redisIpPort}");
             }
             //Save Db to File with respective ip
             
 
             string CacheKeyEvent = "__keyevent@" + db + "__:*";
-            var key = $"{fixEngine.ipAddress}:{fixEngine.port}";
+            var key = $"{fixEngine.engineID}";
             if (!fixEnginesDB.ContainsKey(key))
             {
                 fixEnginesDB.Add(key, db);
@@ -663,40 +647,51 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 fixEnginesDB[key] = db;
                 fixEngines.Remove(fixEngine);
-                throw new Exception($"Engine Already Exists with IP : {fixEngine.ipAddress} and Port : {fixEngine.port}");
+                throw new Exception($"Engine Already Exists with DB : {fixEngine.redisDB}");
             }
 
             //var engineHash = FIXEngine.getHashFromObject(fixEngine);
-            proto.Engine engine = fixEngine;
-            var send = new FBE.proto.EngineModel();
-            send.Serialize(engine);
+            try
+            {
+                proto.Engine engine = fixEngine;
+                var send = new FBE.proto.EngineModel();
+                send.Serialize(engine);
 
-            HashEntry[] engineHash = new HashEntry[1];
-            engineHash[0] = new HashEntry("Engine", send.Buffer.Data);
-            
+                HashEntry[] engineHash = new HashEntry[1];
+                engineHash[0] = new HashEntry("Engine", send.Buffer.Data);
 
-            var client = muxer.GetDatabase(db);
 
-            var setEngine = client.HashSetAsync(fixEngine.engineName.ToUpper(), engineHash);
-            setEngine.Wait();
+                var client = muxer.GetDatabase(db);
 
-            var setEngines = client.HashSetAsync("Engine", fixEngine.engineID, fixEngine.engineName.ToUpper());
-            setEngines.Wait();
-            Thread thread = new Thread(
-                unused => GetSessionsForEngine(muxer, db, client, fixEngine)
-                );
-            thread.Start();
-            //GetSessionsForEngine(muxer, db, client, fixEngine);
-            muxer.GetSubscriber().Subscribe(CacheKeyEvent,
-                            (channel, message) => GetFixMessagesFromRedis(muxer, channel, message, fixEngine));
+                var setEngine = client.HashSetAsync(fixEngine.engineName.ToUpper(), engineHash);
+                setEngine.Wait();
+
+                var setEngines = client.HashSetAsync("Engine", fixEngine.engineID, fixEngine.engineName.ToUpper());
+                setEngines.Wait();
+                Thread thread = new Thread(
+                    unused => GetSessionsForEngine(muxer, db, client, fixEngine)
+                    );
+                thread.Start();
+                //GetSessionsForEngine(muxer, db, client, fixEngine);
+                muxer.GetSubscriber().Subscribe(CacheKeyEvent,
+                                (channel, message) => GetFixMessagesFromRedis(muxer, channel, message, fixEngine));
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine("Exception : " + e.Message);
+                if(e.InnerException != null)
+                {
+                    Console.WriteLine("Inner Exception : " + e.InnerException.Message);
+                }
+            }
             return fixEngine;
         }
 
         public FIXEngine DisconnectToFixEngine(FIXEngine fixEngine)
         {
-            var key = $"{fixEngine.ipAddress}:{fixEngine.port}";
+            var key = $"{fixEngine.engineID}";
             //bool isRemoved = fixEngines.Remove(fixEngine);
-            var engine = fixEngines.SingleOrDefault(x => x.ipAddress == fixEngine.ipAddress && x.port == fixEngine.port);
+            var engine = fixEngines.SingleOrDefault(x => x.redisIpAddress == fixEngine.redisIpAddress && x.redisIpPort == fixEngine.redisIpPort);
             if(engine != null)
             {
                 fixEngines.Remove(engine);
@@ -708,13 +703,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 string CacheKeyEvent = "__keyevent@" + db + "__:*";
                 var muxer = RedisConnectorHelper.GetConnection(fixEngine.redisIpAddress);
                 muxer.GetSubscriber().Unsubscribe(CacheKeyEvent);
-            }
-            if (fixEnginesGrcpClients.ContainsKey(key))
-            {
-                fixEnginesGrcpClients.Remove(key);
-                var channel = fixEnginesChannels[key];
-                channel.ShutdownAsync();
-                fixEnginesChannels.Remove(key);
+                muxer.GetDatabase(engine.redisDB).HashDeleteAsync("Engine",engine.engineID).Wait();
+
             }
             return fixEngine;
         }
@@ -735,16 +725,15 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             var engine = fixEngines[engineID];
             engine.fixSessions.Add(fixSession);
-            int db = fixEnginesDB[$"{engine.ipAddress}:{engine.port}"];
-            var engineHash = new HashEntry[0]; //FIXSession.getHashFromObject(fixSession);
+            int db = fixEnginesDB[$"{engine.engineID}"];
+            var sessionHash = new HashEntry[0]; //FIXSession.getHashFromObject(fixSession);
+            
             var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
             var client = muxer.GetDatabase(db);
-            client.HashSet(fixSession.ConnectionID + "-Config", engineHash);
+            client.HashSet(fixSession.ConnectionID + "-Config", sessionHash);
             //SendFixSessionUpdates(fixSession, engineID, "insert");
             return fixSession;
         }
-
-        
 
         public Task SendSampleFixMessages()
         {
@@ -814,7 +803,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             var engine = fixEngines.FirstOrDefault(x => x.fixSessions.SingleOrDefault(y => y.ConnectionID == key) != null);
             key = key + "-" + subkey;
             var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
-            int db = fixEnginesDB[$"{engine.ipAddress}:{engine.port}"];
+            int db = fixEnginesDB[$"{engine.engineID}"];
             var hash = RedisCacheClient.getHashSet(muxer, key, db);
             hash.Wait();
             var result = hash.Result;
@@ -849,7 +838,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
 
 
-                var engine = fixEngines.SingleOrDefault(x => x.ipAddress == fixEngine.ipAddress && x.port == fixEngine.port);
+                var engine = fixEngines.SingleOrDefault(x => x.redisIpAddress == fixEngine.redisIpAddress && x.redisIpPort == fixEngine.redisIpPort);
                 var session = GetFixSession(engine.engineID).SingleOrDefault(x => x.ConnectionID == conId);
 
                 session.InSecNum = status.InSecNum;
@@ -882,32 +871,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             readMessagesIDs.Add(item.Id);
             string lastTimeStamp = timestamp_seq[0];
             engineStreamLastPosition[engineName] = long.Parse(lastTimeStamp);
-        }
-
-        public void test()
-        {
-            try
-            {
-
-
-                FIXSession session = new FIXSession();
-                var config = proto.Config.Default;
-                config.SessionStart = (ulong)DateTime.Now.TimeOfDay.TotalMilliseconds;
-                config.TargetCompID = "HELLO";
-                config.Port = 900;
-                config.Status = proto.MessageStatus.CONNECTED;
-                //var recieve = new FBE.proto.ConfigModel();
-                //recieve.Attach(sessionHash[0].Value);
-                //recieve.Deserialize(out config);
-
-                session = config;
-
-                Console.WriteLine(config.ToString());
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.Message);
-            }
         }
     }
 }

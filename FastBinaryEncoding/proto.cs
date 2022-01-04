@@ -2484,8 +2484,7 @@ namespace proto {
     {
         public string engineID;
         public string engineName;
-        public string ipAddress;
-        public string port;
+        public ulong redisDB;
         public string redisIpAddress;
         public string redisIpPort;
 
@@ -2496,18 +2495,16 @@ namespace proto {
         {
             engineID = ""
             , engineName = ""
-            , ipAddress = ""
-            , port = ""
+            , redisDB = (ulong)0UL
             , redisIpAddress = ""
             , redisIpPort = ""
         };
 
-        public Engine(string engineID, string engineName, string ipAddress, string port, string redisIpAddress, string redisIpPort)
+        public Engine(string engineID, string engineName, ulong redisDB, string redisIpAddress, string redisIpPort)
         {
             this.engineID = engineID;
             this.engineName = engineName;
-            this.ipAddress = ipAddress;
-            this.port = port;
+            this.redisDB = redisDB;
             this.redisIpAddress = redisIpAddress;
             this.redisIpPort = redisIpPort;
         }
@@ -2561,8 +2558,7 @@ namespace proto {
             sb.Append("Engine(");
             sb.Append("engineID="); if (engineID != null) sb.Append("\"").Append(engineID).Append("\""); else sb.Append("null");
             sb.Append(",engineName="); if (engineName != null) sb.Append("\"").Append(engineName).Append("\""); else sb.Append("null");
-            sb.Append(",ipAddress="); if (ipAddress != null) sb.Append("\"").Append(ipAddress).Append("\""); else sb.Append("null");
-            sb.Append(",port="); if (port != null) sb.Append("\"").Append(port).Append("\""); else sb.Append("null");
+            sb.Append(",redisDB="); sb.Append(redisDB);
             sb.Append(",redisIpAddress="); if (redisIpAddress != null) sb.Append("\"").Append(redisIpAddress).Append("\""); else sb.Append("null");
             sb.Append(",redisIpPort="); if (redisIpPort != null) sb.Append("\"").Append(redisIpPort).Append("\""); else sb.Append("null");
             sb.Append(")");
@@ -2584,8 +2580,7 @@ namespace proto {
     {
         public readonly FieldModelReferenceType<string> engineID;
         public readonly FieldModelReferenceType<string> engineName;
-        public readonly FieldModelReferenceType<string> ipAddress;
-        public readonly FieldModelReferenceType<string> port;
+        public readonly FieldModelValueType<ulong> redisDB;
         public readonly FieldModelReferenceType<string> redisIpAddress;
         public readonly FieldModelReferenceType<string> redisIpPort;
 
@@ -2593,9 +2588,8 @@ namespace proto {
         {
             engineID = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, 4 + 4);
             engineName = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, engineID.FBEOffset + engineID.FBESize);
-            ipAddress = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, engineName.FBEOffset + engineName.FBESize);
-            port = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, ipAddress.FBEOffset + ipAddress.FBESize);
-            redisIpAddress = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, port.FBEOffset + port.FBESize);
+            redisDB = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, engineName.FBEOffset + engineName.FBESize);
+            redisIpAddress = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, redisDB.FBEOffset + redisDB.FBESize);
             redisIpPort = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, redisIpAddress.FBEOffset + redisIpAddress.FBESize);
         }
 
@@ -2609,8 +2603,7 @@ namespace proto {
                 long fbeResult = 4 + 4
                     + engineID.FBESize
                     + engineName.FBESize
-                    + ipAddress.FBESize
-                    + port.FBESize
+                    + redisDB.FBESize
                     + redisIpAddress.FBESize
                     + redisIpPort.FBESize
                     ;
@@ -2634,8 +2627,7 @@ namespace proto {
                 long fbeResult = FBEBody
                     + engineID.FBEExtra
                     + engineName.FBEExtra
-                    + ipAddress.FBEExtra
-                    + port.FBEExtra
+                    + redisDB.FBEExtra
                     + redisIpAddress.FBEExtra
                     + redisIpPort.FBEExtra
                     ;
@@ -2694,17 +2686,11 @@ namespace proto {
                 return false;
             fbeCurrentSize += engineName.FBESize;
 
-            if ((fbeCurrentSize + ipAddress.FBESize) > fbeStructSize)
+            if ((fbeCurrentSize + redisDB.FBESize) > fbeStructSize)
                 return true;
-            if (!ipAddress.Verify())
+            if (!redisDB.Verify())
                 return false;
-            fbeCurrentSize += ipAddress.FBESize;
-
-            if ((fbeCurrentSize + port.FBESize) > fbeStructSize)
-                return true;
-            if (!port.Verify())
-                return false;
-            fbeCurrentSize += port.FBESize;
+            fbeCurrentSize += redisDB.FBESize;
 
             if ((fbeCurrentSize + redisIpAddress.FBESize) > fbeStructSize)
                 return true;
@@ -2782,17 +2768,11 @@ namespace proto {
                 fbeValue.engineName = "";
             fbeCurrentSize += engineName.FBESize;
 
-            if ((fbeCurrentSize + ipAddress.FBESize) <= fbeStructSize)
-                ipAddress.Get(out fbeValue.ipAddress);
+            if ((fbeCurrentSize + redisDB.FBESize) <= fbeStructSize)
+                redisDB.Get(out fbeValue.redisDB);
             else
-                fbeValue.ipAddress = "";
-            fbeCurrentSize += ipAddress.FBESize;
-
-            if ((fbeCurrentSize + port.FBESize) <= fbeStructSize)
-                port.Get(out fbeValue.port);
-            else
-                fbeValue.port = "";
-            fbeCurrentSize += port.FBESize;
+                fbeValue.redisDB = (ulong)0UL;
+            fbeCurrentSize += redisDB.FBESize;
 
             if ((fbeCurrentSize + redisIpAddress.FBESize) <= fbeStructSize)
                 redisIpAddress.Get(out fbeValue.redisIpAddress);
@@ -2850,8 +2830,7 @@ namespace proto {
         {
             engineID.Set(fbeValue.engineID);
             engineName.Set(fbeValue.engineName);
-            ipAddress.Set(fbeValue.ipAddress);
-            port.Set(fbeValue.port);
+            redisDB.Set(fbeValue.redisDB);
             redisIpAddress.Set(fbeValue.redisIpAddress);
             redisIpPort.Set(fbeValue.redisIpPort);
         }
