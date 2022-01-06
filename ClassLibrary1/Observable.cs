@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
+using System.Threading;
 
 namespace FIXMonitorBusinessLogicLayer
 {
@@ -9,6 +10,7 @@ namespace FIXMonitorBusinessLogicLayer
     {
         readonly static Dictionary<string, IObserver<Object>> observers = new Dictionary<string, IObserver<object>>();
         private string _connectionId;
+        static ReaderWriterLock rwl = new ReaderWriterLock();
         public IDisposable Subscribe(IObserver<Object> observer)
         {
             return new Unsubscriber(observers, _connectionId);
@@ -16,6 +18,7 @@ namespace FIXMonitorBusinessLogicLayer
 
         public IDisposable Subscribe(IObserver<Object> observer, string connectionId)
         {
+            rwl.AcquireWriterLock(1000);
             if (observers.ContainsKey(connectionId))
             {
                 observers.Remove(connectionId);
@@ -23,6 +26,7 @@ namespace FIXMonitorBusinessLogicLayer
             Console.WriteLine("[Service Client] Client connected: " + connectionId);
             observers.Add(connectionId, observer);
             _connectionId = connectionId;
+            rwl.ReleaseWriterLock();
             return Subscribe(observer);
         }
 
@@ -69,25 +73,49 @@ namespace FIXMonitorBusinessLogicLayer
 
         public void SendFixMessageUpdate(Object fixMessage, string engineID, string sessionID)
         {
-            foreach (var item in observers)
+            SendFixMessageUpdate:
+            if (!rwl.IsWriterLockHeld)
             {
-                item.Value.OnNext(new Object[] { fixMessage, engineID, sessionID });
+                foreach (var item in observers)
+                {
+                    item.Value.OnNext(new Object[] { fixMessage, engineID, sessionID });
+                }
+            }
+            else
+            {
+                goto SendFixMessageUpdate;
             }
         }
-        
+
         public void SendFixSessionUpdate(Object fixSession, string engineID, string updateType)
         {
-            foreach (var item in observers)
+            SendFixSessionUpdate:
+            if (!rwl.IsWriterLockHeld)
             {
-                item.Value.OnNext(new Object[] { fixSession, engineID, updateType });
+                foreach (var item in observers)
+                {
+                    item.Value.OnNext(new Object[] { fixSession, engineID, updateType });
+                }
+            }
+            else
+            {
+                goto SendFixSessionUpdate;
             }
         }
 
         public void Heartbeat()
         {
-            foreach (var item in observers)
+            Heartbeat:
+            if (!rwl.IsWriterLockHeld)
             {
-                item.Value.OnNext(new Object[] { "heartbeat", "" });
+                foreach (var item in observers)
+                {
+                    item.Value.OnNext(new Object[] { "heartbeat", "" });
+                }
+            }
+            else
+            {
+                goto Heartbeat;
             }
         }
 

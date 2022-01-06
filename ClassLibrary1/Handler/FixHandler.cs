@@ -33,11 +33,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private readonly bool sendSampleFixUpdate = Convert.ToBoolean(System.Configuration.ConfigurationManager.AppSettings["sendSampleFixUpdate"].ToString());
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
-
-        private Dictionary<string, long> engineStreamLastPosition;
-        private Dictionary<string, List<FIXMessage>> sessionFixMessages;
+        private readonly string statusStreamName = "Statuses";
+        //Messages Stream Attributes
+        private Dictionary<string, long> streamLastReadTimeStamps;
         private long streamLastPosition = 0;
         private List<RedisValue> readMessagesIDs;
+
+        //Status Stream Attributes
+        private long statusStreamLastPosition = 0;
+        private List<RedisValue> statusReadMessagesIDs;
+
+        private Dictionary<string, List<FIXMessage>> sessionFixMessages;
 
         public FixHandler()
         {
@@ -47,7 +53,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEnginesChannels = new Dictionary<string, Channel>();
             session_dbs = new Dictionary<string, List<int>>();
             readMessagesIDs = new List<RedisValue>();
-            engineStreamLastPosition = new Dictionary<string, long>();
+            statusReadMessagesIDs = new List<RedisValue>();
+            streamLastReadTimeStamps = new Dictionary<string, long>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
             //ConnectToGRPCServer();
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
@@ -221,7 +228,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void ReadAllExistingFixMessages(IDatabase client, FIXEngine FIXEngine)
         {
-            var stream = client.StreamReadAsync(redisStreamName, engineStreamLastPosition[FIXEngine.engineName]);
+            var stream = client.StreamReadAsync(redisStreamName, streamLastReadTimeStamps[FIXEngine.engineName]);
             stream.Wait();
             var result = stream.Result;
             ProcessAndSendMessages(result, "", FIXEngine, false);
@@ -240,7 +247,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             
             fixEnginesDB.Add($"{fixEngine.engineID}", db);
             fixEngines.Add(fixEngine);
-            engineStreamLastPosition.Add(fixEngine.engineName, 0);
+            streamLastReadTimeStamps.Add(fixEngine.engineName, 0);
+            streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", 0); 
             return fixEngine;
         }
 
@@ -251,7 +259,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 string conId = item.ToString().Replace("-Config", "");
                 string key = item.ToString().Replace("-Config", "-Status");
-                FIXEngine.fixSessions.FirstOrDefault(x => x.ConnectionID == conId);
+                //FIXEngine.fixSessions.FirstOrDefault(x => x.ConnectionID == conId);
                 FIXSession session = FIXEngine.fixSessions.FirstOrDefault(x => x.ConnectionID == conId);
 
                 if (session == null)
@@ -259,16 +267,24 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     session = createFixSession(client, FIXEngine, item, conId);
                     SendFixSessionUpdates(session, FIXEngine.engineID, "insert");
                 }
-                var state = client.HashGetAll(key);
+                HashEntry[] state = HGetAllAsync(client, key);
                 SessionUpdates(key, state, FIXEngine);
                 SendPreviousMessageUpdates(session, FIXEngine.engineID);
             }
         }
 
+        private static HashEntry[] HGetAllAsync(IDatabase client, string key)
+        {
+            var hash = client.HashGetAllAsync(key);
+            hash.Wait();
+            var state = hash.Result;
+            return state;
+        }
+
         private FIXSession createFixSession(IDatabase client, FIXEngine FIXEngine, RedisKey item, string conId)
         {
             FIXSession session = new FIXSession();
-            var sessionHash = client.HashGetAll(item.ToString());
+            var sessionHash = HGetAllAsync(client, item.ToString());
             //Deserialize session from Redis
 
             var config = proto.Config.Default;
@@ -319,70 +335,100 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             try
             {
-
-                if(key == redisStreamName)
+                IDatabase client;
+                StreamEntry[] messages;
+                if (key == redisStreamName)
                 {
-                    var client = muxer.GetDatabase(db);
-                    var stream = client.StreamReadAsync(key, engineStreamLastPosition[fixEngine.engineName]);
-                    stream.Wait();
-                    var messages = stream.Result;
-                    ProcessAndSendMessages(messages,key,fixEngine);
-                    client.StreamAcknowledgeAsync(key, "",readMessagesIDs.ToArray()).Wait();
+                    GetStreamMessages(muxer, fixEngine.engineName, key, db, out client, out messages);
+                    ProcessAndSendMessages(messages, key, fixEngine);
+                    client.StreamAcknowledgeAsync(key, "", readMessagesIDs.ToArray()).Wait();
                     readMessagesIDs.Clear();
                     return;
                 }
-
-                var hash = RedisCacheClient.getHashSet(muxer, key, db);
-                hash.Wait();
-                var result = hash.Result;
-
-                if (key.Contains("Status"))
+                else if (key == statusStreamName)
                 {
-                    if (channel.ToString().Contains("del"))
+                    //var streamKey = fixEngine.engineName + ":Statuses";
+                    //GetStreamMessages(muxer, streamKey, key, db, out client, out messages);
+                    //UpdateSessionStatuses(messages, fixEngine, streamKey);
+                    //client.StreamAcknowledgeAsync(key, "", statusReadMessagesIDs.ToArray()).Wait();
+                    //statusReadMessagesIDs.Clear();
+                    return;
+                }
+                else
+                {
+                    var hash = RedisCacheClient.getHashSet(muxer, key, db);
+                    hash.Wait();
+                    var result = hash.Result;
+
+                    if (key.Contains("Status"))
                     {
-                        result = new HashEntry[0];
+                        if (channel.ToString().Contains("del"))
+                        {
+                            result = new HashEntry[0];
+                        }
+                        SessionUpdates(key, result, fixEngine);
+                        return;
                     }
-                    SessionUpdates(key, result, fixEngine);
-                    return;
+                    else if (channel.ToString().Contains("expire"))
+                    {
+                        return;
+                    }
                 }
-                else if (channel.ToString().Contains("expire"))
-                {
-                    return;
-                }
-                #region old
-                //Array.Sort(result, new FixMessageSorter(this));
-                ////foreach (var item in hash.Result)
-                ////{
-                //if (result == null || result.Length == 0)
-                //{
-                //    return;
-                //}
-                //var item = result.Last();
-                ////Console.WriteLine("Name: " + item.Name + " Value: " + item.Value);
-
-                //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.redisIpAddress && x.port == fixEngine.redisIpPort);
-                //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
-                //FIXMessage fixMessage = getObjectFromFixMessage(item.Value.ToString());
-                //Console.WriteLine("TIME : " + fixMessage.sendingTime);
-                //observable.SendFixMessageUpdate(fixMessage, engine.engineID, session.ConnectionID);
-                //CoreLogging.Logging.LogMessage($"Fix Message sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
-                #endregion
 
             }
             catch (Exception e)
             {
-                CoreLogging.Logging.LogMessage($"ERROR1 : {e.Message}");
+                Logging.LogMessage($"ERROR1 : {e.Message}");
             }
             //}
             //var val = new RedisCacheClient().getHashSetItem(muxer, new RedisKey("myhash3"), new RedisValue("field6"));
             Console.WriteLine("FINISHED READING...");
         }
 
+        private void UpdateSessionStatuses(StreamEntry[] messages, FIXEngine _engine, string key)
+        {
+            string engineName = _engine.engineName;
+            foreach (var message in messages)
+            {
+                UpdateStreamPosition(message, key, statusReadMessagesIDs);
+                for (int i = 0; i < message.Values.Length; i++)
+                {
+                    var val = message.Values[i];
+                    byte[] buffer = val.Value;
+
+                    proto.Header header = proto.Header.Default;
+                    var recieve = new FBE.proto.HeaderModel();
+                    recieve.Attach(buffer);
+                    recieve.Deserialize(out header);
+                    if (header.Signature == Signature.FIXHUB)
+                    {
+                        var engine = fixEngines[_engine.engineID];
+                        if (engine.fixSessions.Contains(header.ConnectionID))
+                        {
+                            var session = engine.fixSessions[header.ConnectionID];
+                            session.InSecNum = header.InSecNum;
+                            session.OutSecNum = header.OutSecNum;
+                            session.Status = header.Status.ToString();
+                            SendFixSessionUpdates(session, engine.engineID, "update");
+                        }
+                    }
+                }
+            }
+        }
+
+        private void GetStreamMessages(ConnectionMultiplexer muxer, string engineName, string key, int db, out IDatabase client, out StreamEntry[] messages)
+        {
+            client = muxer.GetDatabase(db);
+            var stream = client.StreamReadAsync(key, streamLastReadTimeStamps[engineName]);
+            stream.Wait();
+            messages = stream.Result;
+        }
+
         private void ProcessAndSendMessages(StreamEntry[] messages, string key, FIXEngine fixEngine, bool IsSendMessage = true)
         {
             foreach (var message in messages)
             {
-                UpdateStreamPosition(message,fixEngine.engineName);
+                UpdateStreamPosition(message,fixEngine.engineName, readMessagesIDs);
                 for (int i = 0; i < message.Values.Length; i++)
                 {
                     var val = message.Values[i];
@@ -593,6 +639,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public bool ResetSequenceNumber(FIXSession fixSession)
         {
+            fixSession.InSecNum = 0;
+            fixSession.OutSecNum = 0;
             Thread thread = new Thread(
                 unused => isConnected(fixSession.ConnectionID, fixSession)
                 );
@@ -668,6 +716,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 var setEngines = client.HashSetAsync("Engine", fixEngine.engineID, fixEngine.engineName.ToUpper());
                 setEngines.Wait();
+
+                streamLastReadTimeStamps.Add(fixEngine.engineName, 0);
+                streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", 0);
+
                 Thread thread = new Thread(
                     unused => GetSessionsForEngine(muxer, db, client, fixEngine)
                     );
@@ -799,6 +851,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void isConnected(string key, FIXSession fixSession)
         {
+            return;
             string subkey = "Status";
             var engine = fixEngines.FirstOrDefault(x => x.fixSessions.SingleOrDefault(y => y.ConnectionID == key) != null);
             key = key + "-" + subkey;
@@ -865,12 +918,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private void UpdateStreamPosition(StreamEntry item, string engineName)
+        private void UpdateStreamPosition(StreamEntry item, string engineName, List<RedisValue> readIDs)
         {
             string[] timestamp_seq = item.Id.ToString().Split('-');
-            readMessagesIDs.Add(item.Id);
+            readIDs.Add(item.Id);
             string lastTimeStamp = timestamp_seq[0];
-            engineStreamLastPosition[engineName] = long.Parse(lastTimeStamp);
+            streamLastReadTimeStamps[engineName] = long.Parse(lastTimeStamp);
         }
     }
 }

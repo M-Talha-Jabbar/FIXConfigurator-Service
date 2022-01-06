@@ -7,7 +7,7 @@ namespace FIXMonitorBusinessLogicLayer.KeyedCollections
     {
         protected override string GetKeyForItem(FIXSession item)
         {
-            return item.ConnectionID;
+            return item.SenderCompID+"-"+item.TargetCompID;
         }
     }
 }
