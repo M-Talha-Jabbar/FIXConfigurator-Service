@@ -218,8 +218,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     ReadAllExistingFixMessages(client, FIXEngine);
 
                     GetSessionsForEngine(muxer, db, client, FIXEngine);
-                    muxer.GetSubscriber().Subscribe(CacheKeyEvent,
-                                (channel, message) => GetFixMessagesFromRedis(muxer, channel, message, FIXEngine));
+                    SubscribeAndFaliureCallback(FIXEngine, muxer, CacheKeyEvent);
 
                 }
             }
@@ -725,18 +724,43 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     );
                 thread.Start();
                 //GetSessionsForEngine(muxer, db, client, fixEngine);
-                muxer.GetSubscriber().Subscribe(CacheKeyEvent,
-                                (channel, message) => GetFixMessagesFromRedis(muxer, channel, message, fixEngine));
+                SubscribeAndFaliureCallback(fixEngine, muxer, CacheKeyEvent);
+
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine("Exception : " + e.Message);
-                if(e.InnerException != null)
+                Console.WriteLine("StackTrace : " + e.StackTrace);
+                if (e.InnerException != null)
                 {
                     Console.WriteLine("Inner Exception : " + e.InnerException.Message);
+                    Console.WriteLine("StackTrace Inner Exception : " + e.InnerException.StackTrace);
                 }
             }
             return fixEngine;
+        }
+
+        private void SubscribeAndFaliureCallback(FIXEngine fixEngine, ConnectionMultiplexer muxer, string CacheKeyEvent)
+        {
+            SubscribeToKeyEvent(fixEngine, muxer, CacheKeyEvent);
+            muxer.ConnectionFailed += (sender, args) =>
+            {
+                Logging.LogMessage("Lost Connection with REDIS");
+                muxer.GetSubscriber().UnsubscribeAsync(CacheKeyEvent).Wait();
+                Logging.LogMessage("{0} Un Subscribed");
+            };
+            muxer.ConnectionRestored += (sender, args) =>
+            {
+                Logging.LogMessage("Connection Restored with REDIS");
+                SubscribeToKeyEvent(fixEngine, muxer, CacheKeyEvent);
+                Logging.LogMessage("{0} Subscribed");
+            };
+        }
+
+        private void SubscribeToKeyEvent(FIXEngine fixEngine, ConnectionMultiplexer muxer, string CacheKeyEvent)
+        {
+            muxer.GetSubscriber().Subscribe(CacheKeyEvent,
+                                                        (channel, message) => GetFixMessagesFromRedis(muxer, channel, message, fixEngine));
         }
 
         public FIXEngine DisconnectToFixEngine(FIXEngine fixEngine)

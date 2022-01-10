@@ -148,6 +148,7 @@
     <Compile Include="DataModels\FIXConfiguration.cs" />
     <Compile Include="DataModels\FIXSession.cs" />
     <Compile Include="Handler\FixHandler.cs" />
+    <Compile Include="Handler\SocketHandler.cs" />
     <Compile Include="IComparers\FixMessageSorter.cs" />
     <Compile Include="IHandler\IFixHandler.cs" />
     <Compile Include="KeyedCollections\FixEnginesKeyedCollection.cs" />
