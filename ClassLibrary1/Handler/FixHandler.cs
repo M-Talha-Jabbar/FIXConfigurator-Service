@@ -266,9 +266,15 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     session = createFixSession(client, FIXEngine, item, conId);
                     SendFixSessionUpdates(session, FIXEngine.engineID, "insert");
                 }
-                HashEntry[] state = HGetAllAsync(client, key);
-                SessionUpdates(key, state, FIXEngine);
-                SendPreviousMessageUpdates(session, FIXEngine.engineID);
+                if (client.IsConnected(key))
+                {
+                    HashEntry[] state = HGetAllAsync(client, key);
+                    if (state.Length > 0)
+                    {
+                        SessionUpdates(key, state, FIXEngine);
+                        SendPreviousMessageUpdates(session, FIXEngine.engineID);
+                    }
+                }
             }
         }
 
@@ -353,6 +359,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     //statusReadMessagesIDs.Clear();
                     return;
                 }
+                else if (key == "FixMessages") { }
                 else
                 {
                     var hash = RedisCacheClient.getHashSet(muxer, key, db);
@@ -378,6 +385,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             catch (Exception e)
             {
                 Logging.LogMessage($"ERROR1 : {e.Message}");
+                Logging.LogMessage($"ERROR1 : {e.StackTrace}");
+                if(e.InnerException != null)
+                {
+                    Logging.LogMessage($"ERROR1 : {e.InnerException.Message}");
+                    Logging.LogMessage($"ERROR1 : {e.InnerException.StackTrace}");
+                }
             }
             //}
             //var val = new RedisCacheClient().getHashSetItem(muxer, new RedisKey("myhash3"), new RedisValue("field6"));
@@ -572,22 +585,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public bool ConnectFixSessionAsync(FIXSession fixSession)
         {
-            Thread thread = new Thread(
-                unused => isConnected(fixSession.ConnectionID, fixSession)
-                );
-            thread.Start();
-            thread.Join();
-            return PerformGivenActionToRedis(fixSession, proto.Action.CONNECT);
+            var success = PerformGivenActionToRedis(fixSession, proto.Action.CONNECT);
+            GetStatusUpdates(fixSession, success);
+            return success;
         }
 
         public bool DisconnectFixSession(FIXSession fixSession)
         {
-            Thread thread = new Thread(
-                unused => isConnected(fixSession.ConnectionID, fixSession)
-                );
-            thread.Start();
-            thread.Join();
-            return PerformGivenActionToRedis(fixSession, proto.Action.DISCONNECT);
+            var success = PerformGivenActionToRedis(fixSession, proto.Action.DISCONNECT);
+            GetStatusUpdates(fixSession, success);
+            return success;
         }
 
         public bool PerformGivenActionToRedis(FIXSession fixSession, proto.Action action)
@@ -626,13 +633,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public bool SetSequenceNumber(FIXSession fixSession)
         {
-            Thread thread = new Thread(
-                unused => isConnected(fixSession.ConnectionID, fixSession)
-                );
-            thread.Start();
-            thread.Join();
             bool isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.SET_SENDER_SEQUENCE);
             isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.SET_TARGET_SEQUENCE);
+            GetStatusUpdates(fixSession, isCompleted);
             return isCompleted;
         }
 
@@ -640,14 +643,21 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             fixSession.InSecNum = 0;
             fixSession.OutSecNum = 0;
-            Thread thread = new Thread(
-                unused => isConnected(fixSession.ConnectionID, fixSession)
-                );
-            thread.Start();
-            thread.Join();
             bool isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.RESET_SENDER_SEQUENCE);
             isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.RESET_TARGET_SEQUENCE);
+            GetStatusUpdates(fixSession, isCompleted);
             return isCompleted;
+        }
+
+        private void GetStatusUpdates(FIXSession fixSession, bool success)
+        {
+            if (success)
+            {
+                Thread thread = new Thread(
+                    unused => isConnected(fixSession.ConnectionID, fixSession)
+                    );
+                thread.Start();
+            }
         }
 
         public List<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID)
@@ -875,7 +885,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void isConnected(string key, FIXSession fixSession)
         {
-            return;
+            //return;
             string subkey = "Status";
             var engine = fixEngines.FirstOrDefault(x => x.fixSessions.SingleOrDefault(y => y.ConnectionID == key) != null);
             key = key + "-" + subkey;
