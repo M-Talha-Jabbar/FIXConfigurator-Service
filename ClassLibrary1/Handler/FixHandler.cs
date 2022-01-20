@@ -143,7 +143,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                       new HealthCheckRequest { Service = "Status" });
                     if (reply.Status == HealthCheckResponse.Types.ServingStatus.Serving)
                     {
-                        //Console.WriteLine("Server is Serving");
+                        //Logging.LogMessage("Server is Serving");
                         if (!isServerListening)
                         {
                             var muxer = RedisConnectorHelper.GetConnection(fixEngine.redisIpAddress);
@@ -156,7 +156,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     }
                     else if (reply.Status == FIXMonitorServer.HealthCheckResponse.Types.ServingStatus.NotServing)
                     {
-                        Console.WriteLine("Server Disconnected the client");
+                        Logging.LogMessage("Server Disconnected the client");
                         Thread.Sleep(1000);
                         break;
                     }
@@ -167,7 +167,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 catch (Exception e)
                 {
 
-                    Console.WriteLine("Server Unvailable..." + e.Message);
+                    Logging.LogMessage("Server Unvailable..." + e.Message);
                     if (e.Message.Contains("failed to connect to all addresses") && isServerListening)
                     {
 
@@ -323,7 +323,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void GetFixMessagesFromRedis(ConnectionMultiplexer muxer, RedisChannel channel, RedisValue message, FIXEngine fixEngine)
         {
-            Console.WriteLine($"received {message} on {channel}");
+            Logging.LogMessage($"received {message} on {channel}");
             string key = message.ToString();
             int db = 0;
             if (fixEngines.Count > 0)
@@ -350,16 +350,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     readMessagesIDs.Clear();
                     return;
                 }
-                else if (key == statusStreamName)
-                {
-                    //var streamKey = fixEngine.engineName + ":Statuses";
-                    //GetStreamMessages(muxer, streamKey, key, db, out client, out messages);
-                    //UpdateSessionStatuses(messages, fixEngine, streamKey);
-                    //client.StreamAcknowledgeAsync(key, "", statusReadMessagesIDs.ToArray()).Wait();
-                    //statusReadMessagesIDs.Clear();
-                    return;
-                }
-                else if (key == "FixMessages") { }
                 else
                 {
                     var hash = RedisCacheClient.getHashSet(muxer, key, db);
@@ -384,17 +374,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                Logging.LogMessage($"ERROR1 : {e.Message}");
-                Logging.LogMessage($"ERROR1 : {e.StackTrace}");
-                if(e.InnerException != null)
-                {
-                    Logging.LogMessage($"ERROR1 : {e.InnerException.Message}");
-                    Logging.LogMessage($"ERROR1 : {e.InnerException.StackTrace}");
-                }
+                LogException(e);
             }
             //}
             //var val = new RedisCacheClient().getHashSetItem(muxer, new RedisKey("myhash3"), new RedisValue("field6"));
-            Console.WriteLine("FINISHED READING...");
+            Logging.LogMessage("FINISHED READING...");
         }
 
         private void UpdateSessionStatuses(StreamEntry[] messages, FIXEngine _engine, string key)
@@ -443,24 +427,40 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 UpdateStreamPosition(message,fixEngine.engineName, readMessagesIDs);
                 for (int i = 0; i < message.Values.Length; i++)
                 {
-                    var val = message.Values[i];
-                    byte[] buffer = val.Value;
-                    proto.Body body = proto.Body.Default;
-                    var recieve = new FBE.proto.BodyModel();
-                    recieve.Attach(buffer);
-                    recieve.Deserialize(out body);
-                    FIXMessage fixMessage = body;
-                    var _key = body.ConnectionID;
-                    //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.redisIpAddress && x.port == fixEngine.redisIpPort);
-                    //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
-                    if (IsSendMessage)
+                    try
                     {
-                        observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
+                        var val = message.Values[i];
+                        byte[] buffer = val.Value;
+                        proto.Body body = proto.Body.Default;
+                        var recieve = new FBE.proto.BodyModel();
+                        recieve.Attach(buffer);
+                        bool proceed = recieve.Verify();
+                        if (proceed)
+                        {
+                            recieve.Deserialize(out body);
+                            FIXMessage fixMessage = body;
+                            var _key = body.ConnectionID;
+                            //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.redisIpAddress && x.port == fixEngine.redisIpPort);
+                            //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
+                            if (IsSendMessage)
+                            {
+                                observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
+                            }
+                            else
+                            {
+                                if (!sessionFixMessages.ContainsKey(_key)) sessionFixMessages.Add(_key, new List<FIXMessage>());
+                                sessionFixMessages[_key].Add(fixMessage);
+                            }
+                        }
+                        else
+                        {
+                            Logging.LogMessage("ERROR : " + message.Id);
+                            Logging.LogMessage("ERROR : " + recieve.model.ToString());
+                        }
                     }
-                    else
+                    catch(Exception e)
                     {
-                        if (!sessionFixMessages.ContainsKey(_key)) sessionFixMessages.Add(_key, new List<FIXMessage>());
-                        sessionFixMessages[_key].Add(fixMessage);
+                        LogException(e);
                     }
 
                 }
@@ -570,7 +570,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             //    task.Wait();
             //    var result = task.Result;
-            //    Console.WriteLine("MESSAGE : " + result.Db);
+            //    Logging.LogMessage("MESSAGE : " + result.Db);
             //    return result.Db;
             //}
             //catch (Exception e)
@@ -739,12 +739,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception : " + e.Message);
-                Console.WriteLine("StackTrace : " + e.StackTrace);
+                Logging.LogMessage("Exception : " + e.Message);
+                Logging.LogMessage("StackTrace : " + e.StackTrace);
                 if (e.InnerException != null)
                 {
-                    Console.WriteLine("Inner Exception : " + e.InnerException.Message);
-                    Console.WriteLine("StackTrace Inner Exception : " + e.InnerException.StackTrace);
+                    Logging.LogMessage("Inner Exception : " + e.InnerException.Message);
+                    Logging.LogMessage("StackTrace Inner Exception : " + e.InnerException.StackTrace);
                 }
             }
             return fixEngine;
@@ -874,11 +874,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             FIXMessage fixMessageObj = new FIXMessage();
             fixMessageObj.fixMessage = fixMessage;
-            //Console.WriteLine("FIX MESSAGE : " + fixMessage);
+            //Logging.LogMessage("FIX MESSAGE : " + fixMessage);
             fixMessageObj.keyValuePair = FIXMessage.ParseAndStoreFixMessage(fixMessage);
             fixMessageObj.messageType = fixMsgTypes[FIXMessage.GetFixTagValue(fixMessage, "35")];
             fixMessageObj.sendingTime = FIXMessage.GetFixTagValue(fixMessage, "52");
-            //Console.WriteLine("SENDING TIME : " + fixMessageObj.sendingTime);
+            //Logging.LogMessage("SENDING TIME : " + fixMessageObj.sendingTime);
 
             return fixMessageObj;
         }
@@ -958,6 +958,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             readIDs.Add(item.Id);
             string lastTimeStamp = timestamp_seq[0];
             streamLastReadTimeStamps[engineName] = long.Parse(lastTimeStamp);
+        }
+
+        private static void LogException(Exception e)
+        {
+            Logging.LogMessage($"ERROR1 : {e.Message}");
+            Logging.LogMessage($"ERROR1 : {e.StackTrace}");
+            if (e.InnerException != null)
+            {
+                Logging.LogMessage($"ERROR1 : {e.InnerException.Message}");
+                Logging.LogMessage($"ERROR1 : {e.InnerException.StackTrace}");
+            }
         }
     }
 }
