@@ -11,9 +11,6 @@ using System.Threading.Tasks;
 using FIXMonitorServer;
 using RedisCacheService;
 using StackExchange.Redis;
-using FIXMonitorBusinessLogicLayer.IComparers;
-using static FIXMonitorServer.FIXHubCommunicator;
-using FBE;
 using CoreLogging;
 using proto;
 
@@ -21,19 +18,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 {
     public class FixHandler : IFixHandler
     {
-        //private FIXHubCommunicator.FIXHubCommunicatorClient fixGrpcClient;
         private FixEnginesKeyedCollection fixEngines;
         private Dictionary<string, int> fixEnginesDB;
         private Dictionary<string, Channel> fixEnginesChannels;
         private Dictionary<string, List<int>> session_dbs;
-        private Dictionary<string, FIXHubCommunicatorClient> fixEnginesGrcpClients;
         public static Dictionary<string, string> fixMsgTypes = new Dictionary<string, string>();
         public static Dictionary<string, string> fixTagValues = new Dictionary<string, string>();
         Observable observable = new Observable();
 
         private readonly bool sendSampleFixUpdate = Convert.ToBoolean(System.Configuration.ConfigurationManager.AppSettings["sendSampleFixUpdate"].ToString());
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
-        private readonly string statusStreamName = "Statuses";
         //Messages Stream Attributes
         private Dictionary<string, long> streamLastReadTimeStamps;
         private long streamLastPosition = 0;
@@ -49,14 +43,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             fixEngines = new FixEnginesKeyedCollection();
             fixEnginesDB = new Dictionary<string, int>();
-            fixEnginesGrcpClients = new Dictionary<string, FIXHubCommunicatorClient>();
             fixEnginesChannels = new Dictionary<string, Channel>();
             session_dbs = new Dictionary<string, List<int>>();
             readMessagesIDs = new List<RedisValue>();
             statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, long>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
-            //ConnectToGRPCServer();
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
             GenerateDictionary(fixMsgTypes, msgTypes);
 
@@ -89,9 +81,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             
             //------------------------------------------------------------------------------
-            
-            //Thread GRPCStatusThread = new Thread(new ThreadStart(CheckGRPCStatusAsync));
-            //GRPCStatusThread.Start();
                                 /* TODO : CheckFixHubStatus thread */
             //------------------------------------------------------------------------------
             LoadFIXEnginesAndSessions();
@@ -109,86 +98,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             sw.Flush();
             sw.Close();
 
-        }
-
-        private void CheckGRPCStatusAsync()
-        {
-
-            FIXHubCommunicatorClient client = null;
-            bool isServerListening = true;
-            var fixEngine = new FIXEngine();
-            int index = 0;
-            while (true)
-            {
-                int length = fixEngines.Count;
-                if (fixEngines.Count > 0)
-                {
-                    fixEngine = fixEngines[index++ % length];
-                    if (fixEngine.fixSessions.Count > 0)
-                    {
-                        FIXSession fixSession = fixEngine.fixSessions[0];
-                        client = ConnectToGRPCServer(fixSession);
-                    }
-                }
-
-                if (client == null)
-                {
-                    Thread.Sleep(1000);
-                    continue;
-                }
-
-                try
-                {
-                    var reply = client.Check(
-                      new HealthCheckRequest { Service = "Status" });
-                    if (reply.Status == HealthCheckResponse.Types.ServingStatus.Serving)
-                    {
-                        //Logging.LogMessage("Server is Serving");
-                        if (!isServerListening)
-                        {
-                            var muxer = RedisConnectorHelper.GetConnection(fixEngine.redisIpAddress);
-                            var db = fixEnginesDB[$"{fixEngine.engineID}"];
-                            var clientDb = muxer.GetDatabase(db);
-                            GetSessionsForEngine(muxer, db, clientDb, fixEngine);
-                            isServerListening = true;
-                            Thread.Sleep(1000);
-                        }
-                    }
-                    else if (reply.Status == FIXMonitorServer.HealthCheckResponse.Types.ServingStatus.NotServing)
-                    {
-                        Logging.LogMessage("Server Disconnected the client");
-                        Thread.Sleep(1000);
-                        break;
-                    }
-
-
-
-                }
-                catch (Exception e)
-                {
-
-                    Logging.LogMessage("Server Unvailable..." + e.Message);
-                    if (e.Message.Contains("failed to connect to all addresses") && isServerListening)
-                    {
-
-                        isServerListening = false;
-                        //foreach (var engines in fixEngines)
-                        //{
-                        foreach (var sessions in fixEngine.fixSessions)
-                        {
-                            if (sessions.Status.ToLower() != "unavailable")
-                            {
-                                sessions.Status = "unavailable";
-                                sessions.LastUpdated = DateTime.Now;
-                                SendFixSessionUpdates(sessions, fixEngine.engineID, "update");
-                            }
-                        }
-                        Thread.Sleep(1000);
-                    }//}
-                    //make All session Unavailable at Frontend Logic Goes Here.
-                }
-                //Thread.Sleep(1000);
-            }
         }
 
         public void LoadFIXEngines() { }
@@ -490,97 +399,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEngines[0].fixSessions.Add(new FIXSession() { ConnectionID = "trader_VLCY-t", SenderCompID = "Trader", TargetCompID = "VLCY", InSecNum = 5, OutSecNum = 48, LastUpdated = DateTime.Now, Status = "disconnected", FixMessages = new List<FIXMessage>() { fixMessageObj1 } });
         }
 
-        public FIXHubCommunicatorClient ConnectToGRPCServer(FIXSession fixSession)
-        {
-            //Channel will be changed as per the server
-            //Channel channel = new Channel("127.0.0.1:30051", ChannelCredentials.Insecure);
-            string ip = "";
-            try
-            {
-
-                var engine = fixEngines.FirstOrDefault(x => x.fixSessions.FirstOrDefault(y => y.IPAddress + ":" + y.Port == fixSession.IPAddress + ":" + fixSession.Port && y.ConnectionID == fixSession.ConnectionID) != null);
-                ip = engine.redisIpAddress + ":" + engine.redisIpPort;
-                if (fixEnginesGrcpClients.ContainsKey(ip))
-                {
-                    return fixEnginesGrcpClients[ip];
-                }
-                else
-                {
-                    Channel channel = new Channel(ip, ChannelCredentials.Insecure);
-                    //channel.ConnectAsync();
-                    var client = new FIXHubCommunicatorClient(channel);
-                    fixEnginesGrcpClients.Add(ip, client);
-                    fixEnginesChannels.Add(ip, channel);
-                    return client;
-                }
-                //CoreLogging.Logging.LogMessage($"GRPC Server IP Address : { engine.ipAddress } Port : { engine.port }");
-
-            }
-            catch (Exception e)
-            {
-                //CoreLogging.Logging.LogMessage(CoreLogging.LOGTYPE.Error, e.Message);
-                CoreLogging.Logging.LogMessage($"GRPC Server ERROR { e.Message }");
-                return null;
-                //ip = "192.168.0.43:50051";
-            }
-
-
-            //fixGrpcClient = client;
-
-        }
-
         public int GetDBForEngine(FIXSession fixSession, FIXEngine engine)
         {
             return engine.redisDB;
-
-            //FIXHubCommunicatorClient fixGrpcClient = null;
-
-            //if (fixSession == null)
-            //{
-            //    string ip = engine.ipAddress + ":" + engine.port;
-
-            //    if (fixEnginesGrcpClients.ContainsKey(ip))
-            //    {
-
-            //        fixGrpcClient = fixEnginesGrcpClients[ip];
-            //    }
-            //    else
-            //    {
-            //        Channel channel = new Channel(ip, ChannelCredentials.Insecure);
-            //        //channel.ConnectAsync();
-            //        var client = new FIXHubCommunicator.FIXHubCommunicatorClient(channel);
-            //        fixEnginesGrcpClients.Add(ip, client);
-            //        fixEnginesChannels.Add(ip, channel);
-            //        fixGrpcClient = client;
-            //    }
-            //}
-            //else
-            //{
-
-            //    fixGrpcClient = ConnectToGRPCServer(fixSession);
-            //}
-            //try
-            //{
-            //    var task = Task.Run(async () => fixGrpcClient.EngineDB(
-            //    new GetEngineDbRequest
-            //    {
-
-            //    }
-            //    ));
-
-            //    task.Wait();
-            //    var result = task.Result;
-            //    Logging.LogMessage("MESSAGE : " + result.Db);
-            //    return result.Db;
-            //}
-            //catch (Exception e)
-            //{
-            //    CoreLogging.Logging.LogMessage($"Attemp to get DB failed with message {e.InnerException.Message}");
-            //    string ip = $"{engine.ipAddress}:{engine.port}";
-            //    fixEnginesGrcpClients.Remove(ip);
-            //    return -1;
-            //}
-
         }
 
         public bool ConnectFixSessionAsync(FIXSession fixSession)
@@ -679,7 +500,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEngine.fixSessions = new FixSessionKeyedCollection();
             fixEngines.Add(fixEngine);
 
-            // Add to Grpc and Request A DB No. for now i am assuming 3
             var muxer = RedisConnectorHelper.GetConnection($"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort}");
             int db = GetDBForEngine(null, fixEngine);
             if (db == -1)
