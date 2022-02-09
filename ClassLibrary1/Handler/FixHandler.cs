@@ -15,6 +15,7 @@ using CoreLogging;
 using proto;
 using System.Reactive.Subjects;
 using FIXMonitorBusinessLogicLayer.Momentos;
+using FBE.proto;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -186,12 +187,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 string conId = item.ToString().Replace("-Config", "");
                 string key = item.ToString().Replace("-Config", "-Status");
                 //FIXEngine.fixSessions.FirstOrDefault(x => x.ConnectionID == conId);
-                FIXSession session = FIXEngine.fixSessions.FirstOrDefault(x => x.ConnectionID == conId);
+                var engine = fixEngines[FIXEngine.engineID];
+                FIXSession session = engine.fixSessions.FirstOrDefault(x => x.ConnectionID == conId);
 
                 if (session == null)
                 {
                     session = createFixSession(client, FIXEngine, item, conId);
                     SendFixSessionUpdates(session, FIXEngine.engineID, "insert");
+                    SendPreviousMessageUpdates(session, FIXEngine.engineID);
                 }
                 if (client.IsConnected(key))
                 {
@@ -224,10 +227,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             recieve.Attach(sessionHash[0].Value);
             recieve.Deserialize(out config);
 
-            //FIXSession.setObjectFromHash(session, sessionHash);
-
             session = config;
-            //SendPreviousMessageUpdates(session);
             session.FixMessages = new List<FIXMessage>();
             FIXEngine.fixSessions.Add(session);
             session.ConnectionID = conId;
@@ -273,12 +273,23 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     GetStreamMessages(muxer, fixEngine.engineName, key, db, out client, out messages);
                     ProcessAndSendMessages(messages, key, fixEngine);
-                    client.StreamAcknowledgeAsync(key, "", readMessagesIDs.ToArray()).Wait();
-                    readMessagesIDs.Clear();
+                    if(readMessagesIDs.Count > 0)
+                    {
+                        client.StreamAcknowledgeAsync(key, "", readMessagesIDs.ToArray()).Wait();
+                        readMessagesIDs.Clear();
+                    }
                     return;
                 }
                 else
                 {
+
+                    if (key.Contains("Config"))
+                    {
+                        FIXSession session = createFixSession(muxer.GetDatabase(db), fixEngine, key, key.Replace("-Config",""));
+                        SendFixSessionUpdates(session, fixEngine.engineID, "insert");
+                        //fixEngine.fixSessions.Add(session);
+                    }
+
                     var hash = RedisCacheClient.getHashSet(muxer, key, db);
                     hash.Wait();
                     var result = hash.Result;
@@ -361,7 +372,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         proto.Body body = proto.Body.Default;
                         var recieve = new FBE.proto.BodyModel();
                         recieve.Attach(buffer);
-                        bool proceed = recieve.Verify();
+                        bool proceed = true; // recieve.Verify(); -> TODO:: Not Working as expected... 
                         if (proceed)
                         {
                             recieve.Deserialize(out body);
@@ -563,7 +574,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 HashEntry[] engineHash = new HashEntry[1];
                 engineHash[0] = new HashEntry("Engine", send.Buffer.Data);
 
-
                 var client = muxer.GetDatabase(db);
 
                 var setEngine = client.HashSetAsync(fixEngine.engineName.ToUpper(), engineHash);
@@ -575,10 +585,15 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 streamLastReadTimeStamps.Add(fixEngine.engineName, 0);
                 streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", 0);
 
-                Thread thread = new Thread(
+                Thread thread1 = new Thread(
                     unused => GetSessionsForEngine(muxer, db, client, fixEngine)
                     );
-                thread.Start();
+                thread1.Start();
+                Thread thread2 = new Thread(
+                    unused => ReadAllExistingFixMessages(client, fixEngine)
+                    );
+                thread2.Start();
+
                 //GetSessionsForEngine(muxer, db, client, fixEngine);
                 SubscribeAndFaliureCallback(fixEngine, muxer, CacheKeyEvent);
 
@@ -776,17 +791,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             string conId = key.Replace("-Status", "");
             try
             {
-
-
                 var engine = fixEngines.SingleOrDefault(x => x.redisIpAddress == fixEngine.redisIpAddress && x.redisIpPort == fixEngine.redisIpPort);
                 var session = GetFixSession(engine.engineID).SingleOrDefault(x => x.ConnectionID == conId);
-
-                session.InSecNum = status.InSecNum;
-                session.OutSecNum = status.OutSecNum;
-                session.Status = status.Status.ToString();
-                
-                session.LastUpdated = DateTime.Now;
-                SendFixSessionUpdates(session, engine.engineID, "update");
+                if (session != null)
+                {
+                    session.InSecNum = status.InSecNum;
+                    session.OutSecNum = status.OutSecNum;
+                    session.Status = status.Status.ToString();
+                    session.LastUpdated = DateTime.Now;
+                    SendFixSessionUpdates(session, engine.engineID, "update");
+                }
                 CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
             }
             catch (Exception e)
