@@ -66,9 +66,9 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
         public string TaskReset { get; set; }
 
-        public ulong InSecNum { get; set; }
+        public ulong InSeqNum { get; set; }
 
-        public ulong OutSecNum { get; set; }
+        public ulong OutSeqNum { get; set; }
 
         public DateTime LastUpdated { get; set; }
 
@@ -136,9 +136,9 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
                 TaskReset = config.TaskReset,
 
-                InSecNum = config.InSecNum,
+                InSeqNum = config.InSeqNum,
 
-                OutSecNum = config.OutSecNum,
+                OutSeqNum = config.OutSeqNum,
 
                 LastUpdated = new DateTime((long)config.LastUpdated)
 

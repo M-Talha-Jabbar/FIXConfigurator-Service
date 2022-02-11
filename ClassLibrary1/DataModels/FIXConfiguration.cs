@@ -89,9 +89,9 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
         public string TaskReset { get; set; }
 
-        public int InSecNum { get; set; }
+        public int InSeqNum { get; set; }
         
-        public int OutSecNum { get; set; }
+        public int OutSeqNum { get; set; }
 
         public DateTime LastUpdated { get; set; }
     }

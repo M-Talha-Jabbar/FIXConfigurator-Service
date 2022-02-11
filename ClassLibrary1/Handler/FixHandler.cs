@@ -340,8 +340,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         if (engine.fixSessions.Contains(header.ConnectionID))
                         {
                             var session = engine.fixSessions[header.ConnectionID];
-                            session.InSecNum = header.InSecNum;
-                            session.OutSecNum = header.OutSecNum;
+                            session.InSeqNum = header.InSeqNum;
+                            session.OutSeqNum = header.OutSeqNum;
                             session.Status = header.Status.ToString();
                             SendFixSessionUpdates(session, engine.engineID, "update");
                         }
@@ -423,9 +423,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixMessageObj1.sendingTime = FIXMessage.GetFixTagValue(fixMessage1, "52");
 
 
-            fixEngines[0].fixSessions.Add(new FIXSession() { ConnectionID = "t-trader_VLCY", SenderCompID = "Trader", TargetCompID = "VLCY", InSecNum = 3, OutSecNum = 2, LastUpdated = DateTime.Now, Status = "connected", FixMessages = new List<FIXMessage>() { fixMessageObj } });
+            fixEngines[0].fixSessions.Add(new FIXSession() { ConnectionID = "t-trader_VLCY", SenderCompID = "Trader", TargetCompID = "VLCY", InSeqNum = 3, OutSeqNum = 2, LastUpdated = DateTime.Now, Status = "connected", FixMessages = new List<FIXMessage>() { fixMessageObj } });
 
-            fixEngines[0].fixSessions.Add(new FIXSession() { ConnectionID = "trader_VLCY-t", SenderCompID = "Trader", TargetCompID = "VLCY", InSecNum = 5, OutSecNum = 48, LastUpdated = DateTime.Now, Status = "disconnected", FixMessages = new List<FIXMessage>() { fixMessageObj1 } });
+            fixEngines[0].fixSessions.Add(new FIXSession() { ConnectionID = "trader_VLCY-t", SenderCompID = "Trader", TargetCompID = "VLCY", InSeqNum = 5, OutSeqNum = 48, LastUpdated = DateTime.Now, Status = "disconnected", FixMessages = new List<FIXMessage>() { fixMessageObj1 } });
         }
 
         public int GetDBForEngine(FIXSession fixSession, FIXEngine engine)
@@ -464,8 +464,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     Action = action,
                     ConnectionID = fixSession.ConnectionID,
-                    InSecNum = fixSession.InSecNum,
-                    OutSecNum = fixSession.OutSecNum,
+                    InSeqNum = fixSession.InSeqNum,
+                    OutSeqNum = fixSession.OutSeqNum,
                     SenderID = fixSession.SenderCompID,
                     TargetID = fixSession.TargetCompID,
                     Signature = Signature.FIXMONITOR
@@ -499,8 +499,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public bool ResetSequenceNumber(FIXSession fixSession)
         {
-            fixSession.InSecNum = 0;
-            fixSession.OutSecNum = 0;
+            fixSession.InSeqNum = 0;
+            fixSession.OutSeqNum = 0;
             bool isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.RESET_SENDER_SEQUENCE);
             isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.RESET_TARGET_SEQUENCE);
             GetStatusUpdates(fixSession, isCompleted);
@@ -795,8 +795,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var session = GetFixSession(engine.engineID).SingleOrDefault(x => x.ConnectionID == conId);
                 if (session != null)
                 {
-                    session.InSecNum = status.InSecNum;
-                    session.OutSecNum = status.OutSecNum;
+                    session.InSeqNum = status.InSeqNum;
+                    session.OutSeqNum = status.OutSeqNum;
                     session.Status = status.Status.ToString();
                     session.LastUpdated = DateTime.Now;
                     SendFixSessionUpdates(session, engine.engineID, "update");

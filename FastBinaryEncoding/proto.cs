@@ -530,8 +530,8 @@ namespace proto {
         public MessageStatus Status;
         public string SenderID;
         public string TargetID;
-        public ulong InSecNum;
-        public ulong OutSecNum;
+        public ulong InSeqNum;
+        public ulong OutSeqNum;
         public Action Action;
         public Signature Signature;
 
@@ -544,20 +544,20 @@ namespace proto {
             , Status = global::proto.MessageStatus.Default
             , SenderID = ""
             , TargetID = ""
-            , InSecNum = (ulong)0UL
-            , OutSecNum = (ulong)0UL
+            , InSeqNum = (ulong)0UL
+            , OutSeqNum = (ulong)0UL
             , Action = global::proto.Action.Default
             , Signature = global::proto.Signature.Default
         };
 
-        public Header(string ConnectionID, MessageStatus Status, string SenderID, string TargetID, ulong InSecNum, ulong OutSecNum, Action Action, Signature Signature)
+        public Header(string ConnectionID, MessageStatus Status, string SenderID, string TargetID, ulong InSeqNum, ulong OutSeqNum, Action Action, Signature Signature)
         {
             this.ConnectionID = ConnectionID;
             this.Status = Status;
             this.SenderID = SenderID;
             this.TargetID = TargetID;
-            this.InSecNum = InSecNum;
-            this.OutSecNum = OutSecNum;
+            this.InSeqNum = InSeqNum;
+            this.OutSeqNum = OutSeqNum;
             this.Action = Action;
             this.Signature = Signature;
         }
@@ -613,8 +613,8 @@ namespace proto {
             sb.Append(",Status="); sb.Append(Status);
             sb.Append(",SenderID="); if (SenderID != null) sb.Append("\"").Append(SenderID).Append("\""); else sb.Append("null");
             sb.Append(",TargetID="); if (TargetID != null) sb.Append("\"").Append(TargetID).Append("\""); else sb.Append("null");
-            sb.Append(",InSecNum="); sb.Append(InSecNum);
-            sb.Append(",OutSecNum="); sb.Append(OutSecNum);
+            sb.Append(",InSeqNum="); sb.Append(InSeqNum);
+            sb.Append(",OutSeqNum="); sb.Append(OutSeqNum);
             sb.Append(",Action="); sb.Append(Action);
             sb.Append(",Signature="); sb.Append(Signature);
             sb.Append(")");
@@ -638,8 +638,8 @@ namespace proto {
         public readonly FieldModelMessageStatus Status;
         public readonly FieldModelReferenceType<string> SenderID;
         public readonly FieldModelReferenceType<string> TargetID;
-        public readonly FieldModelValueType<ulong> InSecNum;
-        public readonly FieldModelValueType<ulong> OutSecNum;
+        public readonly FieldModelValueType<ulong> InSeqNum;
+        public readonly FieldModelValueType<ulong> OutSeqNum;
         public readonly FieldModelAction Action;
         public readonly FieldModelSignature Signature;
 
@@ -649,9 +649,9 @@ namespace proto {
             Status = new FieldModelMessageStatus(buffer, ConnectionID.FBEOffset + ConnectionID.FBESize);
             SenderID = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, Status.FBEOffset + Status.FBESize);
             TargetID = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, SenderID.FBEOffset + SenderID.FBESize);
-            InSecNum = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, TargetID.FBEOffset + TargetID.FBESize);
-            OutSecNum = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, InSecNum.FBEOffset + InSecNum.FBESize);
-            Action = new FieldModelAction(buffer, OutSecNum.FBEOffset + OutSecNum.FBESize);
+            InSeqNum = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, TargetID.FBEOffset + TargetID.FBESize);
+            OutSeqNum = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, InSeqNum.FBEOffset + InSeqNum.FBESize);
+            Action = new FieldModelAction(buffer, OutSeqNum.FBEOffset + OutSeqNum.FBESize);
             Signature = new FieldModelSignature(buffer, Action.FBEOffset + Action.FBESize);
         }
 
@@ -667,8 +667,8 @@ namespace proto {
                     + Status.FBESize
                     + SenderID.FBESize
                     + TargetID.FBESize
-                    + InSecNum.FBESize
-                    + OutSecNum.FBESize
+                    + InSeqNum.FBESize
+                    + OutSeqNum.FBESize
                     + Action.FBESize
                     + Signature.FBESize
                     ;
@@ -694,8 +694,8 @@ namespace proto {
                     + Status.FBEExtra
                     + SenderID.FBEExtra
                     + TargetID.FBEExtra
-                    + InSecNum.FBEExtra
-                    + OutSecNum.FBEExtra
+                    + InSeqNum.FBEExtra
+                    + OutSeqNum.FBEExtra
                     + Action.FBEExtra
                     + Signature.FBEExtra
                     ;
@@ -766,17 +766,17 @@ namespace proto {
                 return false;
             fbeCurrentSize += TargetID.FBESize;
 
-            if ((fbeCurrentSize + InSecNum.FBESize) > fbeStructSize)
+            if ((fbeCurrentSize + InSeqNum.FBESize) > fbeStructSize)
                 return true;
-            if (!InSecNum.Verify())
+            if (!InSeqNum.Verify())
                 return false;
-            fbeCurrentSize += InSecNum.FBESize;
+            fbeCurrentSize += InSeqNum.FBESize;
 
-            if ((fbeCurrentSize + OutSecNum.FBESize) > fbeStructSize)
+            if ((fbeCurrentSize + OutSeqNum.FBESize) > fbeStructSize)
                 return true;
-            if (!OutSecNum.Verify())
+            if (!OutSeqNum.Verify())
                 return false;
-            fbeCurrentSize += OutSecNum.FBESize;
+            fbeCurrentSize += OutSeqNum.FBESize;
 
             if ((fbeCurrentSize + Action.FBESize) > fbeStructSize)
                 return true;
@@ -866,17 +866,17 @@ namespace proto {
                 fbeValue.TargetID = "";
             fbeCurrentSize += TargetID.FBESize;
 
-            if ((fbeCurrentSize + InSecNum.FBESize) <= fbeStructSize)
-                InSecNum.Get(out fbeValue.InSecNum);
+            if ((fbeCurrentSize + InSeqNum.FBESize) <= fbeStructSize)
+                InSeqNum.Get(out fbeValue.InSeqNum);
             else
-                fbeValue.InSecNum = (ulong)0UL;
-            fbeCurrentSize += InSecNum.FBESize;
+                fbeValue.InSeqNum = (ulong)0UL;
+            fbeCurrentSize += InSeqNum.FBESize;
 
-            if ((fbeCurrentSize + OutSecNum.FBESize) <= fbeStructSize)
-                OutSecNum.Get(out fbeValue.OutSecNum);
+            if ((fbeCurrentSize + OutSeqNum.FBESize) <= fbeStructSize)
+                OutSeqNum.Get(out fbeValue.OutSeqNum);
             else
-                fbeValue.OutSecNum = (ulong)0UL;
-            fbeCurrentSize += OutSecNum.FBESize;
+                fbeValue.OutSeqNum = (ulong)0UL;
+            fbeCurrentSize += OutSeqNum.FBESize;
 
             if ((fbeCurrentSize + Action.FBESize) <= fbeStructSize)
                 Action.Get(out fbeValue.Action);
@@ -936,8 +936,8 @@ namespace proto {
             Status.Set(fbeValue.Status);
             SenderID.Set(fbeValue.SenderID);
             TargetID.Set(fbeValue.TargetID);
-            InSecNum.Set(fbeValue.InSecNum);
-            OutSecNum.Set(fbeValue.OutSecNum);
+            InSeqNum.Set(fbeValue.InSeqNum);
+            OutSeqNum.Set(fbeValue.OutSeqNum);
             Action.Set(fbeValue.Action);
             Signature.Set(fbeValue.Signature);
         }
@@ -1495,8 +1495,8 @@ namespace proto {
         public ulong SessionStart;
         public ulong SessionEnd;
         public string TaskReset;
-        public ulong InSecNum;
-        public ulong OutSecNum;
+        public ulong InSeqNum;
+        public ulong OutSeqNum;
         public ulong LastUpdated;
 
         public const long FBETypeConst = 3;
@@ -1533,12 +1533,12 @@ namespace proto {
             , SessionStart = (ulong)0UL
             , SessionEnd = (ulong)0UL
             , TaskReset = ""
-            , InSecNum = (ulong)0UL
-            , OutSecNum = (ulong)0UL
+            , InSeqNum = (ulong)0UL
+            , OutSeqNum = (ulong)0UL
             , LastUpdated = (ulong)0UL
         };
 
-        public Config(string ConnectionID, MessageStatus Status, string SenderCompID, string TargetCompID, string IPAddress, string BackUpIPAddress, ulong Port, ulong BackUpPort, bool Validate, bool HandleResend, ulong HeartBeatInterval, ulong MaxLatency, bool ResetConnection, bool EnableConnection, string FIXVersion, string InternalFIXVersion, string Mode, bool DBEnabled, bool LatencyEnabled, bool AutoConnect, bool AutoReconnect, ulong ReconnectDelay, ulong ConnectRetry, string LogonRawData, bool MilliSecondTime, bool QEnabled, ulong SessionStart, ulong SessionEnd, string TaskReset, ulong InSecNum, ulong OutSecNum, ulong LastUpdated)
+        public Config(string ConnectionID, MessageStatus Status, string SenderCompID, string TargetCompID, string IPAddress, string BackUpIPAddress, ulong Port, ulong BackUpPort, bool Validate, bool HandleResend, ulong HeartBeatInterval, ulong MaxLatency, bool ResetConnection, bool EnableConnection, string FIXVersion, string InternalFIXVersion, string Mode, bool DBEnabled, bool LatencyEnabled, bool AutoConnect, bool AutoReconnect, ulong ReconnectDelay, ulong ConnectRetry, string LogonRawData, bool MilliSecondTime, bool QEnabled, ulong SessionStart, ulong SessionEnd, string TaskReset, ulong InSeqNum, ulong OutSeqNum, ulong LastUpdated)
         {
             this.ConnectionID = ConnectionID;
             this.Status = Status;
@@ -1569,8 +1569,8 @@ namespace proto {
             this.SessionStart = SessionStart;
             this.SessionEnd = SessionEnd;
             this.TaskReset = TaskReset;
-            this.InSecNum = InSecNum;
-            this.OutSecNum = OutSecNum;
+            this.InSeqNum = InSeqNum;
+            this.OutSeqNum = OutSeqNum;
             this.LastUpdated = LastUpdated;
         }
 
@@ -1650,8 +1650,8 @@ namespace proto {
             sb.Append(",SessionStart="); sb.Append(SessionStart);
             sb.Append(",SessionEnd="); sb.Append(SessionEnd);
             sb.Append(",TaskReset="); if (TaskReset != null) sb.Append("\"").Append(TaskReset).Append("\""); else sb.Append("null");
-            sb.Append(",InSecNum="); sb.Append(InSecNum);
-            sb.Append(",OutSecNum="); sb.Append(OutSecNum);
+            sb.Append(",InSeqNum="); sb.Append(InSeqNum);
+            sb.Append(",OutSeqNum="); sb.Append(OutSeqNum);
             sb.Append(",LastUpdated="); sb.Append(LastUpdated);
             sb.Append(")");
             return sb.ToString();
@@ -1699,8 +1699,8 @@ namespace proto {
         public readonly FieldModelValueType<ulong> SessionStart;
         public readonly FieldModelValueType<ulong> SessionEnd;
         public readonly FieldModelReferenceType<string> TaskReset;
-        public readonly FieldModelValueType<ulong> InSecNum;
-        public readonly FieldModelValueType<ulong> OutSecNum;
+        public readonly FieldModelValueType<ulong> InSeqNum;
+        public readonly FieldModelValueType<ulong> OutSeqNum;
         public readonly FieldModelValueType<ulong> LastUpdated;
 
         public FieldModelConfig(Buffer buffer, long offset) : base(buffer, offset)
@@ -1734,9 +1734,9 @@ namespace proto {
             SessionStart = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, QEnabled.FBEOffset + QEnabled.FBESize);
             SessionEnd = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, SessionStart.FBEOffset + SessionStart.FBESize);
             TaskReset = FieldModelReferenceType<string>.CreateFieldModel(BaseTypes.STRING, buffer, SessionEnd.FBEOffset + SessionEnd.FBESize);
-            InSecNum = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, TaskReset.FBEOffset + TaskReset.FBESize);
-            OutSecNum = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, InSecNum.FBEOffset + InSecNum.FBESize);
-            LastUpdated = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, OutSecNum.FBEOffset + OutSecNum.FBESize);
+            InSeqNum = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, TaskReset.FBEOffset + TaskReset.FBESize);
+            OutSeqNum = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, InSeqNum.FBEOffset + InSeqNum.FBESize);
+            LastUpdated = FieldModelValueType<ulong>.CreateFieldModel(BaseTypes.UINT64, buffer, OutSeqNum.FBEOffset + OutSeqNum.FBESize);
         }
 
         // Get the field size
@@ -1776,8 +1776,8 @@ namespace proto {
                     + SessionStart.FBESize
                     + SessionEnd.FBESize
                     + TaskReset.FBESize
-                    + InSecNum.FBESize
-                    + OutSecNum.FBESize
+                    + InSeqNum.FBESize
+                    + OutSeqNum.FBESize
                     + LastUpdated.FBESize
                     ;
                 return fbeResult;
@@ -1827,8 +1827,8 @@ namespace proto {
                     + SessionStart.FBEExtra
                     + SessionEnd.FBEExtra
                     + TaskReset.FBEExtra
-                    + InSecNum.FBEExtra
-                    + OutSecNum.FBEExtra
+                    + InSeqNum.FBEExtra
+                    + OutSeqNum.FBEExtra
                     + LastUpdated.FBEExtra
                     ;
 
@@ -2048,17 +2048,17 @@ namespace proto {
                 return false;
             fbeCurrentSize += TaskReset.FBESize;
 
-            if ((fbeCurrentSize + InSecNum.FBESize) > fbeStructSize)
+            if ((fbeCurrentSize + InSeqNum.FBESize) > fbeStructSize)
                 return true;
-            if (!InSecNum.Verify())
+            if (!InSeqNum.Verify())
                 return false;
-            fbeCurrentSize += InSecNum.FBESize;
+            fbeCurrentSize += InSeqNum.FBESize;
 
-            if ((fbeCurrentSize + OutSecNum.FBESize) > fbeStructSize)
+            if ((fbeCurrentSize + OutSeqNum.FBESize) > fbeStructSize)
                 return true;
-            if (!OutSecNum.Verify())
+            if (!OutSeqNum.Verify())
                 return false;
-            fbeCurrentSize += OutSecNum.FBESize;
+            fbeCurrentSize += OutSeqNum.FBESize;
 
             if ((fbeCurrentSize + LastUpdated.FBESize) > fbeStructSize)
                 return true;
@@ -2292,17 +2292,17 @@ namespace proto {
                 fbeValue.TaskReset = "";
             fbeCurrentSize += TaskReset.FBESize;
 
-            if ((fbeCurrentSize + InSecNum.FBESize) <= fbeStructSize)
-                InSecNum.Get(out fbeValue.InSecNum);
+            if ((fbeCurrentSize + InSeqNum.FBESize) <= fbeStructSize)
+                InSeqNum.Get(out fbeValue.InSeqNum);
             else
-                fbeValue.InSecNum = (ulong)0UL;
-            fbeCurrentSize += InSecNum.FBESize;
+                fbeValue.InSeqNum = (ulong)0UL;
+            fbeCurrentSize += InSeqNum.FBESize;
 
-            if ((fbeCurrentSize + OutSecNum.FBESize) <= fbeStructSize)
-                OutSecNum.Get(out fbeValue.OutSecNum);
+            if ((fbeCurrentSize + OutSeqNum.FBESize) <= fbeStructSize)
+                OutSeqNum.Get(out fbeValue.OutSeqNum);
             else
-                fbeValue.OutSecNum = (ulong)0UL;
-            fbeCurrentSize += OutSecNum.FBESize;
+                fbeValue.OutSeqNum = (ulong)0UL;
+            fbeCurrentSize += OutSeqNum.FBESize;
 
             if ((fbeCurrentSize + LastUpdated.FBESize) <= fbeStructSize)
                 LastUpdated.Get(out fbeValue.LastUpdated);
@@ -2381,8 +2381,8 @@ namespace proto {
             SessionStart.Set(fbeValue.SessionStart);
             SessionEnd.Set(fbeValue.SessionEnd);
             TaskReset.Set(fbeValue.TaskReset);
-            InSecNum.Set(fbeValue.InSecNum);
-            OutSecNum.Set(fbeValue.OutSecNum);
+            InSeqNum.Set(fbeValue.InSeqNum);
+            OutSeqNum.Set(fbeValue.OutSeqNum);
             LastUpdated.Set(fbeValue.LastUpdated);
         }
     }
