@@ -47,8 +47,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     SocketHandler._socket = _socket;
                     Logging.LogMessage(LOGTYPE.Info, "Socket Successfully Connected.");
-                    isConnected = true;
-                    subject.OnNext(true);
+                    //isConnected = true;
+                    //subject.OnNext(true);
                     Logging.LogMessage(LOGTYPE.Debug, "Socket is Alive");
                     t = new Thread(() => { IsConnected(_socket); });
                     t.Start();
@@ -56,6 +56,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch(Exception e)
             {
+                isConnected = false;
+                subject.OnNext(isConnected);
                 Logging.LogMessage(LOGTYPE.Error, "Socket Connection Failed \n " + e.Message);
                 Reconnect();
             }

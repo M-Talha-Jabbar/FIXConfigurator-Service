@@ -170,6 +170,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             recieve.Attach(engine_data[0].Value);
             recieve.Deserialize(out engine);
             fixEngine = engine;
+
             fixEngine.fixSessions = new FixSessionKeyedCollection();
             
             fixEnginesDB.Add($"{fixEngine.engineID}", db);
@@ -228,6 +229,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             recieve.Deserialize(out config);
 
             session = config;
+            if (FIXEngine.fixSessions.Contains(session.ConnectionID)) {
+                Logging.LogMessage(LOGTYPE.Debug, $"{session.ConnectionID} Already Exists");
+                return null;
+            }
             session.FixMessages = new List<FIXMessage>();
             FIXEngine.fixSessions.Add(session);
             session.ConnectionID = conId;
@@ -252,6 +257,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             Logging.LogMessage($"received {message} on {channel}");
             string key = message.ToString();
+            if (key == "Statuses") return;
             int db = 0;
             if (fixEngines.Count > 0)
             {
@@ -273,41 +279,39 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     GetStreamMessages(muxer, fixEngine.engineName, key, db, out client, out messages);
                     ProcessAndSendMessages(messages, key, fixEngine);
-                    if(readMessagesIDs.Count > 0)
+                    if (readMessagesIDs.Count > 0)
                     {
                         client.StreamAcknowledgeAsync(key, "", readMessagesIDs.ToArray()).Wait();
                         readMessagesIDs.Clear();
                     }
                     return;
                 }
-                else
+
+                if (key.Contains("Config"))
                 {
-
-                    if (key.Contains("Config"))
-                    {
-                        FIXSession session = createFixSession(muxer.GetDatabase(db), fixEngine, key, key.Replace("-Config",""));
-                        SendFixSessionUpdates(session, fixEngine.engineID, "insert");
-                        //fixEngine.fixSessions.Add(session);
-                    }
-
-                    var hash = RedisCacheClient.getHashSet(muxer, key, db);
-                    hash.Wait();
-                    var result = hash.Result;
-
-                    if (key.Contains("Status"))
-                    {
-                        if (channel.ToString().Contains("del"))
-                        {
-                            result = new HashEntry[0];
-                        }
-                        SessionUpdates(key, result, fixEngine);
-                        return;
-                    }
-                    else if (channel.ToString().Contains("expire"))
-                    {
-                        return;
-                    }
+                    FIXSession session = createFixSession(muxer.GetDatabase(db), fixEngine, key, key.Replace("-Config", ""));
+                    SendFixSessionUpdates(session, fixEngine.engineID, "insert");
+                    //fixEngine.fixSessions.Add(session);
                 }
+
+                var hash = RedisCacheClient.getHashSet(muxer, key, db);
+                hash.Wait();
+                var result = hash.Result;
+
+                if (key.Contains("Status"))
+                {
+                    if (channel.ToString().Contains("del"))
+                    {
+                        result = new HashEntry[0];
+                    }
+                    SessionUpdates(key, result, fixEngine);
+                    return;
+                }
+                else if (channel.ToString().Contains("expire"))
+                {
+                    return;
+                }
+
 
             }
             catch (Exception e)
@@ -716,6 +720,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void SendFixSessionUpdates(FIXSession fixSession, string engineID, string updateType)
         {
+            if (fixSession == null) return;
             observable.SendFixSessionUpdate(fixSession, engineID, updateType);
         }
 
