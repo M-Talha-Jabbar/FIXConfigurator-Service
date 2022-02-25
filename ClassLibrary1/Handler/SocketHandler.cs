@@ -85,7 +85,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private static void IsConnected(this Socket s)
         {
-            while (isConnected)
+            while (true)
             {
                 var pollResult = !((s.Poll(1000, SelectMode.SelectRead) && (s.Available == 0)));
                 if (pollResult)
@@ -101,6 +101,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     Logging.LogMessage(LOGTYPE.Error, "Socket Disconnected");
                     Reconnect();
                 }
+                Thread.Sleep(waitBeforeConnecting);
             }
         }
 

@@ -796,7 +796,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             string conId = key.Replace("-Status", "");
             try
             {
-                var engine = fixEngines.SingleOrDefault(x => x.redisIpAddress == fixEngine.redisIpAddress && x.redisIpPort == fixEngine.redisIpPort);
+                var engine = fixEngines.SingleOrDefault(x => x.engineID == fixEngine.engineID);
                 var session = GetFixSession(engine.engineID).SingleOrDefault(x => x.ConnectionID == conId);
                 if (session != null)
                 {
