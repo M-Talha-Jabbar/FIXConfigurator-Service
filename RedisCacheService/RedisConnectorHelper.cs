@@ -19,24 +19,31 @@ namespace RedisCacheService
 
         public static ConnectionMultiplexer GetConnection(string ipAddress)
         {
-            string ip = ipAddress.Split(':')[0];
-            if (muxers.ContainsKey(ip))
+            try
             {
-                return muxers[ip];
+                string ip = ipAddress.Split(':')[0];
+                if (muxers.ContainsKey(ip))
+                {
+                    return muxers[ip];
+                }
+                var lazyConnection = new Lazy<ConnectionMultiplexer>(() =>
+                {
+                    var configOption = new ConfigurationOptions();
+                    configOption.EndPoints.Add(ipAddress);
+                    configOption.AllowAdmin = true;
+                    var muxer = ConnectionMultiplexer.Connect(configOption);
+                    muxer.GetServer(muxer.GetEndPoints().Single())
+                         .ConfigSet("notify-keyspace-events", "KEA");
+                    return muxer;
+                });
+                var val = lazyConnection.Value;
+                muxers.Add(ip, val);
+                return val;
             }
-            var lazyConnection = new Lazy<ConnectionMultiplexer>(() =>
+            catch (Exception e)
             {
-                var configOption = new ConfigurationOptions();
-                configOption.EndPoints.Add(ipAddress);
-                configOption.AllowAdmin = true;
-                var muxer = ConnectionMultiplexer.Connect(configOption);
-                muxer.GetServer(muxer.GetEndPoints().Single())
-                     .ConfigSet("notify-keyspace-events", "KEA");
-                return muxer;
-            });
-            var val = lazyConnection.Value;
-            muxers.Add(ip, val);
-            return val;
+                throw new Exception($"Cant Connect To Redis Server on {ipAddress}");
+            }
         }
 
         public static ConnectionMultiplexer Connection

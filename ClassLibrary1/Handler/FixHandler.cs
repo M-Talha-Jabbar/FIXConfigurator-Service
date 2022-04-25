@@ -55,10 +55,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
 
             //------------------------------------------------------------------------------
-            /* TODO : CheckFixHubStatus */
+            /* HACK : FixHub Status */
             IObservable<bool> data = SocketHandler.GetStatus();
             data.Subscribe(updates => {
-                    UpdateSessionStatus(updates);
+                    UpdateSessionStatus(updates); //TODO: Use Engine IP instead of configured ip
             });
             //------------------------------------------------------------------------------
             LoadFIXEnginesAndSessions();
@@ -379,7 +379,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         bool proceed = true; // recieve.Verify(); -> TODO:: Not Working as expected... 
                         if (proceed)
                         {
-                            recieve.Deserialize(out body);
+                            //if (recieve.Verify())
+                            //{
+                                recieve.Deserialize(out body);
+                            //} else
+                            //{
+                            //    body = Body.Default;
+                            //}
                             FIXMessage fixMessage = body;
                             var _key = body.ConnectionID;
                             //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.redisIpAddress && x.port == fixEngine.redisIpPort);
@@ -537,16 +543,31 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             //Request to connect
 
             //Add in keyed collection
-            fixEngine.engineID = Guid.NewGuid().ToString();
+            fixEngine.engineID = GetKey(fixEngine);
             fixEngine.fixSessions = new FixSessionKeyedCollection();
+            if (fixEngines.Contains(fixEngine.engineID))
+            {
+                throw new Exception($"Engine Already Exists with DB : {fixEngine.redisDB}");
+            }
+
             fixEngines.Add(fixEngine);
 
-            var muxer = RedisConnectorHelper.GetConnection($"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort}");
+            ConnectionMultiplexer muxer = null;
+            try
+            {
+                muxer = RedisConnectorHelper.GetConnection($"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort}");
+            }
+            catch (Exception e)
+            {
+                fixEngines.Remove(fixEngine);
+                throw e;
+            }
+
             int db = GetDBForEngine(null, fixEngine);
             if (db == -1)
             {
                 fixEngines.Remove(fixEngine);
-                //throw new Exception($"cant connect to IP : {fixEngine.redisIpAddress} and Port : {fixEngine.redisIpPort}");
+                throw new Exception($"DB not found");
             }
             //Save Db to File with respective ip
             
@@ -565,7 +586,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 fixEnginesDB[key] = db;
                 fixEngines.Remove(fixEngine);
-                throw new Exception($"Engine Already Exists with DB : {fixEngine.redisDB}");
             }
 
             //var engineHash = FIXEngine.getHashFromObject(fixEngine);
@@ -604,13 +624,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                Logging.LogMessage("Exception : " + e.Message);
-                Logging.LogMessage("StackTrace : " + e.StackTrace);
-                if (e.InnerException != null)
-                {
-                    Logging.LogMessage("Inner Exception : " + e.InnerException.Message);
-                    Logging.LogMessage("StackTrace Inner Exception : " + e.InnerException.StackTrace);
-                }
+                LogException(e);
             }
             return fixEngine;
         }
@@ -621,13 +635,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             muxer.ConnectionFailed += (sender, args) =>
             {
                 Logging.LogMessage("Lost Connection with REDIS");
-                muxer.GetSubscriber().UnsubscribeAsync(CacheKeyEvent).Wait();
-                Logging.LogMessage("{0} Un Subscribed");
+                //muxer.GetSubscriber().UnsubscribeAsync(CacheKeyEvent).Wait();
+                //Logging.LogMessage("{0} Un Subscribed");
             };
             muxer.ConnectionRestored += (sender, args) =>
             {
                 Logging.LogMessage("Connection Restored with REDIS");
-                SubscribeToKeyEvent(fixEngine, muxer, CacheKeyEvent);
+                //SubscribeToKeyEvent(fixEngine, muxer, CacheKeyEvent);
                 Logging.LogMessage("{0} Subscribed");
             };
         }
@@ -810,7 +824,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                CoreLogging.Logging.LogMessage($"ERROR2  { e.Message }");
+                LogException(e);
             }
         }
 
@@ -867,13 +881,21 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private static void LogException(Exception e)
         {
-            Logging.LogMessage($"ERROR1 : {e.Message}");
-            Logging.LogMessage($"ERROR1 : {e.StackTrace}");
+
+            Logging.LogMessage(LOGTYPE.Error, "Exception : " + e.Message);
+            Logging.LogMessage(LOGTYPE.Error, "StackTrace : " + e.StackTrace);
             if (e.InnerException != null)
             {
-                Logging.LogMessage($"ERROR1 : {e.InnerException.Message}");
-                Logging.LogMessage($"ERROR1 : {e.InnerException.StackTrace}");
+                Logging.LogMessage(LOGTYPE.Error, "Inner Exception : " + e.InnerException.Message);
+                Logging.LogMessage(LOGTYPE.Error, "StackTrace Inner Exception : " + e.InnerException.StackTrace);
             }
         }
+
+        private string GetKey(FIXEngine fixEngine)
+        {
+            return $"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort}::{fixEngine.redisDB}";
+        }
+
+
     }
 }
