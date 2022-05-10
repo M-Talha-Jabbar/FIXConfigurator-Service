@@ -117,9 +117,9 @@ namespace FIXMonitorService
             return orderObservable.IsSubscribed(connectionId);
         }
 
-        public IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID)
+        public IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
         {
-            return this.DataCache.GetFixMessages(fixEngineID, fixSessionConnectionID);
+            return this.DataCache.GetFixMessages(fixEngineID, fixSessionConnectionID, dataSourceLoadOptions);
         }
 
         public void SendFixMessagesToClient(FIXMessage fixMessage, string engineID, string sessionID)

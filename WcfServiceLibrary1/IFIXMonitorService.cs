@@ -56,7 +56,7 @@ namespace FIXMonitorService
         bool IsSubscribed(string connectionId);
 
         [OperationContract]
-        IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID);
+        IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions);
 
         [OperationContract]
         List<AlertFlag> GetAlertCache();

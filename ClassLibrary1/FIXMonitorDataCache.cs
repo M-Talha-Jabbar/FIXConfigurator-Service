@@ -156,9 +156,9 @@ namespace FIXMonitorBusinessLogicLayer
             return fixHandler.ConnectToFixSession(engineID, fixSession);
         }
 
-        public IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID)
+        public IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
         {
-            return fixHandler.GetFixMessages(fixEngineID, fixSessionConnectionID);
+            return fixHandler.GetFixMessages(fixEngineID, fixSessionConnectionID, dataSourceLoadOptions);
         }
         #endregion
 

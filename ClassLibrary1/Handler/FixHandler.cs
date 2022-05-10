@@ -16,6 +16,9 @@ using proto;
 using System.Reactive.Subjects;
 using FIXMonitorBusinessLogicLayer.Momentos;
 using FBE.proto;
+using DevExtreme.AspNet.Mvc;
+using DevExtreme.AspNet.Data;
+using Newtonsoft.Json;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -528,9 +531,31 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        public List<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID)
+        //public List<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID)
+        //{
+        //    return fixEngines[fixEngineID].fixSessions[fixSessionConnectionID].FixMessages;
+        //}
+
+        public List<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
         {
-            return fixEngines[fixEngineID].fixSessions[fixSessionConnectionID].FixMessages;
+            if (string.IsNullOrEmpty(fixEngineID) || string.IsNullOrEmpty(fixSessionConnectionID))
+                return new List<FIXMessage>();
+
+            List<FIXMessage> ordersTemp = fixEngines[fixEngineID].fixSessions[fixSessionConnectionID].FixMessages;
+            if (!string.IsNullOrEmpty(dataSourceLoadOptions))
+            {
+                try
+                {
+                    DataSourceLoadOptions loadOptions = JsonConvert.DeserializeObject<DataSourceLoadOptions>(dataSourceLoadOptions);
+                    return DataSourceLoader.Load(ordersTemp, loadOptions).data.OfType<FIXMessage>().ToList();
+                }
+                catch (Exception e)
+                {
+
+                }
+            }
+            return ordersTemp;
+
         }
 
         public FixEnginesKeyedCollection GetFixEngines()
