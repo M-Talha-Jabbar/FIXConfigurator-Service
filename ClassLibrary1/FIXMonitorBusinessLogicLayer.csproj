@@ -40,6 +40,9 @@
     <Reference Include="CoreLogging">
       <HintPath>C:\Users\abdul.hadi\Downloads\CoreLogging.dll</HintPath>
     </Reference>
+    <Reference Include="EmailSender">
+      <HintPath>C:\Users\abdul.hadi\Downloads\EmailSender.dll</HintPath>
+    </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\WcfServiceLibrary1\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.dll</HintPath>
     </Reference>
@@ -156,6 +159,7 @@
     <Compile Include="DataModels\FIXMessage.cs" />
     <Compile Include="DataModels\FIXConfiguration.cs" />
     <Compile Include="DataModels\FIXSession.cs" />
+    <Compile Include="Handler\EmailHandler.cs" />
     <Compile Include="Handler\FixHandler.cs" />
     <Compile Include="Handler\SocketHandler.cs" />
     <Compile Include="IComparers\FixMessageSorter.cs" />

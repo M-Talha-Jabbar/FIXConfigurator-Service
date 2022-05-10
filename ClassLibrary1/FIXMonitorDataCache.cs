@@ -30,6 +30,7 @@ namespace FIXMonitorBusinessLogicLayer
         private IList<FIXConfiguration> fixConfiguration;
         readonly Observable observable;
         private IFixHandler fixHandler;
+        
         //Can use inherited class instead of creating object.
 
         private readonly bool IsRunWithSampleData = Convert.ToBoolean(ConfigurationManager.AppSettings["isRunWithSampleData"].ToString());

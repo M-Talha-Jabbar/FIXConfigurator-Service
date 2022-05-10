@@ -46,6 +46,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private FixEngineMomento engineMomento;
 
+        private EmailHandler emailHandler;
+
         public FixHandler()
         {
             Initializers();
@@ -120,6 +122,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             GenerateDictionary(fixTagValues, fixTags);
 
             engineMomento = new FixEngineMomento();
+
+            emailHandler = new EmailHandler();
+
         }
 
         public void LoadFIXEngines() { }
@@ -844,6 +849,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     session.Status = status.Status.ToString();
                     session.LastUpdated = DateTime.Now;
                     SendFixSessionUpdates(session, engine.engineID, "update");
+                    emailHandler.SendEmail(conId, session.Status);
                 }
                 CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
             }
