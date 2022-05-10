@@ -73,17 +73,17 @@ namespace FIXMonitorBusinessLogicLayer
 
         public void SendFixMessageUpdate(Object fixMessage, string engineID, string sessionID)
         {
-            SendFixMessageUpdate:
-            if (!rwl.IsWriterLockHeld)
+            foreach (var item in observers)
             {
-                foreach (var item in observers)
+                SendFixMessageUpdate:
+                if (!rwl.IsWriterLockHeld)
                 {
                     item.Value.OnNext(new Object[] { fixMessage, engineID, sessionID });
                 }
-            }
-            else
-            {
-                goto SendFixMessageUpdate;
+                else
+                {
+                    goto SendFixMessageUpdate;
+                }
             }
         }
 
