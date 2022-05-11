@@ -844,12 +844,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var session = GetFixSession(engine.engineID).SingleOrDefault(x => x.ConnectionID == conId);
                 if (session != null)
                 {
+                    var sendEmail = session.Status != status.Status.ToString();
                     session.InSeqNum = status.InSeqNum;
                     session.OutSeqNum = status.OutSeqNum;
                     session.Status = status.Status.ToString();
                     session.LastUpdated = DateTime.Now;
                     SendFixSessionUpdates(session, engine.engineID, "update");
-                    emailHandler.SendEmail(conId, session.Status);
+                    if(sendEmail)
+                        emailHandler.SendEmail(conId, session.Status);
                 }
                 CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
             }

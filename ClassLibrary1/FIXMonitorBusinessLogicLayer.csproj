@@ -49,6 +49,9 @@
     <Reference Include="EntityFramework.SqlServer, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <HintPath>..\WcfServiceLibrary1\packages\EntityFramework.6.2.0\lib\net45\EntityFramework.SqlServer.dll</HintPath>
     </Reference>
+    <Reference Include="GEmail">
+      <HintPath>C:\Users\abdul.hadi\Downloads\GEmail.dll</HintPath>
+    </Reference>
     <Reference Include="Google.Protobuf, Version=3.15.6.0, Culture=neutral, PublicKeyToken=a7d26565bac4d604, processorArchitecture=MSIL">
       <HintPath>..\WcfServiceLibrary1\packages\Google.Protobuf.3.15.6\lib\net45\Google.Protobuf.dll</HintPath>
     </Reference>

@@ -18,7 +18,7 @@ namespace FIXMonitorBusinessLogicLayer
 
         public IDisposable Subscribe(IObserver<Object> observer, string connectionId)
         {
-            rwl.AcquireWriterLock(1000);
+            rwl.AcquireWriterLock(1000000);
             if (observers.ContainsKey(connectionId))
             {
                 observers.Remove(connectionId);
@@ -89,17 +89,17 @@ namespace FIXMonitorBusinessLogicLayer
 
         public void SendFixSessionUpdate(Object fixSession, string engineID, string updateType)
         {
-            SendFixSessionUpdate:
-            if (!rwl.IsWriterLockHeld)
+            foreach (var item in observers)
             {
-                foreach (var item in observers)
+                SendFixMessageUpdate:
+                if (!rwl.IsWriterLockHeld)
                 {
                     item.Value.OnNext(new Object[] { fixSession, engineID, updateType });
                 }
-            }
-            else
-            {
-                goto SendFixSessionUpdate;
+                else
+                {
+                    goto SendFixMessageUpdate;
+                }
             }
         }
 
