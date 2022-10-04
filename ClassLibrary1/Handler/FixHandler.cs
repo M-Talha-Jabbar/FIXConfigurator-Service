@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using FIXMonitorServer;
+//using FIXMonitorServer;
 using RedisCacheService;
 using StackExchange.Redis;
 using CoreLogging;
@@ -19,6 +19,7 @@ using FBE.proto;
 using DevExtreme.AspNet.Mvc;
 using DevExtreme.AspNet.Data;
 using Newtonsoft.Json;
+using System.Collections.Concurrent;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -36,7 +37,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         //Messages Stream Attributes
         private Dictionary<string, long> streamLastReadTimeStamps;
         private long streamLastPosition = 0;
-        private List<RedisValue> readMessagesIDs;
+        //private List<RedisValue> readMessagesIDs;
+
+        private ConcurrentBag<RedisValue> readMessagesIDs;
 
         //Status Stream Attributes
         private long statusStreamLastPosition = 0;
@@ -111,7 +114,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEnginesDB = new Dictionary<string, int>();
             fixEnginesChannels = new Dictionary<string, Channel>();
             session_dbs = new Dictionary<string, List<int>>();
-            readMessagesIDs = new List<RedisValue>();
+            readMessagesIDs = new ConcurrentBag<RedisValue>();
             statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, long>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
@@ -289,8 +292,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     ProcessAndSendMessages(messages, key, fixEngine);
                     if (readMessagesIDs.Count > 0)
                     {
+                        // concurrent queue is another option which doesnot need to be reversed
+
                         client.StreamAcknowledgeAsync(key, "", readMessagesIDs.ToArray()).Wait();
-                        readMessagesIDs.Clear();
+                        //readMessagesIDs.Clear();
+
+                        while (!readMessagesIDs.IsEmpty) {
+                            readMessagesIDs.TryTake(out RedisValue redisValue);
+                        }
                     }
                     return;
                 }
@@ -869,6 +878,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var data = lines[i].Split(',');
                 dic.Add(data[0], data[1]);
             }
+        }
+
+        private void UpdateStreamPosition(StreamEntry item, string engineName, ConcurrentBag<RedisValue> readIDs)
+        {
+            string[] timestamp_seq = item.Id.ToString().Split('-');
+            readIDs.Add(item.Id);
+            string lastTimeStamp = timestamp_seq[0];
+            streamLastReadTimeStamps[engineName] = long.Parse(lastTimeStamp);
         }
 
         private void UpdateStreamPosition(StreamEntry item, string engineName, List<RedisValue> readIDs)
