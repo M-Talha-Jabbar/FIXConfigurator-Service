@@ -8,7 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using FIXMonitorServer;
+//using FIXMonitorServer;
 using RedisCacheService;
 using StackExchange.Redis;
 using CoreLogging;
@@ -17,8 +17,10 @@ using System.Reactive.Subjects;
 using FIXMonitorBusinessLogicLayer.Momentos;
 using FBE.proto;
 using DevExtreme.AspNet.Mvc;
-using DevExtreme.AspNet.Data;
+//using DevExtreme.AspNet.Data;
 using Newtonsoft.Json;
+using DevExtreme.AspNet.Data;
+using FIXMonitorBusinessLogicLayer.Data;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -815,6 +817,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         }
 
+        // key: redis key of session id 
         public void SessionUpdates(string key, HashEntry[] result, FIXEngine fixEngine)
         {
             var status = proto.Header.Default;
@@ -841,6 +844,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             try
             {
                 var engine = fixEngines.SingleOrDefault(x => x.engineID == fixEngine.engineID);
+
+                // returns fix sessions in specified engine id 
+
                 var session = GetFixSession(engine.engineID).SingleOrDefault(x => x.ConnectionID == conId);
                 if (session != null)
                 {
@@ -850,8 +856,23 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     session.Status = status.Status.ToString();
                     session.LastUpdated = DateTime.Now;
                     SendFixSessionUpdates(session, engine.engineID, "update");
-                    if(sendEmail)
-                        emailHandler.SendEmail(conId, session.Status);
+
+                    if (sendEmail)
+                    {
+                        using (var context = new FIXMonitorContext())
+                        {
+                            var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
+
+                            if (sessionInfo != null && sessionInfo.EmailStatus.Equals("Enabled"))
+                            {
+                                emailHandler.SendEmail(conId, session.Status, sessionInfo);
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Email Alert for Session {conId} is disabled");
+                            }
+                        }
+                    }
                 }
                 CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
             }
