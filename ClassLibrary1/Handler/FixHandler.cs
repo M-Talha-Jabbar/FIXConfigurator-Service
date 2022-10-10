@@ -21,6 +21,7 @@ using DevExtreme.AspNet.Mvc;
 using Newtonsoft.Json;
 using DevExtreme.AspNet.Data;
 using FIXMonitorBusinessLogicLayer.Data;
+using FIXMonitorBusinessLogicLayer.Notifier;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -48,7 +49,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private FixEngineMomento engineMomento;
 
-        private EmailHandler emailHandler;
+        //private EmailHandler emailHandler;
+
+        private EmailNotifier emailNotifier;
 
         public FixHandler()
         {
@@ -125,7 +128,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             engineMomento = new FixEngineMomento();
 
-            emailHandler = new EmailHandler();
+            //emailHandler = new EmailHandler();
 
         }
 
@@ -863,9 +866,36 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         {
                             var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
 
-                            if (sessionInfo != null && sessionInfo.EmailStatus.Equals("Enabled"))
+                            if (sessionInfo != null && sessionInfo.EmailStatus.Equals("Enabled", StringComparison.OrdinalIgnoreCase)) // make case insensitive & check is session.Status is new state
                             {
-                                emailHandler.SendEmail(conId, session.Status, sessionInfo);
+                                if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo);
+                                    emailNotifier.SendEmail();
+                                }
+                                else if (EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    System.Timers.Timer timer;
+                                    EmailNotifier.emailTimer.TryGetValue(sessionInfo.SessionId, out timer);
+                                    timer.Stop();
+                                    timer.Dispose();
+
+                                    /*
+                                    EmailNotifier.emailTimer.Remove(sessionInfo.SessionId);
+
+                                    emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo);
+                                    emailNotifier.SendEmail();
+                                    */
+                                }
+                                else if(!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    int intervalInMilliseconds = GetIntervalInMilliseconds(sessionInfo.Timeout);
+
+                                    emailNotifier = new EmailNotifier(intervalInMilliseconds, conId, session.Status, sessionInfo);
+                                    EmailNotifier.emailTimer.Add(sessionInfo.SessionId, emailNotifier.getTimerInstance());
+                                }
+
+                                //emailHandler.SendEmail(conId, session.Status, sessionInfo);
                             }
                             else
                             {
@@ -880,6 +910,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 LogException(e);
             }
+        }
+
+        private int GetIntervalInMilliseconds(DateTime Timeout)
+        {
+            int hours = Timeout.Hour * 60 * 60 * 1000;
+            int minutes = Timeout.Minute * 60 * 1000;
+            int seconds = Timeout.Second * 1000;
+
+            int totalMilliseconds = hours + minutes + seconds;
+
+            return totalMilliseconds;
         }
 
 

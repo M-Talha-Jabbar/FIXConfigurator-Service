@@ -273,6 +273,7 @@
     <Compile Include="KeyedCollections\FixEnginesKeyedCollection.cs" />
     <Compile Include="KeyedCollections\FixSessionKeyedCollection.cs" />
     <Compile Include="Momentos\FixEngineMomento.cs" />
+    <Compile Include="Notifier\EmailNotifier.cs" />
     <Compile Include="Observable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
