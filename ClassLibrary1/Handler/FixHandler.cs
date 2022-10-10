@@ -866,7 +866,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         {
                             var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
 
-                            if (sessionInfo != null && sessionInfo.EmailStatus.Equals("Enabled", StringComparison.OrdinalIgnoreCase)) // make case insensitive & check is session.Status is new state
+                            if (sessionInfo != null && sessionInfo.EmailStatus.Equals("Enabled", StringComparison.OrdinalIgnoreCase))
                             {
                                 if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
                                 {
@@ -880,9 +880,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                                     timer.Stop();
                                     timer.Dispose();
 
-                                    /*
+                                    
                                     EmailNotifier.emailTimer.Remove(sessionInfo.SessionId);
-
+                                    /*
                                     emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo);
                                     emailNotifier.SendEmail();
                                     */
