@@ -39,7 +39,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private long streamLastPosition = 0;
         //private List<RedisValue> readMessagesIDs;
 
-        private ConcurrentBag<RedisValue> readMessagesIDs;
+        private ConcurrentStack<RedisValue> readMessagesIDs;
 
         //Status Stream Attributes
         private long statusStreamLastPosition = 0;
@@ -114,7 +114,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEnginesDB = new Dictionary<string, int>();
             fixEnginesChannels = new Dictionary<string, Channel>();
             session_dbs = new Dictionary<string, List<int>>();
-            readMessagesIDs = new ConcurrentBag<RedisValue>();
+            readMessagesIDs = new ConcurrentStack<RedisValue>();
             statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, long>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
@@ -292,14 +292,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     ProcessAndSendMessages(messages, key, fixEngine);
                     if (readMessagesIDs.Count > 0)
                     {
-                        // concurrent queue is another option which doesnot need to be reversed
-
                         client.StreamAcknowledgeAsync(key, "", readMessagesIDs.ToArray()).Wait();
-                        //readMessagesIDs.Clear();
+                        readMessagesIDs.Clear();
 
-                        while (!readMessagesIDs.IsEmpty) {
-                            readMessagesIDs.TryTake(out RedisValue redisValue);
-                        }
                     }
                     return;
                 }
@@ -880,10 +875,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private void UpdateStreamPosition(StreamEntry item, string engineName, ConcurrentBag<RedisValue> readIDs)
+        private void UpdateStreamPosition(StreamEntry item, string engineName, ConcurrentStack<RedisValue> readIDs)
         {
             string[] timestamp_seq = item.Id.ToString().Split('-');
-            readIDs.Add(item.Id);
+            readIDs.Push(item.Id);
             string lastTimeStamp = timestamp_seq[0];
             streamLastReadTimeStamps[engineName] = long.Parse(lastTimeStamp);
         }
