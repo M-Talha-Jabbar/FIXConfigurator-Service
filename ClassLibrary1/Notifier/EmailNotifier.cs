@@ -18,6 +18,7 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         private Sessions sessionInfo;
 
         public static Dictionary<string, Timer> emailTimer = new Dictionary<string, Timer>();
+        public static Dictionary<string, int> recurringEmailsCount = new Dictionary<string, int>();
 
         public EmailNotifier(string conId, string status, Sessions sessionInfo) // Email Alert without Timer
         {
@@ -25,28 +26,36 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             this.status = status;
             this.sessionInfo = sessionInfo;
         }
-        public EmailNotifier(int interval, string conId, string status, Sessions sessionInfo) // Email Alert with Time defined
+        public EmailNotifier(int interval, string conId, string status, Sessions sessionInfo) // Email Alert with Time defined (can be both Recurring & Non-Recurring)
         {
             timer = new Timer(interval);
             timer.Elapsed += OnEventExecution;
-            timer.AutoReset = false; // Disable recurrent events.
-            timer.Start();
 
             this.conId = conId;
             this.status = status;
             this.sessionInfo = sessionInfo;
+
+            timer.AutoReset = (bool)sessionInfo.Recurring; // By default recurring emails are disabled.
+            if (timer.AutoReset)
+                recurringEmailsCount.Add(conId, 0);
+
+            timer.Start();
         }
 
         private void OnEventExecution(Object sender, ElapsedEventArgs eventArgs)
         {
             SendEmail();
 
-            emailTimer.Remove(conId); 
+            if (!(bool)sessionInfo.Recurring)
+                emailTimer.Remove(conId);
+            else
+                recurringEmailsCount[conId]++;
         }
 
-        public void SendEmail()
+        public EmailNotifier SendEmail()
         {
             emailHandler.SendEmail(conId, status, sessionInfo);
+            return this;
         }
 
         public Timer getTimerInstance()

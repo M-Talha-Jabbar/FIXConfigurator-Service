@@ -14,5 +14,6 @@ namespace FIXMonitorBusinessLogicLayer.Data
         public string CcEmails { get; set; }
         public string EmailStatus { get; set; }
         public DateTime Timeout { get; set; }
+        public bool? Recurring { get; set; }
     }
 }

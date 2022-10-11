@@ -14,9 +14,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
     {
         //private EmailService emailService;
         //private readonly string FromEmail = System.Configuration.ConfigurationManager.AppSettings["FromEmail"].ToString();
-        //private readonly string CommaSeperatedToEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedToEmails"].ToString();
-        //private readonly string CommaSeperatedCCEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedCCEmails"].ToString();
         //private readonly string EmailApiKey = System.Configuration.ConfigurationManager.AppSettings["EmailApiKey"].ToString();
+
+        private readonly string DefaultCommaSeperatedToEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedToEmails"].ToString();
+        private readonly string DefaultCommaSeperatedCCEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedCCEmails"].ToString();
         private readonly string Environment = System.Configuration.ConfigurationManager.AppSettings["Environment"].ToString();
         public EmailHandler()
         {
@@ -28,8 +29,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             EmailData emailData = new EmailData()
             {
-                CommaSeperatedToEmails = sessionInfo.ToEmails,
-                CommaSeperatedCCEmails = sessionInfo.CcEmails,
+                CommaSeperatedToEmails = string.IsNullOrEmpty(sessionInfo.ToEmails) ? DefaultCommaSeperatedToEmails : sessionInfo.ToEmails,
+                CommaSeperatedCCEmails = string.IsNullOrEmpty(sessionInfo.CcEmails) ? DefaultCommaSeperatedCCEmails : sessionInfo.CcEmails,
                 Subject = $"Session {sessionId} status changed",
                 Body = $"Session {sessionId} status changed to {status} -> {Environment} Environment"
             };

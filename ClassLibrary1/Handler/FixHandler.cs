@@ -862,32 +862,36 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     if (sendEmail)
                     {
+
                         using (var context = new FIXMonitorContext())
                         {
                             var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
 
-                            if (sessionInfo != null && sessionInfo.EmailStatus.Equals("Enabled", StringComparison.OrdinalIgnoreCase))
+                            if (sessionInfo != null && sessionInfo.EmailStatus.Equals("Enabled", StringComparison.OrdinalIgnoreCase)) // If email alert has been enabled for a particular session
                             {
                                 if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
-                                {
-                                    emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo);
-                                    emailNotifier.SendEmail();
-                                }
+                                    emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+
                                 else if (EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
                                 {
                                     System.Timers.Timer timer;
                                     EmailNotifier.emailTimer.TryGetValue(sessionInfo.SessionId, out timer);
                                     timer.Stop();
                                     timer.Dispose();
-
                                     
                                     EmailNotifier.emailTimer.Remove(sessionInfo.SessionId);
-                                    /*
-                                    emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo);
-                                    emailNotifier.SendEmail();
-                                    */
+
+                                    if ((bool)sessionInfo.Recurring)
+                                    {
+                                        if(EmailNotifier.recurringEmailsCount[sessionInfo.SessionId] > 0)
+                                            emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+
+                                        EmailNotifier.recurringEmailsCount.Remove(sessionInfo.SessionId);
+                                    }
+
                                 }
-                                else if(!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
+
+                                else if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
                                 {
                                     int intervalInMilliseconds = GetIntervalInMilliseconds(sessionInfo.Timeout);
 
@@ -897,11 +901,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                 //emailHandler.SendEmail(conId, session.Status, sessionInfo);
                             }
+
                             else
                             {
                                 Console.WriteLine($"Email Alert for Session {conId} is disabled");
                             }
                         }
+
                     }
                 }
                 CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");

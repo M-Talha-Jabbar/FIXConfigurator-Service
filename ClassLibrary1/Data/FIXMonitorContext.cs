@@ -135,6 +135,10 @@ namespace FIXMonitorBusinessLogicLayer.Data
             modelBuilder.Entity<Sessions>(entity =>
             {
                 entity.HasKey(e => e.SessionId);
+
+                entity.Property(e => e.Recurring)
+                    .IsRequired()
+                    .HasDefaultValueSql("(CONVERT([bit],(0)))");
             });
 
             OnModelCreatingPartial(modelBuilder);
