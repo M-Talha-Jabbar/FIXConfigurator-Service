@@ -17,8 +17,10 @@ using System.Reactive.Subjects;
 using FIXMonitorBusinessLogicLayer.Momentos;
 using FBE.proto;
 using DevExtreme.AspNet.Mvc;
-using DevExtreme.AspNet.Data;
 using Newtonsoft.Json;
+using DevExtreme.AspNet.Data;
+using FIXMonitorBusinessLogicLayer.Data;
+using FIXMonitorBusinessLogicLayer.Notifier;
 using System.Collections.Concurrent;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
@@ -49,7 +51,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private FixEngineMomento engineMomento;
 
-        private EmailHandler emailHandler;
+        //private EmailHandler emailHandler;
+
+        private EmailNotifier emailNotifier;
 
         public FixHandler()
         {
@@ -126,7 +130,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             engineMomento = new FixEngineMomento();
 
-            emailHandler = new EmailHandler();
+            //emailHandler = new EmailHandler();
 
         }
 
@@ -819,6 +823,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         }
 
+        // key: redis key of session id 
         public void SessionUpdates(string key, HashEntry[] result, FIXEngine fixEngine)
         {
             var status = proto.Header.Default;
@@ -845,6 +850,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             try
             {
                 var engine = fixEngines.SingleOrDefault(x => x.engineID == fixEngine.engineID);
+
+                // returns fix sessions in specified engine id 
+
                 var session = GetFixSession(engine.engineID).SingleOrDefault(x => x.ConnectionID == conId);
                 if (session != null)
                 {
@@ -854,8 +862,56 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     session.Status = status.Status.ToString();
                     session.LastUpdated = DateTime.Now;
                     SendFixSessionUpdates(session, engine.engineID, "update");
-                    if(sendEmail)
-                        emailHandler.SendEmail(conId, session.Status);
+
+                    if (sendEmail)
+                    {
+
+                        using (var context = new FIXMonitorContext())
+                        {
+                            var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
+
+                            if (sessionInfo != null && sessionInfo.EmailStatus.Equals("Enabled", StringComparison.OrdinalIgnoreCase)) // If email alert has been enabled for a particular session
+                            {
+                                if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
+                                    emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+
+                                else if (EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    System.Timers.Timer timer;
+                                    EmailNotifier.emailTimer.TryGetValue(sessionInfo.SessionId, out timer);
+                                    timer.Stop();
+                                    timer.Dispose();
+                                    
+                                    EmailNotifier.emailTimer.Remove(sessionInfo.SessionId);
+
+                                    if ((bool)sessionInfo.Recurring)
+                                    {
+                                        if(EmailNotifier.recurringEmailsCount[sessionInfo.SessionId] > 0)
+                                            emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+
+                                        EmailNotifier.recurringEmailsCount.Remove(sessionInfo.SessionId);
+                                    }
+
+                                }
+
+                                else if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    int intervalInMilliseconds = GetIntervalInMilliseconds(sessionInfo.Timeout);
+
+                                    emailNotifier = new EmailNotifier(intervalInMilliseconds, conId, session.Status, sessionInfo);
+                                    EmailNotifier.emailTimer.Add(sessionInfo.SessionId, emailNotifier.getTimerInstance());
+                                }
+
+                                //emailHandler.SendEmail(conId, session.Status, sessionInfo);
+                            }
+
+                            else
+                            {
+                                Console.WriteLine($"Email Alert for Session {conId} is disabled");
+                            }
+                        }
+
+                    }
                 }
                 CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
             }
@@ -863,6 +919,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 LogException(e);
             }
+        }
+
+        private int GetIntervalInMilliseconds(DateTime Timeout)
+        {
+            int hours = Timeout.Hour * 60 * 60 * 1000;
+            int minutes = Timeout.Minute * 60 * 1000;
+            int seconds = Timeout.Second * 1000;
+
+            int totalMilliseconds = hours + minutes + seconds;
+
+            return totalMilliseconds;
         }
 
 
