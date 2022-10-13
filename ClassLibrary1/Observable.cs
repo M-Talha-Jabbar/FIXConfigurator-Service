@@ -1,5 +1,6 @@
 ﻿using FIXMonitorBusinessLogicLayer.DataModels;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Threading;
@@ -8,7 +9,7 @@ namespace FIXMonitorBusinessLogicLayer
 {
     public class Observable : IObservable<Object>
     {
-        readonly static Dictionary<string, IObserver<Object>> observers = new Dictionary<string, IObserver<object>>();
+        readonly static ConcurrentDictionary<string, IObserver<Object>> observers = new ConcurrentDictionary<string, IObserver<object>>();
         private string _connectionId;
         static ReaderWriterLock rwl = new ReaderWriterLock();
         public IDisposable Subscribe(IObserver<Object> observer)
@@ -18,15 +19,17 @@ namespace FIXMonitorBusinessLogicLayer
 
         public IDisposable Subscribe(IObserver<Object> observer, string connectionId)
         {
-            rwl.AcquireWriterLock(1000000);
+            //rwl.AcquireWriterLock(1000000);
             if (observers.ContainsKey(connectionId))
             {
-                observers.Remove(connectionId);
+                //observers.Remove(connectionId);
+                observers.TryRemove(connectionId, out IObserver<object> value);
             }
             Console.WriteLine("[Service Client] Client connected: " + connectionId);
-            observers.Add(connectionId, observer);
+            //observers.Add(connectionId, observer);
+            observers.TryAdd(connectionId, observer);
             _connectionId = connectionId;
-            rwl.ReleaseWriterLock();
+            //rwl.ReleaseWriterLock();
             return Subscribe(observer);
         }
 
@@ -75,15 +78,17 @@ namespace FIXMonitorBusinessLogicLayer
         {
             foreach (var item in observers)
             {
-                SendFixMessageUpdate:
-                if (!rwl.IsWriterLockHeld)
-                {
-                    item.Value.OnNext(new Object[] { fixMessage, engineID, sessionID });
-                }
-                else
-                {
-                    goto SendFixMessageUpdate;
-                }
+                //SendFixMessageUpdate:
+                //if (!rwl.IsWriterLockHeld)
+                //{
+                //    item.Value.OnNext(new Object[] { fixMessage, engineID, sessionID });
+                //}
+                //else
+                //{
+                //    goto SendFixMessageUpdate;
+                //}
+
+                item.Value.OnNext(new Object[] { fixMessage, engineID, sessionID });
             }
         }
 
@@ -91,32 +96,34 @@ namespace FIXMonitorBusinessLogicLayer
         {
             foreach (var item in observers)
             {
-                SendFixMessageUpdate:
-                if (!rwl.IsWriterLockHeld)
-                {
-                    item.Value.OnNext(new Object[] { fixSession, engineID, updateType });
-                }
-                else
-                {
-                    goto SendFixMessageUpdate;
-                }
+                //SendFixMessageUpdate:
+                //if (!rwl.IsWriterLockHeld)
+                //{
+                //    item.Value.OnNext(new Object[] { fixSession, engineID, updateType });
+                //}
+                //else
+                //{
+                //    goto SendFixMessageUpdate;
+                //}
+
+                item.Value.OnNext(new Object[] { fixSession, engineID, updateType });
             }
         }
 
         public void Heartbeat()
         {
-            Heartbeat:
-            if (!rwl.IsWriterLockHeld)
+            //Heartbeat:
+            //if (!rwl.IsWriterLockHeld)
+            //{
+            foreach (var item in observers)
             {
-                foreach (var item in observers)
-                {
-                    item.Value.OnNext(new Object[] { "heartbeat", "" });
-                }
+                item.Value.OnNext(new Object[] { "heartbeat", "" });
             }
-            else
-            {
-                goto Heartbeat;
-            }
+            //}
+            //else
+            //{
+            //    goto Heartbeat;
+            //}
         }
 
         public void SendAlertFlag(AlertFlag flag)
@@ -130,10 +137,10 @@ namespace FIXMonitorBusinessLogicLayer
 
     public class Unsubscriber : IDisposable
     {
-        private Dictionary<string, IObserver<Object>> _observers;
+        private ConcurrentDictionary<string, IObserver<Object>> _observers;
         readonly private string _observerConnectionId;
 
-        public Unsubscriber(Dictionary<string, IObserver<Object>> observers, string observerConnectionId)
+        public Unsubscriber(ConcurrentDictionary<string, IObserver<Object>> observers, string observerConnectionId)
         {
             this._observers = observers;
             this._observerConnectionId = observerConnectionId;
@@ -142,7 +149,10 @@ namespace FIXMonitorBusinessLogicLayer
         public void Dispose()
         {
             if (_observerConnectionId != null && _observers.ContainsKey(_observerConnectionId))
-                _observers.Remove(_observerConnectionId);
+            {
+                //_observers.Remove(_observerConnectionId);
+                _observers.TryRemove(_observerConnectionId, out IObserver<object> value);
+            }
         }
     }
 }

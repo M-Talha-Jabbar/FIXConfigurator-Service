@@ -17,11 +17,11 @@ using System.Reactive.Subjects;
 using FIXMonitorBusinessLogicLayer.Momentos;
 using FBE.proto;
 using DevExtreme.AspNet.Mvc;
-//using DevExtreme.AspNet.Data;
 using Newtonsoft.Json;
 using DevExtreme.AspNet.Data;
 using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.Notifier;
+using System.Collections.Concurrent;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -39,7 +39,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         //Messages Stream Attributes
         private Dictionary<string, long> streamLastReadTimeStamps;
         private long streamLastPosition = 0;
-        private List<RedisValue> readMessagesIDs;
+        //private List<RedisValue> readMessagesIDs;
+
+        private ConcurrentStack<RedisValue> readMessagesIDs;
 
         //Status Stream Attributes
         private long statusStreamLastPosition = 0;
@@ -116,7 +118,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEnginesDB = new Dictionary<string, int>();
             fixEnginesChannels = new Dictionary<string, Channel>();
             session_dbs = new Dictionary<string, List<int>>();
-            readMessagesIDs = new List<RedisValue>();
+            readMessagesIDs = new ConcurrentStack<RedisValue>();
             statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, long>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
@@ -296,6 +298,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     {
                         client.StreamAcknowledgeAsync(key, "", readMessagesIDs.ToArray()).Wait();
                         readMessagesIDs.Clear();
+
                     }
                     return;
                 }
@@ -936,6 +939,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var data = lines[i].Split(',');
                 dic.Add(data[0], data[1]);
             }
+        }
+
+        private void UpdateStreamPosition(StreamEntry item, string engineName, ConcurrentStack<RedisValue> readIDs)
+        {
+            string[] timestamp_seq = item.Id.ToString().Split('-');
+            readIDs.Push(item.Id);
+            string lastTimeStamp = timestamp_seq[0];
+            streamLastReadTimeStamps[engineName] = long.Parse(lastTimeStamp);
         }
 
         private void UpdateStreamPosition(StreamEntry item, string engineName, List<RedisValue> readIDs)
