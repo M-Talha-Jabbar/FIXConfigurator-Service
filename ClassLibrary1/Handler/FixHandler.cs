@@ -778,7 +778,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             observable.SendFixMessageUpdate(fixMessage, engineID, sessionID);
         }
 
-        
 
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)
         {
@@ -997,6 +996,85 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return $"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort}::{fixEngine.redisDB}";
         }
 
+        public SessionEmails GetSessionAlertConfiguration(string SessionId)
+        {
+            SessionEmails sessionEmails = null;
 
+            if (!string.IsNullOrEmpty(SessionId))
+            {
+                using (var context = new FIXMonitorContext())
+                {
+                    var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == SessionId);
+
+                    if (sessionInfo != null)
+                    {
+                        sessionEmails = new SessionEmails()
+                        {
+                            SessionId = sessionInfo.SessionId,
+                            ToEmails = sessionInfo.ToEmails,
+                            CcEmails = sessionInfo.CcEmails,
+                            EmailStatus = sessionInfo.EmailStatus,
+                            Timeout = sessionInfo.Timeout,
+                            Recurring = sessionInfo.Recurring
+                        };
+
+                        return sessionEmails;
+                    }
+
+                    return sessionEmails;
+                }
+            }
+
+            return sessionEmails;
+        }
+
+        public bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails)
+        {
+            if (sessionEmails != null)
+            {
+                var updatedConfiguration = new Sessions()
+                {
+                    SessionId = sessionEmails.SessionId,
+                    ToEmails = sessionEmails.ToEmails,
+                    CcEmails = sessionEmails.CcEmails,
+                    EmailStatus = sessionEmails.EmailStatus,
+                    Timeout = sessionEmails.Timeout,
+                    Recurring = sessionEmails.Recurring
+                };
+
+                using(var context = new FIXMonitorContext())
+                {
+                    context.Sessions.Update(updatedConfiguration);
+                    context.SaveChanges();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeleteSessionAlertConfiguration(string SessionId)
+        {
+            if (!string.IsNullOrEmpty(SessionId))
+            {
+                using (var context = new FIXMonitorContext())
+                {
+                    var session = context.Sessions.FirstOrDefault(s => s.SessionId == SessionId);
+
+                    if (session != null)
+                    {
+                        context.Sessions.Remove(session);
+                        context.SaveChanges();
+
+                        return true;
+                    }
+
+                    return false;
+                }
+            }
+
+            return false;
+        }
     }
 }

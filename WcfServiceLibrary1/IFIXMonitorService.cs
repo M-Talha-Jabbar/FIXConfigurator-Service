@@ -60,8 +60,19 @@ namespace FIXMonitorService
 
         [OperationContract]
         List<AlertFlag> GetAlertCache();
+
         [OperationContract]
         bool RemoveAlertCache(string orderId);
+
+        [OperationContract]
+        SessionEmails GetSessionAlertConfiguration(string SessionId);
+
+        [OperationContract]
+        bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails);
+
+        [OperationContract]
+        bool DeleteSessionAlertConfiguration(string SessionId);
+
         // TODO: Add your service operations here
     }
 
