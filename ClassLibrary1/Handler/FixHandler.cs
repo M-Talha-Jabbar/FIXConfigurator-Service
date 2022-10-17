@@ -869,7 +869,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         {
                             var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
 
-                            if (sessionInfo != null && sessionInfo.EmailStatus.Equals("Enabled", StringComparison.OrdinalIgnoreCase)) // If email alert has been enabled for a particular session
+                            if (sessionInfo != null && sessionInfo.EmailStatus) // If email alert has been enabled for a particular session
                             {
                                 if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
                                     emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
@@ -1039,11 +1039,37 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return sessionEmails;
         }
 
+        public bool AddSessionAlertConfiguration(SessionEmails sessionEmails)
+        {
+            if (sessionEmails != null)
+            {
+                var sessionConfiguration = new Sessions()
+                {
+                    SessionId = sessionEmails.SessionId,
+                    ToEmails = sessionEmails.ToEmails,
+                    CcEmails = sessionEmails.CcEmails,
+                    EmailStatus = sessionEmails.EmailStatus,
+                    Timeout = sessionEmails.Timeout,
+                    Recurring = sessionEmails.Recurring
+                };
+
+                using (var context = new FIXMonitorContext())
+                {
+                    context.Sessions.Add(sessionConfiguration);
+                    context.SaveChanges();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         public bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails)
         {
             if (sessionEmails != null)
             {
-                var updatedConfiguration = new Sessions()
+                var updatedSessionConfiguration = new Sessions()
                 {
                     SessionId = sessionEmails.SessionId,
                     ToEmails = sessionEmails.ToEmails,
@@ -1055,7 +1081,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 using(var context = new FIXMonitorContext())
                 {
-                    context.Sessions.Update(updatedConfiguration);
+                    context.Sessions.Update(updatedSessionConfiguration);
                     context.SaveChanges();
                 }
 

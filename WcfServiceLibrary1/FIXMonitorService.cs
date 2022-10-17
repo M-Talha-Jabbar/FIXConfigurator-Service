@@ -168,6 +168,11 @@ namespace FIXMonitorService
             return this.DataCache.GetSessionAlertConfiguration(SessionId);
         }
 
+        public bool AddSessionAlertConfiguration(SessionEmails sessionEmails)
+        {
+            return this.DataCache.AddSessionAlertConfiguration(sessionEmails);
+        }
+
         public bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails)
         {
             return this.DataCache.UpdateSessionAlertConfiguration(sessionEmails);

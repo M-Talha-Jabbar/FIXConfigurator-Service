@@ -180,6 +180,10 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return fixHandler.GetSessionAlertConfiguration(SessionId);
         }
+        public bool AddSessionAlertConfiguration(SessionEmails sessionEmails)
+        {
+            return fixHandler.AddSessionAlertConfiguration(sessionEmails);
+        }
 
         public bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails)
         {

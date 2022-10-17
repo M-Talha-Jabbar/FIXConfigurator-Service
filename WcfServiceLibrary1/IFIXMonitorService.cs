@@ -68,6 +68,9 @@ namespace FIXMonitorService
         SessionEmails GetSessionAlertConfiguration(string SessionId);
 
         [OperationContract]
+        bool AddSessionAlertConfiguration(SessionEmails sessionEmails);
+
+        [OperationContract]
         bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails);
 
         [OperationContract]

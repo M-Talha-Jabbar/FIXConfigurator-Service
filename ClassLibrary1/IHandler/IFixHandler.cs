@@ -28,6 +28,7 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         void SessionUpdates(string key, HashEntry[] result,FIXEngine fixEngine);
         void GetFixMessagesFromRedis(ConnectionMultiplexer muxer, RedisChannel channel, RedisValue message, FIXEngine fixEngine);
         SessionEmails GetSessionAlertConfiguration(string SessionId);
+        bool AddSessionAlertConfiguration(SessionEmails sessionEmails);
         bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails);
         bool DeleteSessionAlertConfiguration(string SessionId);
     }

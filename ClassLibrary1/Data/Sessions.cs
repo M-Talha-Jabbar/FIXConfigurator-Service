@@ -12,7 +12,7 @@ namespace FIXMonitorBusinessLogicLayer.Data
         public string SessionId { get; set; }
         public string ToEmails { get; set; }
         public string CcEmails { get; set; }
-        public string EmailStatus { get; set; }
+        public bool EmailStatus { get; set; }
         public DateTime Timeout { get; set; }
         public bool? Recurring { get; set; }
     }
