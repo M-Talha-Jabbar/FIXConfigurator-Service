@@ -30,6 +30,7 @@ namespace FIXMonitorBusinessLogicLayer
         private IList<FIXConfiguration> fixConfiguration;
         readonly Observable observable;
         private IFixHandler fixHandler;
+        private IEmailHandler emailHandler;
         
         //Can use inherited class instead of creating object.
 
@@ -68,6 +69,7 @@ namespace FIXMonitorBusinessLogicLayer
         {
             fixConfiguration = new List<FIXConfiguration>();
             fixHandler = new FixHandler();
+            emailHandler = new EmailHandler();
         }
 
         #region DataLoading
@@ -178,21 +180,21 @@ namespace FIXMonitorBusinessLogicLayer
 
         public SessionEmails GetSessionAlertConfiguration(string SessionId)
         {
-            return fixHandler.GetSessionAlertConfiguration(SessionId);
+            return emailHandler.GetSessionAlertConfiguration(SessionId);
         }
         public bool AddSessionAlertConfiguration(SessionEmails sessionEmails)
         {
-            return fixHandler.AddSessionAlertConfiguration(sessionEmails);
+            return emailHandler.AddSessionAlertConfiguration(sessionEmails);
         }
 
         public bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails)
         {
-            return fixHandler.UpdateSessionAlertConfiguration(sessionEmails);
+            return emailHandler.UpdateSessionAlertConfiguration(sessionEmails);
         }
 
         public bool DeleteSessionAlertConfiguration(string SessionId)
         {
-            return fixHandler.DeleteSessionAlertConfiguration(SessionId);
+            return emailHandler.DeleteSessionAlertConfiguration(SessionId);
         }
     }
 

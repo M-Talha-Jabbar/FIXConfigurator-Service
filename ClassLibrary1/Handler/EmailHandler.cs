@@ -6,11 +6,13 @@ using System.Threading;
 using System.Threading.Tasks;
 //using EmailSender;
 using FIXMonitorBusinessLogicLayer.Data;
+using FIXMonitorBusinessLogicLayer.DataModels;
+using FIXMonitorBusinessLogicLayer.IHandler;
 using GEmail;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
-    class EmailHandler
+    class EmailHandler : IEmailHandler
     {
         //private EmailService emailService;
         //private readonly string FromEmail = System.Configuration.ConfigurationManager.AppSettings["FromEmail"].ToString();
@@ -54,6 +56,113 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             //SendEmail
             //emailService.SendEmailAsync(emailData);
+        }
+
+        public SessionEmails GetSessionAlertConfiguration(string SessionId)
+        {
+            SessionEmails sessionEmails = null;
+
+            if (!string.IsNullOrEmpty(SessionId))
+            {
+                using (var context = new FIXMonitorContext())
+                {
+                    var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == SessionId);
+
+                    if (sessionInfo != null)
+                    {
+                        sessionEmails = new SessionEmails()
+                        {
+                            SessionId = sessionInfo.SessionId,
+                            ToEmails = sessionInfo.ToEmails,
+                            CcEmails = sessionInfo.CcEmails,
+                            EmailStatus = sessionInfo.EmailStatus,
+                            Timeout = sessionInfo.Timeout,
+                            Recurring = sessionInfo.Recurring
+                        };
+
+                        return sessionEmails;
+                    }
+
+                    return sessionEmails;
+                }
+            }
+
+            return sessionEmails;
+        }
+
+        public bool AddSessionAlertConfiguration(SessionEmails sessionEmails)
+        {
+            if (sessionEmails != null)
+            {
+                var sessionConfiguration = new Sessions()
+                {
+                    SessionId = sessionEmails.SessionId,
+                    ToEmails = sessionEmails.ToEmails,
+                    CcEmails = sessionEmails.CcEmails,
+                    EmailStatus = sessionEmails.EmailStatus,
+                    Timeout = sessionEmails.Timeout,
+                    Recurring = sessionEmails.Recurring
+                };
+
+                using (var context = new FIXMonitorContext())
+                {
+                    context.Sessions.Add(sessionConfiguration);
+                    context.SaveChanges();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails)
+        {
+            if (sessionEmails != null)
+            {
+                var updatedSessionConfiguration = new Sessions()
+                {
+                    SessionId = sessionEmails.SessionId,
+                    ToEmails = sessionEmails.ToEmails,
+                    CcEmails = sessionEmails.CcEmails,
+                    EmailStatus = sessionEmails.EmailStatus,
+                    Timeout = sessionEmails.Timeout,
+                    Recurring = sessionEmails.Recurring
+                };
+
+                using (var context = new FIXMonitorContext())
+                {
+                    context.Sessions.Update(updatedSessionConfiguration);
+                    context.SaveChanges();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeleteSessionAlertConfiguration(string SessionId)
+        {
+            if (!string.IsNullOrEmpty(SessionId))
+            {
+                using (var context = new FIXMonitorContext())
+                {
+                    var session = context.Sessions.FirstOrDefault(s => s.SessionId == SessionId);
+
+                    if (session != null)
+                    {
+                        context.Sessions.Remove(session);
+                        context.SaveChanges();
+
+                        return true;
+                    }
+
+                    return false;
+                }
+            }
+
+            return false;
         }
     }
 }
