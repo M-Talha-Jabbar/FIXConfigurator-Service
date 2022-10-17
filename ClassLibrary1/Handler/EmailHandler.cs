@@ -30,7 +30,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             EmailData emailData = new EmailData()
             {
                 CommaSeperatedToEmails = string.IsNullOrEmpty(sessionInfo.ToEmails) ? DefaultCommaSeperatedToEmails : sessionInfo.ToEmails,
-                CommaSeperatedCCEmails = string.IsNullOrEmpty(sessionInfo.CcEmails) ? DefaultCommaSeperatedCCEmails : sessionInfo.CcEmails,
+                CommaSeperatedCCEmails = string.IsNullOrEmpty(sessionInfo.ToEmails) ? DefaultCommaSeperatedCCEmails : sessionInfo.CcEmails,
                 Subject = $"Session {sessionId} status changed",
                 Body = $"Session {sessionId} status changed to {status} -> {Environment} Environment"
             };

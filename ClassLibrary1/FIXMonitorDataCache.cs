@@ -175,6 +175,25 @@ namespace FIXMonitorBusinessLogicLayer
         }
 
         #endregion
+
+        public SessionEmails GetSessionAlertConfiguration(string SessionId)
+        {
+            return fixHandler.GetSessionAlertConfiguration(SessionId);
+        }
+        public bool AddSessionAlertConfiguration(SessionEmails sessionEmails)
+        {
+            return fixHandler.AddSessionAlertConfiguration(sessionEmails);
+        }
+
+        public bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails)
+        {
+            return fixHandler.UpdateSessionAlertConfiguration(sessionEmails);
+        }
+
+        public bool DeleteSessionAlertConfiguration(string SessionId)
+        {
+            return fixHandler.DeleteSessionAlertConfiguration(SessionId);
+        }
     }
 
 }

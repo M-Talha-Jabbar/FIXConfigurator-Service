@@ -162,5 +162,25 @@ namespace FIXMonitorService
         {
             return this.DataCache.RemoveAlertCache(orderId);
         }
+
+        public SessionEmails GetSessionAlertConfiguration(string SessionId)
+        {
+            return this.DataCache.GetSessionAlertConfiguration(SessionId);
+        }
+
+        public bool AddSessionAlertConfiguration(SessionEmails sessionEmails)
+        {
+            return this.DataCache.AddSessionAlertConfiguration(sessionEmails);
+        }
+
+        public bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails)
+        {
+            return this.DataCache.UpdateSessionAlertConfiguration(sessionEmails);
+        }
+
+        public bool DeleteSessionAlertConfiguration(string SessionId)
+        {
+            return this.DataCache.DeleteSessionAlertConfiguration(SessionId);
+        }
     }
 }
