@@ -270,6 +270,7 @@
     <Compile Include="Handler\FixHandler.cs" />
     <Compile Include="Handler\SocketHandler.cs" />
     <Compile Include="IComparers\FixMessageSorter.cs" />
+    <Compile Include="IHandler\IEmailHandler.cs" />
     <Compile Include="IHandler\IFixHandler.cs" />
     <Compile Include="KeyedCollections\FixEnginesKeyedCollection.cs" />
     <Compile Include="KeyedCollections\FixSessionKeyedCollection.cs" />
