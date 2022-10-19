@@ -6,6 +6,7 @@ using System.ServiceModel;
 using System.ServiceModel.Description;
 using System.Text;
 using System.Threading.Tasks;
+//using FIXMonitorService;
 using Topshelf;
 
 namespace FIXMonitorServiceHost
@@ -22,13 +23,16 @@ namespace FIXMonitorServiceHost
             string address = ConfigurationManager.AppSettings["baseAddress"].ToString();
             Uri baseAddress = new Uri(address);
 
-            serviceHost = new ServiceHost(typeof(FIXMonitorService.FIXMonitorService));
+            serviceHost = new ServiceHost(FIXMonitorService.FIXMonitorService.GetInstance().DataCache);
             ServiceMetadataBehavior smb = new ServiceMetadataBehavior();
             smb.HttpGetEnabled = true;
             smb.MetadataExporter.PolicyVersion = PolicyVersion.Policy15;
             //serviceHost.Description.Behaviors.Add(smb);
 
             serviceHost.Open();
+
+            // FIXMonitorService.FIXMonitorService.GetInstance();
+
             return true;
         }
 
