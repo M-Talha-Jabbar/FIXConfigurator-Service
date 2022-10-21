@@ -22,6 +22,7 @@ using DevExtreme.AspNet.Data;
 using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.Notifier;
 using System.Collections.Concurrent;
+using FIXMonitorBusinessLogicLayer.Converter;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -895,7 +896,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                 else if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
                                 {
-                                    int intervalInMilliseconds = GetIntervalInMilliseconds(sessionInfo.Timeout);
+                                    int intervalInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionInfo.Timeout);
 
                                     emailNotifier = new EmailNotifier(intervalInMilliseconds, conId, session.Status, sessionInfo);
                                     EmailNotifier.emailTimer.Add(sessionInfo.SessionId, emailNotifier.getTimerInstance());
@@ -919,18 +920,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 LogException(e);
             }
         }
-
-        private int GetIntervalInMilliseconds(DateTime Timeout)
-        {
-            int hours = Timeout.Hour * 60 * 60 * 1000;
-            int minutes = Timeout.Minute * 60 * 1000;
-            int seconds = Timeout.Second * 1000;
-
-            int totalMilliseconds = hours + minutes + seconds;
-
-            return totalMilliseconds;
-        }
-
 
         private void GenerateDictionary(Dictionary<string, string> dic, string[] lines)
         {
