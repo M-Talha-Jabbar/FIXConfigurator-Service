@@ -23,7 +23,7 @@ namespace FIXMonitorServiceHost
             string address = ConfigurationManager.AppSettings["baseAddress"].ToString();
             Uri baseAddress = new Uri(address);
 
-            serviceHost = new ServiceHost(FIXMonitorService.FIXMonitorService.GetInstance().DataCache);
+            serviceHost = new ServiceHost(typeof(FIXMonitorService.FIXMonitorService));
             ServiceMetadataBehavior smb = new ServiceMetadataBehavior();
             smb.HttpGetEnabled = true;
             smb.MetadataExporter.PolicyVersion = PolicyVersion.Policy15;
