@@ -139,6 +139,8 @@ namespace FIXMonitorBusinessLogicLayer.Data
                 entity.Property(e => e.Recurring)
                     .IsRequired()
                     .HasDefaultValueSql("(CONVERT([bit],(0)))");
+
+                entity.Property(e => e.ScheduleTime).HasDefaultValueSql("('0001-01-01T00:00:00.0000000')");
             });
 
             OnModelCreatingPartial(modelBuilder);

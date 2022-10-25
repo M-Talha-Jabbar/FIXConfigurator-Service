@@ -248,6 +248,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Converter\TimeConverter.cs" />
     <Compile Include="DataModels\SessionEmails.cs" />
     <Compile Include="Data\AspNetRoleClaims.cs" />
     <Compile Include="Data\AspNetRoles.cs" />

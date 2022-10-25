@@ -4,10 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using FIXMonitorBusinessLogicLayer.Converter;
 //using EmailSender;
 using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.IHandler;
+using FIXMonitorBusinessLogicLayer.Notifier;
 using GEmail;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
@@ -21,6 +23,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private readonly string DefaultCommaSeperatedToEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedToEmails"].ToString();
         private readonly string DefaultCommaSeperatedCCEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedCCEmails"].ToString();
         private readonly string Environment = System.Configuration.ConfigurationManager.AppSettings["Environment"].ToString();
+
+        private EmailNotifier emailNotifier;
         public EmailHandler()
         {
             //emailService = new EmailService(EmailApiKey);
@@ -29,13 +33,22 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void SendEmail(string sessionId, string status, Sessions sessionInfo)
         {
-            EmailData emailData = new EmailData()
+            EmailData emailData = new EmailData();
+
+            if (string.IsNullOrEmpty(sessionInfo.ToEmails))
             {
-                CommaSeperatedToEmails = string.IsNullOrEmpty(sessionInfo.ToEmails) ? DefaultCommaSeperatedToEmails : sessionInfo.ToEmails,
-                CommaSeperatedCCEmails = string.IsNullOrEmpty(sessionInfo.ToEmails) ? DefaultCommaSeperatedCCEmails : sessionInfo.CcEmails,
-                Subject = $"Session {sessionId} status changed",
-                Body = $"Session {sessionId} status changed to {status} -> {Environment} Environment"
-            };
+                emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
+                emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
+                emailData.Subject = $"Session {sessionId} status changed";
+                emailData.Body = $"Session {sessionId} status changed to {status} -> {Environment} Environment";
+            }
+            else
+            {
+                emailData.CommaSeperatedToEmails = sessionInfo.ToEmails;
+                emailData.CommaSeperatedCCEmails = sessionInfo.CcEmails;
+                emailData.Subject = sessionInfo.Subject == null ? string.Empty : sessionInfo.Subject;
+                emailData.Body = sessionInfo.Body == null ? string.Empty : sessionInfo.Body;
+            }
 
             Thread thread = new Thread(() =>
             {
@@ -77,7 +90,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             CcEmails = sessionInfo.CcEmails,
                             EmailStatus = sessionInfo.EmailStatus,
                             Timeout = sessionInfo.Timeout,
-                            Recurring = sessionInfo.Recurring
+                            Recurring = sessionInfo.Recurring,
+                            Subject = sessionInfo.Subject,
+                            Body = sessionInfo.Body
                         };
 
                         return sessionEmails;
@@ -101,7 +116,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     CcEmails = sessionEmails.CcEmails,
                     EmailStatus = sessionEmails.EmailStatus,
                     Timeout = sessionEmails.Timeout,
-                    Recurring = sessionEmails.Recurring
+                    Recurring = sessionEmails.Recurring,
+                    Subject = sessionEmails.Subject,
+                    Body = sessionEmails.Body
                 };
 
                 using (var context = new FIXMonitorContext())
@@ -127,8 +144,28 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     CcEmails = sessionEmails.CcEmails,
                     EmailStatus = sessionEmails.EmailStatus,
                     Timeout = sessionEmails.Timeout,
-                    Recurring = sessionEmails.Recurring
+                    Recurring = sessionEmails.Recurring,
+                    Subject = sessionEmails.Subject,
+                    Body = sessionEmails.Body
                 };
+
+                if (EmailNotifier.emailTimer.ContainsKey(updatedSessionConfiguration.SessionId))
+                {
+                    System.Timers.Timer timer;
+                    EmailNotifier.emailTimer.TryGetValue(updatedSessionConfiguration.SessionId, out timer);
+                    timer.Stop();
+                    timer.Dispose();
+
+                    EmailNotifier.emailTimer.Remove(updatedSessionConfiguration.SessionId);
+
+                    if (updatedSessionConfiguration.EmailStatus)
+                    {
+                        int intervalInMilliseconds = TimeConverter.GetTimeInMilliseconds(updatedSessionConfiguration.Timeout);
+
+                        emailNotifier = new EmailNotifier(intervalInMilliseconds, updatedSessionConfiguration.SessionId, "DISCONNECTED", updatedSessionConfiguration);
+                        EmailNotifier.emailTimer.Add(updatedSessionConfiguration.SessionId, emailNotifier.getTimerInstance());
+                    }
+                }
 
                 using (var context = new FIXMonitorContext())
                 {
@@ -146,6 +183,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             if (!string.IsNullOrEmpty(SessionId))
             {
+                if (EmailNotifier.emailTimer.ContainsKey(SessionId))
+                {
+                    System.Timers.Timer timer;
+                    EmailNotifier.emailTimer.TryGetValue(SessionId, out timer);
+                    timer.Stop();
+                    timer.Dispose();
+
+                    EmailNotifier.emailTimer.Remove(SessionId);
+                }
+
                 using (var context = new FIXMonitorContext())
                 {
                     var session = context.Sessions.FirstOrDefault(s => s.SessionId == SessionId);

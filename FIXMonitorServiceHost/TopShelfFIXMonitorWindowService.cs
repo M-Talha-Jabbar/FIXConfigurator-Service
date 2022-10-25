@@ -29,6 +29,7 @@ namespace FIXMonitorServiceHost
             //serviceHost.Description.Behaviors.Add(smb);
 
             serviceHost.Open();
+
             return true;
         }
 
