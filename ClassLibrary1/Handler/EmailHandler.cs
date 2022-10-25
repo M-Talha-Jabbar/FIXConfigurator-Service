@@ -33,13 +33,22 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void SendEmail(string sessionId, string status, Sessions sessionInfo)
         {
-            EmailData emailData = new EmailData()
+            EmailData emailData = new EmailData();
+
+            if (string.IsNullOrEmpty(sessionInfo.ToEmails))
             {
-                CommaSeperatedToEmails = string.IsNullOrEmpty(sessionInfo.ToEmails) ? DefaultCommaSeperatedToEmails : sessionInfo.ToEmails,
-                CommaSeperatedCCEmails = string.IsNullOrEmpty(sessionInfo.ToEmails) ? DefaultCommaSeperatedCCEmails : sessionInfo.CcEmails,
-                Subject = string.IsNullOrEmpty(sessionInfo.Subject) ? $"Session {sessionId} status changed" : sessionInfo.Subject,
-                Body = string.IsNullOrEmpty(sessionInfo.Body) ? $"Session {sessionId} status changed to {status} -> {Environment} Environment" : sessionInfo.Body
-            };
+                emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
+                emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
+                emailData.Subject = $"Session {sessionId} status changed";
+                emailData.Body = $"Session {sessionId} status changed to {status} -> {Environment} Environment";
+            }
+            else
+            {
+                emailData.CommaSeperatedToEmails = sessionInfo.ToEmails;
+                emailData.CommaSeperatedCCEmails = sessionInfo.CcEmails;
+                emailData.Subject = sessionInfo.Subject == null ? string.Empty : sessionInfo.Subject;
+                emailData.Body = sessionInfo.Body == null ? string.Empty : sessionInfo.Body;
+            }
 
             Thread thread = new Thread(() =>
             {

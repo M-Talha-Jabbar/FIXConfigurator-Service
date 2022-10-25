@@ -6,7 +6,6 @@ using System.ServiceModel;
 using System.ServiceModel.Description;
 using System.Text;
 using System.Threading.Tasks;
-//using FIXMonitorService;
 using Topshelf;
 
 namespace FIXMonitorServiceHost
@@ -30,8 +29,6 @@ namespace FIXMonitorServiceHost
             //serviceHost.Description.Behaviors.Add(smb);
 
             serviceHost.Open();
-
-            // FIXMonitorService.FIXMonitorService.GetInstance();
 
             return true;
         }
