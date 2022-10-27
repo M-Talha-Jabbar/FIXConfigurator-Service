@@ -89,8 +89,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             sw.Flush();
             sw.Close();
 
-            SetScheduler();
-
+            Task.Run(() =>
+            {
+                SetScheduler();
+            });
         }
 
         private void EnginePersistence()
