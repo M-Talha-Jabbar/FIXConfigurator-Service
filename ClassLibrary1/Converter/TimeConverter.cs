@@ -18,5 +18,24 @@ namespace FIXMonitorBusinessLogicLayer.Converter
 
             return totalMilliseconds;
         }
+
+        public static int GetTimeInMilliseconds(TimeSpan t)
+        {
+            int hours = t.Hours * 60 * 60 * 1000;
+            int minutes = t.Minutes * 60 * 1000;
+            int seconds = t.Seconds * 1000;
+
+            int totalMilliseconds = hours + minutes + seconds;
+
+            return totalMilliseconds;
+        }
+
+        public static int CompareTimeDifference(TimeSpan t1, TimeSpan t2)
+        {
+            if (t1 < t2)
+                return -1;
+            else
+                return 1;
+        }
     }
 }
