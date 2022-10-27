@@ -89,6 +89,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             sw.Flush();
             sw.Close();
 
+            Task.Run(() =>
+            {
+                SetScheduler();
+            });
         }
 
         private void EnginePersistence()
@@ -570,6 +574,27 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             return ordersTemp;
 
+        }
+
+        private void SetScheduler()
+        {
+            foreach(var engine in fixEngines)
+            {
+                foreach(var session in engine.fixSessions)
+                {
+                    using(var context = new FIXMonitorContext())
+                    {
+                        var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == session.ConnectionID);
+
+                        if(sessionInfo != null && sessionInfo.EmailStatus && TimeConverter.CompareTimeDifference(sessionInfo.ScheduleTime.TimeOfDay, DateTime.Now.TimeOfDay) > 0)
+                        {
+                            var totalTimeInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionInfo.ScheduleTime.TimeOfDay - DateTime.Now.TimeOfDay) + TimeConverter.GetTimeInMilliseconds(sessionInfo.Timeout);
+
+                            emailNotifier = new EmailNotifier(totalTimeInMilliseconds, session, sessionInfo);
+                        }
+                    }
+                }
+            }
         }
 
         public FixEnginesKeyedCollection GetFixEngines()

@@ -46,8 +46,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 emailData.CommaSeperatedToEmails = sessionInfo.ToEmails;
                 emailData.CommaSeperatedCCEmails = sessionInfo.CcEmails;
-                emailData.Subject = sessionInfo.Subject == null ? string.Empty : sessionInfo.Subject;
-                emailData.Body = sessionInfo.Body == null ? string.Empty : sessionInfo.Body;
+                emailData.Subject = string.IsNullOrEmpty(sessionInfo.Subject) ? $"Session {sessionId} status changed" : sessionInfo.Subject.Replace("{sessionId}", sessionId).Replace("{status}", status);
+                emailData.Body = string.IsNullOrEmpty(sessionInfo.Body) ? $"Session {sessionId} status changed to {status} -> {Environment} Environment" : sessionInfo.Body.Replace("{sessionId}", sessionId).Replace("{status}", status);
             }
 
             Thread thread = new Thread(() =>
@@ -92,7 +92,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             Timeout = sessionInfo.Timeout,
                             Recurring = sessionInfo.Recurring,
                             Subject = sessionInfo.Subject,
-                            Body = sessionInfo.Body
+                            Body = sessionInfo.Body,
+                            ScheduleTime = sessionInfo.ScheduleTime
                         };
 
                         return sessionEmails;
@@ -118,7 +119,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     Timeout = sessionEmails.Timeout,
                     Recurring = sessionEmails.Recurring,
                     Subject = sessionEmails.Subject,
-                    Body = sessionEmails.Body
+                    Body = sessionEmails.Body,
+                    ScheduleTime = sessionEmails.ScheduleTime
                 };
 
                 using (var context = new FIXMonitorContext())
@@ -146,7 +148,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     Timeout = sessionEmails.Timeout,
                     Recurring = sessionEmails.Recurring,
                     Subject = sessionEmails.Subject,
-                    Body = sessionEmails.Body
+                    Body = sessionEmails.Body,
+                    ScheduleTime = sessionEmails.ScheduleTime
                 };
 
                 if (EmailNotifier.emailTimer.ContainsKey(updatedSessionConfiguration.SessionId))

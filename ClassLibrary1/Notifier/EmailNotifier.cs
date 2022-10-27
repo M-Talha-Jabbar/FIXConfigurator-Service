@@ -1,10 +1,10 @@
 ﻿using FIXMonitorBusinessLogicLayer.Data;
+using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.Handler;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Timers;
 
 namespace FIXMonitorBusinessLogicLayer.Notifier
@@ -16,17 +16,19 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         private string conId;
         private string status;
         private Sessions sessionInfo;
+        private FIXSession FIXSession;
 
         public static Dictionary<string, Timer> emailTimer = new Dictionary<string, Timer>();
         public static Dictionary<string, int> recurringEmailsCount = new Dictionary<string, int>();
 
-        public EmailNotifier(string conId, string status, Sessions sessionInfo) // Email Alert without Timer
+        public EmailNotifier(string conId, string status, Sessions sessionInfo) 
         {
             this.conId = conId;
             this.status = status;
             this.sessionInfo = sessionInfo;
         }
-        public EmailNotifier(int interval, string conId, string status, Sessions sessionInfo) // Email Alert with Time defined (can be both Recurring & Non-Recurring)
+
+        public EmailNotifier(int interval, string conId, string status, Sessions sessionInfo) 
         {
             timer = new Timer(interval);
             timer.Elapsed += OnEventExecution;
@@ -42,6 +44,19 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             timer.Start();
         }
 
+        public EmailNotifier(int interval, FIXSession fixSession, Sessions sessionInfo) 
+        {
+            timer = new Timer(interval);
+            timer.Elapsed += OnScheduledCheckExecution;
+            timer.AutoReset = false;
+
+            this.conId = sessionInfo.SessionId;
+            this.sessionInfo = sessionInfo;
+            this.FIXSession = fixSession;
+
+            timer.Start();
+        }
+
         private void OnEventExecution(Object sender, ElapsedEventArgs eventArgs)
         {
             SendEmail();
@@ -50,6 +65,15 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
                 emailTimer.Remove(conId);
             else
                 recurringEmailsCount[conId]++;
+        }
+
+        private void OnScheduledCheckExecution(Object sender, ElapsedEventArgs eventArgs)
+        {
+            if(FIXSession.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
+            {
+                this.status = FIXSession.Status;
+                SendEmail();
+            }
         }
 
         public EmailNotifier SendEmail()
