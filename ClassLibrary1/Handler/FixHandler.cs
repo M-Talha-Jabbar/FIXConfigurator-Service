@@ -23,6 +23,7 @@ using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.Notifier;
 using System.Collections.Concurrent;
 using FIXMonitorBusinessLogicLayer.Converter;
+using FIXMonitorBusinessLogicLayer;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -56,8 +57,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private EmailNotifier emailNotifier;
 
+        private FixMessageLog fixMessageLogs;
+
         public FixHandler()
         {
+            fixMessageLogs = new FixMessageLog();
             Initializers();
             //Persistence Work -- 
             EnginePersistence();
@@ -407,10 +411,25 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             //{
                             //    body = Body.Default;
                             //}
+
+                            
+
                             FIXMessage fixMessage = body;
+
+                            if (key != string.Empty) {
+                                var session = fixEngine.fixSessions[body.ConnectionID];
+                                fixMessageLogs.FixMessageLogger(session.ConnectionID, session, fixMessage);
+                            }
+
+                           
+
                             var _key = body.ConnectionID;
+
+
                             //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.redisIpAddress && x.port == fixEngine.redisIpPort);
                             //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
+
+                           
                             if (IsSendMessage)
                             {
                                 observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
