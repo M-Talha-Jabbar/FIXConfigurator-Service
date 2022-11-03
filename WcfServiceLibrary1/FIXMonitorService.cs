@@ -3,6 +3,7 @@ using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
 
@@ -181,6 +182,11 @@ namespace FIXMonitorService
         public bool DeleteSessionAlertConfiguration(string SessionId)
         {
             return this.DataCache.DeleteSessionAlertConfiguration(SessionId);
+        }
+
+        public Stream GetFixMessageLogFileStream(string sessionId, string engineName)
+        {
+            return this.DataCache.GetFixMessageLogFileStream(sessionId, engineName);
         }
     }
 }
