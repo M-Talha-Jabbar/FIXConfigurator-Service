@@ -1,56 +1,65 @@
 ﻿using FIXMonitorBusinessLogicLayer.DataModels;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace FIXMonitorBusinessLogicLayer
 {
     class FixMessageLog
     {
-
         // creating files for each session.
-        // maintaining a dictionary with key -> sessionid & value -> list or set of files
         // whenever new message arrive append into the file
         // parsing fix messages and replacing seperator with pipe, appending either msg is IN or OUT, Date of the logging
-        // Sending txt file blob to be consumed
+        // Sending Stream to web client
         // "./FixMessagesLogs/test.txt"
 
-        // key is sessionid and values is filename. whenever will be file created we append to this dictionary
+        // key is engineName+sessionid and values is filename. whenever will be file created we append to this dictionary
 
-        Dictionary<string, string> CreatedFiles;
+        private static ConcurrentDictionary<string, string> CreatedFiles = new ConcurrentDictionary<string, string>();
+        private static readonly ConcurrentDictionary<string, object> s_fileLocks = new ConcurrentDictionary<string, object>();
+        private static string FixMessageLogDirectoryPath = ConfigurationManager.AppSettings["FixMessageLogDirectoryPath"];
 
-        public FixMessageLog() {
 
-            CreatedFiles = new Dictionary<string, string>();
-        }
-
-        public bool IsFileCreated(string sessionId)
+        public static bool IsFileCreated(string sessionId, string engineName)
         {
-            return CreatedFiles.ContainsKey(sessionId) ? true : false; 
+            return CreatedFiles.ContainsKey($"{engineName}-{sessionId}") ? true : false;
         }
 
-        public void AddFixMessageLog(string sessionId, string fixMessageLog, string filePath) {
-
-            CreatedFiles.Add(sessionId, filePath);
-
-            using (StreamWriter sw = File.AppendText(filePath))
+        public static void AddFixMessageLog(string fixMessageLog, string filePath) /// ////
+        {
+            
+            object lockForThisFile;
+            if (s_fileLocks.ContainsKey(filePath))
             {
-                sw.WriteLine(fixMessageLog);
+                lockForThisFile = s_fileLocks[filePath];
+            }
+            else
+            {
+                lockForThisFile = new object();
+                s_fileLocks.TryAdd(filePath, lockForThisFile);
+            }
+
+            lock (lockForThisFile)
+            {
+                using (StreamWriter sw = File.AppendText(filePath))
+                {
+                    sw.WriteLine(fixMessageLog);
+                    sw.Flush();
+                }
             }
         }
 
-        public void AddFixMessageLog(string sessionId, string fixMessageLog)
-        {
-            using (StreamWriter sw = File.AppendText(CreatedFiles[sessionId]))
-            {
-                sw.WriteLine(fixMessageLog);
-            }
+        public static object GetLockObject(string filePath) {
+            return s_fileLocks[filePath];
         }
 
-        public string FixMessageLogFormatter(FIXMessage fixMessage, FIXSession fixSession) 
+        public static string FixMessageLogFormatter(FIXMessage fixMessage, FIXSession fixSession)
         {
             // DateTime 
             // Finding Message is comming or going in/from fixhub
@@ -70,72 +79,51 @@ namespace FIXMonitorBusinessLogicLayer
             string formattedDate = DateTime.Now.ToString("yyyyMMdd-HH:mm:ss.fff");
 
             string formattedFixMessage = fixMessage.fixMessage.Replace("\u0001", " | ").Insert(0, $" | {messageSender} | ").Insert(0, formattedDate);
-           
+
             return formattedFixMessage;
         }
 
-        public string LogFileNameCreator(string sessionId) {
-
-            var logFileName = $"{sessionId}-{DateTime.Now.ToString("yyyyMMdd")}";
-
+        public static string LogFileNameCreator(string sessionId, string engineName)
+        {
+            var logFileName = $"{engineName}-{sessionId}-{DateTime.Now.ToString("yyyyMMdd")}";
             return logFileName;
         }
 
-        public string LogFilePathCreator(string logFileName) {
-
-            var logFilePath = $"./FixMessagesLogs/{logFileName}.txt";
-
+        public static string LogFilePathCreator(string logFileName)
+        {
+            var logFilePath = $"{FixMessageLogDirectoryPath}{logFileName}.txt";
             return logFilePath;
         }
 
-        public void FixMessageLogger(string sessionId, FIXSession fixSession, FIXMessage fixMessage)
+        public static void FixMessageLogger(string sessionId, FIXEngine fixEngine, FIXMessage fixMessage)
         {
+            string logFilePath;
+            string createdFilekey = $"{fixEngine.engineName}-{sessionId}";
+            bool isFileCreated = IsFileCreated(sessionId, fixEngine.engineName);
 
-            bool isFileCreated = IsFileCreated(sessionId);
+            var fixSession = fixEngine.fixSessions[sessionId];
 
             string formattedFixMessageLog = FixMessageLogFormatter(fixMessage, fixSession);
 
-            if (isFileCreated)
+            if (!isFileCreated)
             {
-                AddFixMessageLog(sessionId, formattedFixMessageLog);
+                logFilePath = LogFilePathCreator(LogFileNameCreator(sessionId, fixEngine.engineName));
+                CreatedFiles.TryAdd(createdFilekey, logFilePath);
             }
-            else {
-
-                var logFilePath = LogFilePathCreator(LogFileNameCreator(sessionId));
-
-                AddFixMessageLog(sessionId, formattedFixMessageLog, logFilePath);
+            else
+            {
+                logFilePath = CreatedFiles[createdFilekey];
             }
+
+            AddFixMessageLog(formattedFixMessageLog, logFilePath);
         }
 
-        public void test() {
-
-            //if (!File.Exists(path))
-            //{
-            //    // Create a file to write to.
-            //    using (StreamWriter sw = File.CreateText(path))
-            //    {
-            //        sw.WriteLine("Hello");
-            //        sw.WriteLine("And");
-            //        sw.WriteLine("Welcome");
-            //    }
-            //}
-
-            try
-            {
-               
-                using (StreamWriter sw = File.AppendText("./FixMessagesLogs/test.txt"))
-                {
-                    sw.WriteLine("This");
-                    sw.WriteLine("is Extra");
-                    sw.WriteLine("Text");
-                }
-            }
-            catch (Exception ex) { 
-                
-            }
-           
+        public static string GetFixMessageLogFilePath(string sessionId, string engineName)
+        {
+            string filePath;
+            CreatedFiles.TryGetValue($"{engineName}-{sessionId}", out filePath);
+            return filePath;
         }
-
 
     }
 }
