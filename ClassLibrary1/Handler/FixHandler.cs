@@ -57,11 +57,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private EmailNotifier emailNotifier;
 
-        private FixMessageLog fixMessageLogs;
 
         public FixHandler()
         {
-            fixMessageLogs = new FixMessageLog();
             Initializers();
             //Persistence Work -- 
             EnginePersistence();
@@ -415,14 +413,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             
 
                             FIXMessage fixMessage = body;
-
-                            if (key != string.Empty) {
-                                var session = fixEngine.fixSessions[body.ConnectionID];
-                                fixMessageLogs.FixMessageLogger(session.ConnectionID, session, fixMessage);
-                            }
-
-                           
-
                             var _key = body.ConnectionID;
 
 
@@ -433,6 +423,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             if (IsSendMessage)
                             {
                                 observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
+                                if (key != string.Empty)
+                                {
+                                    FixMessageLog.FixMessageLogger(body.ConnectionID, fixEngine, fixMessage);
+                                }
                             }
                             else
                             {
