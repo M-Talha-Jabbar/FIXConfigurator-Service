@@ -423,7 +423,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             if (IsSendMessage)
                             {
                                 observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
-                                FixMessageLog.FixMessageLogger(body.ConnectionID, fixEngine, fixMessage);
+                                Task.Run(() =>
+                                {
+                                    FixMessageLog.FixMessageLogger(_key, fixEngine, fixMessage);
+                                });
                             }
                             else
                             {
