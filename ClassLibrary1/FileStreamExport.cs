@@ -11,27 +11,34 @@ namespace FIXMonitorBusinessLogicLayer
     class FileStreamExport
     {
 
-        public static Stream fsExport(string filePath) {
+        public static Stream fsExport(string filePath)
+        {
 
+            if (filePath == null)
+            {
+                return null;
+            }
+
+            FileStream fs = null;
             object lockObject = FixMessageLog.GetLockObject(filePath);
 
             lock (lockObject)
             {
                 try
-            {
-                    using (FileStream fs = new FileStream(filePath, FileMode.Open, FileAccess.Read)) {
-                        Console.WriteLine("file read");
-                        return fs;
-                    }
-                        
+                {
+                    fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
+                    Console.WriteLine("file read");
+                    return fs;
                 }
-                catch (Exception ex) {
+
+                catch (Exception ex)
+                {
 
                     Console.WriteLine("file reading lock error: ", ex.Message);
                     return null;
                 }
+            }
 
             }
         }
     }
-}
