@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,6 @@ namespace FIXMonitorBusinessLogicLayer
 {
     class FileStreamExport
     {
-
         public static Stream fsExport(string filePath)
         {
 
@@ -20,9 +20,8 @@ namespace FIXMonitorBusinessLogicLayer
             }
 
             FileStream fs = null;
-            object lockObject = FixMessageLog.GetLockObject(filePath);
 
-            lock (lockObject)
+            lock (FixMessageLog.GetLockObj(filePath))
             {
                 try
                 {
@@ -32,7 +31,7 @@ namespace FIXMonitorBusinessLogicLayer
                 }
 
                 catch (Exception ex)
-                {
+                    {
 
                     Console.WriteLine("file reading lock error: ", ex.Message);
                     return null;
