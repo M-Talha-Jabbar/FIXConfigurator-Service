@@ -31,9 +31,7 @@ namespace FIXMonitorBusinessLogicLayer
             return CreatedFiles.ContainsKey($"{engineName}-{sessionId}") ? true : false;
         }
 
-        public static void AddFixMessageLog(string fixMessageLog, string filePath) /// ////
-        {
-            
+        public static object GetLockObj(string filePath) {
             object lockForThisFile;
             if (s_fileLocks.ContainsKey(filePath))
             {
@@ -45,7 +43,12 @@ namespace FIXMonitorBusinessLogicLayer
                 s_fileLocks.TryAdd(filePath, lockForThisFile);
             }
 
-            lock (lockForThisFile)
+            return lockForThisFile;
+        }
+
+        public static void AddFixMessageLog(string fixMessageLog, string filePath) /// ////
+        {
+            lock (GetLockObj(filePath))
             {
                 using (StreamWriter sw = File.AppendText(filePath))
                 {
@@ -53,10 +56,6 @@ namespace FIXMonitorBusinessLogicLayer
                     sw.Flush();
                 }
             }
-        }
-
-        public static object GetLockObject(string filePath) {
-            return s_fileLocks[filePath];
         }
 
         public static string FixMessageLogFormatter(FIXMessage fixMessage, FIXSession fixSession)
@@ -122,6 +121,10 @@ namespace FIXMonitorBusinessLogicLayer
         {
             string filePath;
             CreatedFiles.TryGetValue($"{engineName}-{sessionId}", out filePath);
+            if (filePath == null) { 
+                filePath = LogFilePathCreator(LogFileNameCreator(sessionId, engineName));
+                if (File.Exists(filePath)) CreatedFiles.TryAdd($"{engineName}-{sessionId}", filePath);
+            }
             return filePath;
         }
 
