@@ -120,13 +120,12 @@ namespace FIXMonitorBusinessLogicLayer
         public static string GetFixMessageLogFilePath(string sessionId, string engineName)
         {
             string filePath;
-            CreatedFiles.TryGetValue($"{engineName}-{sessionId}", out filePath);
-            if (filePath == null) { 
+            var isFileExist = CreatedFiles.TryGetValue($"{engineName}-{sessionId}", out filePath);
+            if (!isFileExist) { 
                 filePath = LogFilePathCreator(LogFileNameCreator(sessionId, engineName));
-                if (File.Exists(filePath)) CreatedFiles.TryAdd($"{engineName}-{sessionId}", filePath);
+                if (File.Exists(filePath)) CreatedFiles.TryAdd($"{engineName}-{sessionId}", filePath);     
             }
             return filePath;
         }
-
     }
 }
