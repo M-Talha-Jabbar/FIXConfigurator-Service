@@ -423,6 +423,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             if (IsSendMessage)
                             {
                                 observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
+                                bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
+                                if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message"); 
                                 Task.Run(() =>
                                 {
                                     FixMessageLog.FixMessageLogger(_key, fixEngine, fixMessage);
@@ -447,6 +449,23 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 }
             }
+        }
+
+        public bool StoreRealTimeFixMessage(FIXEngine fixEngine, FIXMessage fixMessage, string _key) {
+
+            FIXSession fixSession = null;
+
+            var engine = fixEngines.FirstOrDefault(x => x.engineName == fixEngine.engineName);
+
+            if (engine != null) fixSession = engine.fixSessions.FirstOrDefault(s => s.ConnectionID == _key);
+
+            if (fixSession != null) {
+                fixSession.FixMessages.Add(fixMessage);
+                return true;
+            }
+
+            return false;
+           
         }
 
         public void LoadFIXSessions()
