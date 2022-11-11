@@ -259,6 +259,8 @@
     <Compile Include="Data\AspNetUserTokens.cs" />
     <Compile Include="Data\FIXMonitorContext.cs" />
     <Compile Include="Data\Sessions.cs" />
+    <Compile Include="FileStreamExport.cs" />
+    <Compile Include="FixMessageLog.cs" />
     <Compile Include="FIXMonitorDataCache.cs" />
     <Compile Include="FIXMonitorDataCacheWrapper.cs" />
     <Compile Include="DataModels\Account.cs" />
@@ -304,7 +306,6 @@
       <Name>RedisCacheService</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

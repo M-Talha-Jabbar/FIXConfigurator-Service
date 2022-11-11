@@ -196,6 +196,11 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return emailHandler.DeleteSessionAlertConfiguration(SessionId);
         }
+
+        public Stream GetFixMessageLogFileStream(string sessionId, string engineName)
+        {
+            return FileStreamExport.fsExport(FixMessageLog.GetFixMessageLogFilePath(sessionId, engineName));
+        }
     }
 
 }

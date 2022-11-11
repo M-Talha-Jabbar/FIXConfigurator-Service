@@ -23,6 +23,7 @@ using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.Notifier;
 using System.Collections.Concurrent;
 using FIXMonitorBusinessLogicLayer.Converter;
+using FIXMonitorBusinessLogicLayer;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -55,6 +56,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         //private EmailHandler emailHandler;
 
         private EmailNotifier emailNotifier;
+
 
         public FixHandler()
         {
@@ -407,18 +409,26 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             //{
                             //    body = Body.Default;
                             //}
+
+                            
+
                             FIXMessage fixMessage = body;
                             var _key = body.ConnectionID;
+
+
                             //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.redisIpAddress && x.port == fixEngine.redisIpPort);
                             //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
+
+                           
                             if (IsSendMessage)
                             {
                                 observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
-
                                 if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message"); 
-
-
+                                Task.Run(() =>
+                                {
+                                    FixMessageLog.FixMessageLogger(_key, fixEngine, fixMessage);
+                                });
                             }
                             else
                             {
