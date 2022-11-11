@@ -13,21 +13,19 @@ using System.Reactive.Subjects;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
-    public static class SocketHandler
+    public class SocketHandler
     {
-        static string ipAddress = System.Configuration.ConfigurationManager.AppSettings["fixHubServerIP"].ToString();
-        static int port = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["fixHubServerPort"].ToString());
-        static int heartbeat = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["heartbeatIntervalForFixHub"].ToString());
-        static int waitBeforeConnecting = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["waitBeforeConnecting"].ToString());
-        static Socket _socket;
-        private static bool isConnected = false;
-        static IPEndPoint IPEndPoint;
-        static Thread t;
+         static int heartbeat = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["heartbeatIntervalForFixHub"].ToString());
+         static int waitBeforeConnecting = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["waitBeforeConnecting"].ToString());
+         Socket _socket;
+         private bool isConnected = false;
+         IPEndPoint IPEndPoint;
+         Thread t;
 
-        public static BehaviorSubject<bool> subject;
+         public BehaviorSubject<bool> subject;
 
-        static SocketHandler()
-        {
+       public SocketHandler(string ipAddress, int port)
+       {
             IPEndPoint = new IPEndPoint(IPAddress.Parse(ipAddress), port);
             subject = new BehaviorSubject<bool>(true);
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -36,16 +34,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             _socket.BeginConnect(IPEndPoint, SocketConnectCallback, _socket);
         }
 
-        private static void SocketConnectCallback(IAsyncResult ar)
+        private void SocketConnectCallback(IAsyncResult ar)
         {
             Logging.LogMessage(LOGTYPE.Info, "Inside Connection Callback.");
             try
             {
-                var _socket = (Socket)ar.AsyncState;
-                _socket.EndConnect(ar);
-                if (_socket.Connected)
+                var socket = (Socket)ar.AsyncState;
+                socket.EndConnect(ar);
+                if (socket.Connected)
                 {
-                    SocketHandler._socket = _socket;
+                    _socket = socket;
                     Logging.LogMessage(LOGTYPE.Info, "Socket Successfully Connected.");
                     //isConnected = true;
                     //subject.OnNext(true);
@@ -54,7 +52,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     t.Start();
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 isConnected = false;
                 subject.OnNext(isConnected);
@@ -63,7 +61,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private static void Reconnect()
+        private void Reconnect()
         {
             try
             {
@@ -83,7 +81,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private static void IsConnected(this Socket s)
+        private void IsConnected(Socket s)
         {
             while (true)
             {
@@ -105,7 +103,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        public static IObservable<bool> GetStatus()
+        public IObservable<bool> GetStatus()
         {
             return subject;
         }
