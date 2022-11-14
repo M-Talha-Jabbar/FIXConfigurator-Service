@@ -259,6 +259,8 @@
     <Compile Include="Data\AspNetUserTokens.cs" />
     <Compile Include="Data\FIXMonitorContext.cs" />
     <Compile Include="Data\Sessions.cs" />
+    <Compile Include="FixEngineSocket.cs" />
+    <!-- <Compile Include="FixMessageDirectory.cs" /> -->
     <Compile Include="FIXMonitorDataCache.cs" />
     <Compile Include="FIXMonitorDataCacheWrapper.cs" />
     <Compile Include="DataModels\Account.cs" />
