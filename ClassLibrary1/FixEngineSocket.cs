@@ -15,6 +15,7 @@ namespace FIXMonitorBusinessLogicLayer
         // store and instantiate socket handler so it begins socket in constructor call
 
         readonly ConcurrentDictionary<string, SocketHandler> FixEngineSockets = new ConcurrentDictionary<string, SocketHandler>();
+        private static FixEngineSocket fixEngineSocket = new FixEngineSocket();
 
         private FixEngineSocket() { }
 
@@ -36,7 +37,7 @@ namespace FIXMonitorBusinessLogicLayer
         }
 
         public static FixEngineSocket GetSingletonInstance() {
-            return new FixEngineSocket();
+            return fixEngineSocket;
         }
 
         public SocketHandler GetFixEngineSocket(FIXEngine fixEngine) {
