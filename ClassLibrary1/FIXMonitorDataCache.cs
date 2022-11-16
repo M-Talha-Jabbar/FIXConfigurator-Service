@@ -201,6 +201,10 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return FileStreamExport.fsExport(FixMessageLog.GetFixMessageLogFilePath(sessionId, engineName));
         }
+
+        public FIXEngine GetFixEngine(string engineID) { 
+            return fixHandler.GetFixEngine(engineID);
+        }
     }
 
 }
