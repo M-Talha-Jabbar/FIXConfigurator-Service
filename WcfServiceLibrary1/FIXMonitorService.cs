@@ -16,7 +16,7 @@ namespace FIXMonitorService
         static IFIXMonitorServiceCallback callback;
 
         readonly private static FIXMonitorService service = new FIXMonitorService();
-        
+
         private FIXMonitorService()
         {
         }
@@ -130,7 +130,7 @@ namespace FIXMonitorService
                 callback.SendFixMessagesToClient(fixMessage, engineID, sessionID);
             }
         }
-        
+
         public void SendFixSessionToClient(FIXSession fixSession, string engineID, string commandType)
         {
             if (((IChannel)callback).State == CommunicationState.Opened)
@@ -187,6 +187,11 @@ namespace FIXMonitorService
         public Stream GetFixMessageLogFileStream(string sessionId, string engineName)
         {
             return this.DataCache.GetFixMessageLogFileStream(sessionId, engineName);
+        }
+
+        public FIXEngine GetFixEngine(string engineID)
+        {
+            return this.DataCache.GetFixEngine(engineID);
         }
     }
 }

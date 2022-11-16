@@ -79,6 +79,9 @@ namespace FIXMonitorService
 
         [OperationContract]
         Stream GetFixMessageLogFileStream(string sessionId, string engineName);
+        
+        [OperationContract]
+        FIXEngine GetFixEngine(string engineID);
 
         // TODO: Add your service operations here
     }

@@ -653,6 +653,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return fixEngines;
         }
 
+        public FIXEngine GetFixEngine(string engineID) {
+
+           return fixEngines.Contains(engineID) ? fixEngines[engineID] : null;
+        }
+
         public FIXEngine ConnectToFixEngine(FIXEngine fixEngine)
         {
             //Request to connect
