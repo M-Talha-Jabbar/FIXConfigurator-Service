@@ -1,6 +1,7 @@
 ﻿using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.Serialization;
 using System.ServiceModel;
 
@@ -75,6 +76,9 @@ namespace FIXMonitorService
 
         [OperationContract]
         bool DeleteSessionAlertConfiguration(string SessionId);
+
+        [OperationContract]
+        Stream GetFixMessageLogFileStream(string sessionId, string engineName);
 
         // TODO: Add your service operations here
     }
