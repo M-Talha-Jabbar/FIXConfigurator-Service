@@ -51,13 +51,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private Dictionary<string, List<FIXMessage>> sessionFixMessages;
 
-        private FixEngineMomento engineMomento;
+        private ConcurrentDictionary<string, FixEngineMomento> fixEngineMomentos;
 
         //private EmailHandler emailHandler;
 
         private EmailNotifier emailNotifier;
-
-
+        
+        private FixEngineSocket fixEngineSocket;
+        
         public FixHandler()
         {
             Initializers();
@@ -71,10 +72,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             //------------------------------------------------------------------------------
             /* HACK : FixHub Status */
-            IObservable<bool> data = SocketHandler.GetStatus();
-            data.Subscribe(updates => {
-                    UpdateSessionStatus(updates); //TODO: Use Engine IP instead of configured ip
-            });
+           
             //------------------------------------------------------------------------------
             LoadFIXEnginesAndSessions();
 
@@ -129,13 +127,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, long>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
+            fixEngineSocket = FixEngineSocket.GetSingletonInstance();
+            fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
             GenerateDictionary(fixMsgTypes, msgTypes);
 
             string[] fixTags = File.ReadAllLines("fixTagValuePair.csv");
             GenerateDictionary(fixTagValues, fixTags);
-
-            engineMomento = new FixEngineMomento();
 
             //emailHandler = new EmailHandler();
 
@@ -165,6 +163,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     string key = engine[0].Value;
                     var engine_data = client.HashGetAll(key);
                     FIXEngine FIXEngine = CreateFixEngine(db, engine_data);
+
+                    // creating sockets for already present engines present in config files and redis both after engine is created in memory
+                    FixEngineSocketHandler(FIXEngine);
+
                     ReadAllExistingFixMessages(client, FIXEngine);
 
                     GetSessionsForEngine(muxer, db, client, FIXEngine);
@@ -173,6 +175,23 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
             }
             //fixEngines.Add(new FIXEngine() { engineID = "ATS_FIX", engineName = "ATS_FIX", ipAddress = "192.168.0.1", port = 4044 });
+        }
+
+        public void SubscribeFixEngineSocketUpdate(FIXEngine fixEngine) {
+
+            SocketHandler socketHandler = fixEngineSocket.GetFixEngineSocket(fixEngine);
+
+            IObservable<bool> data = socketHandler.GetStatus();
+            data.Subscribe(updates =>
+            {
+                UpdateSessionStatus(updates, fixEngine); //TODO: Use Engine IP instead of configured ip
+            });
+        }
+
+        public void FixEngineSocketHandler(FIXEngine fixEngine) {
+            // creating socket handler object 
+            fixEngineSocket.AddFixEngineSocket(fixEngine);
+            SubscribeFixEngineSocketUpdate(fixEngine);
         }
 
         private void ReadAllExistingFixMessages(IDatabase client, FIXEngine FIXEngine)
@@ -652,6 +671,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             try
             {
                 muxer = RedisConnectorHelper.GetConnection($"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort}");
+
+                // It will create socket connection when new engine is added from client side
+
+                // creating socket right after it creates redis connection
+
+                FixEngineSocketHandler(fixEngine);
             }
             catch (Exception e)
             {
@@ -673,10 +698,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             if (!fixEnginesDB.ContainsKey(key))
             {
                 fixEnginesDB.Add(key, db);
-                StreamWriter sw = new StreamWriter("redisConfigAndDB.txt", true);
-                sw.WriteLine($"{fixEngine.redisIpAddress}:{db}");
-                sw.Flush();
-                sw.Close();
+                PersistFixEngineConfig(fixEngine, "redisConfigAndDB.txt");
             }
             else
             {
@@ -723,6 +745,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 LogException(e);
             }
             return fixEngine;
+        }
+
+        private void PersistFixEngineConfig(FIXEngine fixEngine, string filepath) {
+            StreamWriter sw = new StreamWriter(filepath, true);
+            sw.WriteLine($"{fixEngine.redisIpAddress}:{fixEngine.redisDB}");
+            sw.Flush();
+            sw.Close();
         }
 
         private void SubscribeAndFaliureCallback(FIXEngine fixEngine, ConnectionMultiplexer muxer, string CacheKeyEvent)
@@ -1003,13 +1032,26 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             streamLastReadTimeStamps[engineName] = long.Parse(lastTimeStamp);
         }
 
-        private void UpdateSessionStatus(bool isConnected)
+        private void UpdateSessionStatus(bool isConnected, FIXEngine fixEngine)
         {
             try
             {
                 if (!isConnected)
                 {
-                    engineMomento.SetState(fixEngines);
+                    // creating multiple engineMomento object
+
+                    if (!fixEngineMomentos.ContainsKey(fixEngine.engineID)) fixEngineMomentos.TryAdd(fixEngine.engineID, new FixEngineMomento());
+
+                    FixEngineMomento engineMomento;
+                    var isEngineMomentoExists = fixEngineMomentos.TryGetValue(fixEngine.engineID, out engineMomento);
+
+
+                    if (isEngineMomentoExists) {
+                        engineMomento.SetState(fixEngine);
+                    } else {
+                        Logging.LogMessage(LOGTYPE.Error, "Could not get engine Momento object");
+                    }
+                       
 
 
                     //if (isConnected)
@@ -1019,15 +1061,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     //    fixEngines = _state;
                     //}
 
-                    foreach (var engine in fixEngines)
-                    {
-                        foreach (var session in engine.fixSessions)
+                    // only sending updates to individual fix engine
+
+                        foreach (var session in fixEngine.fixSessions)
                         {
                             if (!isConnected)
                                 session.Status = "UNAVAILABLE";
-                            SendFixSessionUpdates(session, engine.engineID, "update");
+                            SendFixSessionUpdates(session, fixEngine.engineID, "update");
                         }
-                    }
                 }
             }
             catch (Exception e)

@@ -14,6 +14,9 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
         public string redisIpAddress { get; set; }
         public string redisIpPort { get; set; }
         public int redisDB { get; set; }
+        public string FIXEngineIpAddress { get; set; }
+        public int FIXEngineIpPort { get; set; }
+
         public FixSessionKeyedCollection fixSessions { get; set; } = new FixSessionKeyedCollection();
 
         public static implicit operator FIXEngine(proto.Engine engine)
@@ -25,7 +28,9 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
                 redisIpAddress = engine.redisIpAddress,
                 redisIpPort = engine.redisIpPort,
                 redisDB = (int)engine.redisDB,
-                fixSessions = new FixSessionKeyedCollection()
+                fixSessions = new FixSessionKeyedCollection(),
+                FIXEngineIpAddress = engine.FIXEngineIpAddress,
+                FIXEngineIpPort = int.Parse(engine.FIXEngineIpPort)
             };
         }
 
@@ -37,7 +42,9 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
                 engineName = engine.engineName,
                 redisIpAddress = engine.redisIpAddress,
                 redisIpPort = engine.redisIpPort,
-                redisDB = (ulong)engine.redisDB
+                redisDB = (ulong)engine.redisDB,
+                FIXEngineIpAddress = engine.FIXEngineIpAddress,
+                FIXEngineIpPort = engine.FIXEngineIpPort.ToString()
             };
         }
 

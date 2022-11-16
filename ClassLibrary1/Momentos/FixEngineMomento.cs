@@ -1,4 +1,5 @@
-﻿using FIXMonitorBusinessLogicLayer.KeyedCollections;
+﻿using FIXMonitorBusinessLogicLayer.DataModels;
+using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,13 +10,13 @@ namespace FIXMonitorBusinessLogicLayer.Momentos
 {
     public class FixEngineMomento
     {
-        private FixEnginesKeyedCollection state;
-        public void SetState(FixEnginesKeyedCollection _state)
+        private FIXEngine state;
+        public void SetState(FIXEngine _state)
         {
             state = _state;
 
         }
-        public FixEnginesKeyedCollection GetState()
+        public FIXEngine GetState()
         {
             return state;
         }
