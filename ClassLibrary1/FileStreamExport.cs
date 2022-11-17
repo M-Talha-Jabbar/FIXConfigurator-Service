@@ -18,8 +18,8 @@ namespace FIXMonitorBusinessLogicLayer
             {
                 return null;
             }
-
-            FileStream fs = null;
+          
+            FileStream fs;
 
             lock (FixMessageLog.GetLockObj(filePath))
             {

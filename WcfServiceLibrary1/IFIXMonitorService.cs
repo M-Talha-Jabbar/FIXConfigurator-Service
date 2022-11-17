@@ -79,7 +79,10 @@ namespace FIXMonitorService
 
         [OperationContract]
         Stream GetFixMessageLogFileStream(string sessionId, string engineName);
-        
+
+        [OperationContract]
+        bool FileExists(string sessionId, string engineName);
+
         [OperationContract]
         FIXEngine GetFixEngine(string engineID);
 
