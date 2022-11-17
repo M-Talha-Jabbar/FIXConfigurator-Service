@@ -184,9 +184,15 @@ namespace FIXMonitorService
             return this.DataCache.DeleteSessionAlertConfiguration(SessionId);
         }
 
+   
         public Stream GetFixMessageLogFileStream(string sessionId, string engineName)
         {
             return this.DataCache.GetFixMessageLogFileStream(sessionId, engineName);
+        }
+
+        public bool FileExists(string sessionId, string engineName) 
+        {
+            return this.DataCache.FileExists(sessionId, engineName);
         }
 
         public FIXEngine GetFixEngine(string engineID)
