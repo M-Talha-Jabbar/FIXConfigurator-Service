@@ -124,13 +124,12 @@ namespace FIXMonitorBusinessLogicLayer
             if (!isFileExist)
             {
                 filePath = LogFilePathCreator(LogFileNameCreator(sessionId, engineName));
-                if (File.Exists(filePath))
+                if (!File.Exists(filePath))
                 {
-                    CreatedFiles.TryAdd($"{engineName}-{sessionId}", filePath);
-                }
-                else {
                     return null;
                 }
+
+                CreatedFiles.TryAdd($"{engineName}-{sessionId}", filePath);
             }
             
             return filePath;
