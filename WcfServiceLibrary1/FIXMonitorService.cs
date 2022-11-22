@@ -184,7 +184,21 @@ namespace FIXMonitorService
             return this.DataCache.DeleteSessionAlertConfiguration(SessionId);
         }
 
-   
+        public List<FIXMessageRejects> GetAllFixMessageRejects()
+        {
+            return this.DataCache.GetAllFixMessageRejects();
+        }
+
+        public bool AddFixMessageReject(FIXMessageRejects fixMessageRejects)
+        {
+            return this.DataCache.AddFixMessageReject(fixMessageRejects);
+        }
+
+        public bool DeleteFixMessageReject(string FixTag, string FixValue)
+        {
+            return this.DataCache.DeleteFixMessageReject(FixTag, FixValue);
+        }
+
         public Stream GetFixMessageLogFileStream(string sessionId, string engineName)
         {
             return this.DataCache.GetFixMessageLogFileStream(sessionId, engineName);

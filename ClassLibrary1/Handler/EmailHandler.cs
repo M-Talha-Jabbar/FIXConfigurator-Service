@@ -215,5 +215,83 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             return false;
         }
+
+        public List<FIXMessageRejects> GetAllFixMessageRejects()
+        {
+            using(var context = new FIXMonitorContext())
+            {
+                List<FIXMessageRejects> allRejects = null;
+
+                var res = context.FixmessageRejects.ToList();
+
+                if (res.Count > 0)
+                {
+                    allRejects = res.Select(reject => new FIXMessageRejects()
+                    {
+                        FixTag = reject.FixTag,
+                        FixValue = reject.FixValue,
+                        ToEmails = reject.ToEmails,
+                        CcEmails = reject.CcEmails,
+                        EmailStatus = reject.EmailStatus,
+                        Subject = reject.Subject,
+                        Body = reject.Body
+                    }).ToList();
+
+                    return allRejects;
+                }
+
+                return allRejects;
+            }
+        }
+
+        public bool AddFixMessageReject(FIXMessageRejects fixMessageRejects)
+        {
+            if(fixMessageRejects != null)
+            {
+                var rejectConfiguration = new FixmessageRejects()
+                {
+                    FixTag = fixMessageRejects.FixTag,
+                    FixValue = fixMessageRejects.FixValue,
+                    ToEmails = fixMessageRejects.ToEmails,
+                    CcEmails = fixMessageRejects.CcEmails,
+                    EmailStatus = fixMessageRejects.EmailStatus,
+                    Subject = fixMessageRejects.Subject,
+                    Body = fixMessageRejects.Body
+                };
+
+                using(var context = new FIXMonitorContext())
+                {
+                    context.FixmessageRejects.Add(rejectConfiguration);
+                    context.SaveChanges();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeleteFixMessageReject(string FixTag, string FixValue)
+        {
+            if(!string.IsNullOrEmpty(FixTag) && !string.IsNullOrEmpty(FixValue))
+            {
+                using(var context = new FIXMonitorContext())
+                {
+                    var reject = context.FixmessageRejects.FirstOrDefault(r => r.FixTag.Equals(FixTag) && r.FixValue.Equals(FixValue));
+
+                    if(reject != null)
+                    {
+                        context.FixmessageRejects.Remove(reject);
+                        context.SaveChanges();
+
+                        return true;
+                    }
+
+                    return false;
+                }
+            }
+
+            return false;
+        }
     }
 }

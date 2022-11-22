@@ -197,6 +197,21 @@ namespace FIXMonitorBusinessLogicLayer
             return emailHandler.DeleteSessionAlertConfiguration(SessionId);
         }
 
+        public List<FIXMessageRejects> GetAllFixMessageRejects()
+        {
+            return emailHandler.GetAllFixMessageRejects();
+        }
+
+        public bool AddFixMessageReject(FIXMessageRejects fixMessageRejects)
+        {
+            return emailHandler.AddFixMessageReject(fixMessageRejects);
+        }
+
+        public bool DeleteFixMessageReject(string FixTag, string FixValue)
+        {
+            return emailHandler.DeleteFixMessageReject(FixTag, FixValue);
+        }
+
         public bool FileExists(string sessionId, string engineName)
         {
             return FixMessageLog.GetFixMessageLogFilePath(sessionId, engineName) == null ? false : true;

@@ -873,7 +873,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             observable.SendFixMessageUpdate(fixMessage, engineID, sessionID);
         }
 
-
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)
         {
             return fixEngines[FixEngineID].fixSessions;

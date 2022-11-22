@@ -26,6 +26,7 @@ namespace FIXMonitorBusinessLogicLayer.Data
         public virtual DbSet<AspNetUserRoles> AspNetUserRoles { get; set; }
         public virtual DbSet<AspNetUserTokens> AspNetUserTokens { get; set; }
         public virtual DbSet<AspNetUsers> AspNetUsers { get; set; }
+        public virtual DbSet<FixmessageRejects> FixmessageRejects { get; set; }
         public virtual DbSet<Sessions> Sessions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -130,6 +131,11 @@ namespace FIXMonitorBusinessLogicLayer.Data
                 entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
 
                 entity.Property(e => e.UserName).HasMaxLength(256);
+            });
+
+            modelBuilder.Entity<FixmessageRejects>(entity =>
+            {
+                entity.ToTable("FIXMessageRejects");
             });
 
             modelBuilder.Entity<Sessions>(entity =>
