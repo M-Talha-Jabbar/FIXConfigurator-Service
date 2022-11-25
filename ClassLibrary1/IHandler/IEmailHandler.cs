@@ -20,6 +20,6 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         bool DeleteSessionAlertConfiguration(string SessionId);
         List<FIXMessageRejects> GetAllFixMessageRejects();
         bool AddFixMessageReject(FIXMessageRejects fixmessageRejects);
-        bool DeleteFixMessageReject(string FixTag, string FixValue);
+        bool DeleteFixMessageReject(int id);
     }
 }

@@ -194,9 +194,9 @@ namespace FIXMonitorService
             return this.DataCache.AddFixMessageReject(fixMessageRejects);
         }
 
-        public bool DeleteFixMessageReject(string FixTag, string FixValue)
+        public bool DeleteFixMessageReject(int id)
         {
-            return this.DataCache.DeleteFixMessageReject(FixTag, FixValue);
+            return this.DataCache.DeleteFixMessageReject(id);
         }
 
         public Stream GetFixMessageLogFileStream(string sessionId, string engineName)

@@ -207,9 +207,9 @@ namespace FIXMonitorBusinessLogicLayer
             return emailHandler.AddFixMessageReject(fixMessageRejects);
         }
 
-        public bool DeleteFixMessageReject(string FixTag, string FixValue)
+        public bool DeleteFixMessageReject(int id)
         {
-            return emailHandler.DeleteFixMessageReject(FixTag, FixValue);
+            return emailHandler.DeleteFixMessageReject(id);
         }
 
         public bool FileExists(string sessionId, string engineName)

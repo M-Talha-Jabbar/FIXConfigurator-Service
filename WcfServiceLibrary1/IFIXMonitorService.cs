@@ -84,7 +84,7 @@ namespace FIXMonitorService
         bool AddFixMessageReject(FIXMessageRejects fixMessageRejects);
 
         [OperationContract]
-        bool DeleteFixMessageReject(string FixTag, string FixValue);
+        bool DeleteFixMessageReject(int id);
 
         [OperationContract]
         Stream GetFixMessageLogFileStream(string sessionId, string engineName);

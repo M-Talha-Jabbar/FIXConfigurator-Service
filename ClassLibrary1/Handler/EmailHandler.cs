@@ -255,6 +255,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     allRejects = res.Select(reject => new FIXMessageRejects()
                     {
+                        Id = reject.Id,
                         FixTag = reject.FixTag,
                         FixValue = reject.FixValue,
                         ToEmails = reject.ToEmails,
@@ -300,29 +301,24 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return false;
         }
 
-        public bool DeleteFixMessageReject(string FixTag, string FixValue)
+        public bool DeleteFixMessageReject(int id)
         {
-            if(!string.IsNullOrEmpty(FixTag) && !string.IsNullOrEmpty(FixValue))
+            using (var context = new FIXMonitorContext())
             {
-                using(var context = new FIXMonitorContext())
+                var reject = context.FixmessageRejects.FirstOrDefault(r => r.Id == id);
+
+                if(reject != null)
                 {
-                    var reject = context.FixmessageRejects.FirstOrDefault(r => r.FixTag.Equals(FixTag) && r.FixValue.Equals(FixValue));
+                    EmailNotifier.FixmsgRejects.Remove(reject);
 
-                    if(reject != null)
-                    {
-                        EmailNotifier.FixmsgRejects.Remove(reject);
+                    context.FixmessageRejects.Remove(reject);
+                    context.SaveChanges();
 
-                        context.FixmessageRejects.Remove(reject);
-                        context.SaveChanges();
-
-                        return true;
-                    }
-
-                    return false;
+                    return true;
                 }
-            }
 
-            return false;
+                return false;
+            }
         }
     }
 }
