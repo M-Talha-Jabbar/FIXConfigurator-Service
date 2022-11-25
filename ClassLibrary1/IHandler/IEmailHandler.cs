@@ -1,5 +1,6 @@
 ﻿using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.DataModels;
+using GEmail;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,7 +11,9 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
 {
     public interface IEmailHandler
     {
+        void DispatchEmail(EmailData emailData);
         void SendEmail(string sessionId, string status, Sessions sessionInfo);
+        void SendEmail(string sessionId, FixmessageRejects fixmessageRejects);
         SessionEmails GetSessionAlertConfiguration(string SessionId);
         bool AddSessionAlertConfiguration(SessionEmails sessionEmails);
         bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails);

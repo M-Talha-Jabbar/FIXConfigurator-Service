@@ -32,6 +32,15 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             //GEmailUtil.ConfigureMail();
         }
 
+        public void DispatchEmail(EmailData emailData)
+        {
+            Thread thread = new Thread(() =>
+            {
+                GEmailUtil.SendEmail(emailData);
+            });
+            thread.Start();
+        }
+
         public void SendEmail(string sessionId, string status, Sessions sessionInfo)
         {
             EmailData emailData = new EmailData();
@@ -51,11 +60,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 emailData.Body = string.IsNullOrEmpty(sessionInfo.Body) ? $"Session {sessionId} status changed to {status} -> {Environment} Environment" : Regex.Replace(Regex.Replace(sessionInfo.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{status}", status, RegexOptions.IgnoreCase);
             }
 
-            Thread thread = new Thread(() =>
-            {
-                GEmailUtil.SendEmail(emailData);
-            });
-            thread.Start();
+            DispatchEmail(emailData);
 
             //emailData.EmailSubject = $"Session {sessionId} status changed";
             //emailData.EmailBody = $"Session {sessionId} status changed to {status} -> {Environment} Environment";
@@ -70,6 +75,28 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             //SendEmail
             //emailService.SendEmailAsync(emailData);
+        }
+
+        public void SendEmail(string sessionId, FixmessageRejects fixmessageRejects)
+        {
+            EmailData emailData = new EmailData();
+
+            if (string.IsNullOrEmpty(fixmessageRejects.ToEmails))
+            {
+                emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
+                emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
+                emailData.Subject = $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue})";
+                emailData.Body = $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue}) -> {Environment} Environment";
+            }
+            else
+            {
+                emailData.CommaSeperatedToEmails = fixmessageRejects.ToEmails;
+                emailData.CommaSeperatedCCEmails = fixmessageRejects.CcEmails;
+                emailData.Subject = string.IsNullOrEmpty(fixmessageRejects.Subject) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue})" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
+                emailData.Body = string.IsNullOrEmpty(fixmessageRejects.Body) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
+            }
+
+            DispatchEmail(emailData);
         }
 
         public SessionEmails GetSessionAlertConfiguration(string SessionId)
@@ -259,6 +286,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     Body = fixMessageRejects.Body
                 };
 
+                EmailNotifier.FixmsgRejects.Add(rejectConfiguration);
+
                 using(var context = new FIXMonitorContext())
                 {
                     context.FixmessageRejects.Add(rejectConfiguration);
@@ -281,6 +310,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     if(reject != null)
                     {
+                        EmailNotifier.FixmsgRejects.Remove(reject);
+
                         context.FixmessageRejects.Remove(reject);
                         context.SaveChanges();
 

@@ -17,9 +17,11 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         private string status;
         private Sessions sessionInfo;
         private FIXSession FIXSession;
+        private FixmessageRejects fixmessageRejects; 
 
         public static Dictionary<string, Timer> emailTimer = new Dictionary<string, Timer>();
         public static Dictionary<string, int> recurringEmailsCount = new Dictionary<string, int>();
+        public static List<FixmessageRejects> FixmsgRejects = new List<FixmessageRejects>();
 
         public EmailNotifier(string conId, string status, Sessions sessionInfo) 
         {
@@ -57,6 +59,12 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             timer.Start();
         }
 
+        public EmailNotifier(string conId, FixmessageRejects fixmessageRejects)
+        {
+            this.conId = conId;
+            this.fixmessageRejects = fixmessageRejects;
+        }
+
         private void OnEventExecution(Object sender, ElapsedEventArgs eventArgs)
         {
             SendEmail();
@@ -79,6 +87,12 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         public EmailNotifier SendEmail()
         {
             emailHandler.SendEmail(conId, status, sessionInfo);
+            return this;
+        }
+
+        public EmailNotifier SendEmailForFIXMessageReject()
+        {
+            emailHandler.SendEmail(conId, fixmessageRejects);
             return this;
         }
 
