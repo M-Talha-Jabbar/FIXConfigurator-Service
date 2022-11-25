@@ -78,6 +78,15 @@ namespace FIXMonitorService
         bool DeleteSessionAlertConfiguration(string SessionId);
 
         [OperationContract]
+        List<FIXMessageRejects> GetAllFixMessageRejects();
+
+        [OperationContract]
+        bool AddFixMessageReject(FIXMessageRejects fixMessageRejects);
+
+        [OperationContract]
+        bool DeleteFixMessageReject(int id);
+
+        [OperationContract]
         Stream GetFixMessageLogFileStream(string sessionId, string engineName);
 
         [OperationContract]

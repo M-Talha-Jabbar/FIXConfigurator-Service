@@ -32,6 +32,15 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             //GEmailUtil.ConfigureMail();
         }
 
+        public void DispatchEmail(EmailData emailData)
+        {
+            Thread thread = new Thread(() =>
+            {
+                GEmailUtil.SendEmail(emailData);
+            });
+            thread.Start();
+        }
+
         public void SendEmail(string sessionId, string status, Sessions sessionInfo)
         {
             EmailData emailData = new EmailData();
@@ -51,11 +60,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 emailData.Body = string.IsNullOrEmpty(sessionInfo.Body) ? $"Session {sessionId} status changed to {status} -> {Environment} Environment" : Regex.Replace(Regex.Replace(sessionInfo.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{status}", status, RegexOptions.IgnoreCase);
             }
 
-            Thread thread = new Thread(() =>
-            {
-                GEmailUtil.SendEmail(emailData);
-            });
-            thread.Start();
+            DispatchEmail(emailData);
 
             //emailData.EmailSubject = $"Session {sessionId} status changed";
             //emailData.EmailBody = $"Session {sessionId} status changed to {status} -> {Environment} Environment";
@@ -70,6 +75,28 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             //SendEmail
             //emailService.SendEmailAsync(emailData);
+        }
+
+        public void SendEmail(string sessionId, FixmessageRejects fixmessageRejects)
+        {
+            EmailData emailData = new EmailData();
+
+            if (string.IsNullOrEmpty(fixmessageRejects.ToEmails))
+            {
+                emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
+                emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
+                emailData.Subject = $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue})";
+                emailData.Body = $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue}) -> {Environment} Environment";
+            }
+            else
+            {
+                emailData.CommaSeperatedToEmails = fixmessageRejects.ToEmails;
+                emailData.CommaSeperatedCCEmails = fixmessageRejects.CcEmails;
+                emailData.Subject = string.IsNullOrEmpty(fixmessageRejects.Subject) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue})" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
+                emailData.Body = string.IsNullOrEmpty(fixmessageRejects.Body) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
+            }
+
+            DispatchEmail(emailData);
         }
 
         public SessionEmails GetSessionAlertConfiguration(string SessionId)
@@ -214,6 +241,84 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
 
             return false;
+        }
+
+        public List<FIXMessageRejects> GetAllFixMessageRejects()
+        {
+            using(var context = new FIXMonitorContext())
+            {
+                List<FIXMessageRejects> allRejects = null;
+
+                var res = context.FixmessageRejects.ToList();
+
+                if (res.Count > 0)
+                {
+                    allRejects = res.Select(reject => new FIXMessageRejects()
+                    {
+                        Id = reject.Id,
+                        FixTag = reject.FixTag,
+                        FixValue = reject.FixValue,
+                        ToEmails = reject.ToEmails,
+                        CcEmails = reject.CcEmails,
+                        EmailStatus = reject.EmailStatus,
+                        Subject = reject.Subject,
+                        Body = reject.Body
+                    }).ToList();
+
+                    return allRejects;
+                }
+
+                return allRejects;
+            }
+        }
+
+        public bool AddFixMessageReject(FIXMessageRejects fixMessageRejects)
+        {
+            if(fixMessageRejects != null)
+            {
+                var rejectConfiguration = new FixmessageRejects()
+                {
+                    FixTag = fixMessageRejects.FixTag,
+                    FixValue = fixMessageRejects.FixValue,
+                    ToEmails = fixMessageRejects.ToEmails,
+                    CcEmails = fixMessageRejects.CcEmails,
+                    EmailStatus = fixMessageRejects.EmailStatus,
+                    Subject = fixMessageRejects.Subject,
+                    Body = fixMessageRejects.Body
+                };
+
+                EmailNotifier.FixmsgRejects.Add(rejectConfiguration);
+
+                using(var context = new FIXMonitorContext())
+                {
+                    context.FixmessageRejects.Add(rejectConfiguration);
+                    context.SaveChanges();
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        public bool DeleteFixMessageReject(int id)
+        {
+            using (var context = new FIXMonitorContext())
+            {
+                var reject = context.FixmessageRejects.FirstOrDefault(r => r.Id == id);
+
+                if(reject != null)
+                {
+                    EmailNotifier.FixmsgRejects.Remove(reject);
+
+                    context.FixmessageRejects.Remove(reject);
+                    context.SaveChanges();
+
+                    return true;
+                }
+
+                return false;
+            }
         }
     }
 }

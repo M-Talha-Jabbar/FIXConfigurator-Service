@@ -53,8 +53,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private ConcurrentDictionary<string, FixEngineMomento> fixEngineMomentos;
 
-        //private EmailHandler emailHandler;
-
         private EmailNotifier emailNotifier;
         
         private FixEngineSocket fixEngineSocket;
@@ -129,14 +127,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
             fixEngineSocket = FixEngineSocket.GetSingletonInstance();
             fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
+
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
             GenerateDictionary(fixMsgTypes, msgTypes);
 
             string[] fixTags = File.ReadAllLines("fixTagValuePair.csv");
             GenerateDictionary(fixTagValues, fixTags);
 
-            //emailHandler = new EmailHandler();
-
+            LoadFIXMessageRejects();
         }
 
         public void LoadFIXEngines() { }
@@ -175,6 +173,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
             }
             //fixEngines.Add(new FIXEngine() { engineID = "ATS_FIX", engineName = "ATS_FIX", ipAddress = "192.168.0.1", port = 4044 });
+        }
+
+        public void LoadFIXMessageRejects()
+        {
+            using(var context = new FIXMonitorContext())
+            {
+                var FixmessageRejects = context.FixmessageRejects.ToList();
+
+                EmailNotifier.FixmsgRejects = FixmessageRejects;
+            }
         }
 
         public void SubscribeFixEngineSocketUpdate(FIXEngine fixEngine) {
@@ -441,7 +449,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                            
                             if (IsSendMessage)
                             {
-                                observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
+                                //observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
+                                SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
                                 if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message"); 
                                 Task.Run(() =>
@@ -871,8 +880,22 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         public void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID)
         {
             observable.SendFixMessageUpdate(fixMessage, engineID, sessionID);
+            Task.Run(() =>
+            {
+                CheckForMessageRejects(sessionID, fixMessage);
+            });
         }
 
+        public void CheckForMessageRejects(string sessionID, FIXMessage fixMessage)
+        {
+            foreach(var desc in fixMessage.keyValuePair)
+            {
+                var res = EmailNotifier.FixmsgRejects.FirstOrDefault(f => f.FixTag.Equals(desc.Item1) && f.FixValue.Equals(desc.Item3));
+
+                if(res != null && res.EmailStatus)
+                    emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
+            }
+        }
 
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)
         {

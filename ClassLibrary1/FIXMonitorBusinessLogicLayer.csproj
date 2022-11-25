@@ -249,6 +249,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Converter\TimeConverter.cs" />
+    <Compile Include="DataModels\FIXMessageRejects.cs" />
     <Compile Include="DataModels\SessionEmails.cs" />
     <Compile Include="Data\AspNetRoleClaims.cs" />
     <Compile Include="Data\AspNetRoles.cs" />
@@ -257,6 +258,7 @@
     <Compile Include="Data\AspNetUserRoles.cs" />
     <Compile Include="Data\AspNetUsers.cs" />
     <Compile Include="Data\AspNetUserTokens.cs" />
+    <Compile Include="Data\FixmessageRejects.cs" />
     <Compile Include="Data\FIXMonitorContext.cs" />
     <Compile Include="Data\Sessions.cs" />
     <Compile Include="FixEngineSocket.cs" />
