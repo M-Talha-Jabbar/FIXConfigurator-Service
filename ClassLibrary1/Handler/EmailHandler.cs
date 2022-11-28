@@ -247,7 +247,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             using(var context = new FIXMonitorContext())
             {
-                List<FIXMessageRejects> allRejects = null;
+                List<FIXMessageRejects> allRejects = new List<FIXMessageRejects>();
 
                 var res = context.FixmessageRejects.ToList();
 
