@@ -131,6 +131,14 @@ namespace FIXMonitorService
             }
         }
 
+        public void SendFixRejectsToClient(FIXMessage fixMessage, string engineID, string sessionID)
+        {
+            if (((IChannel)callback).State == CommunicationState.Opened)
+            {
+                callback.SendFixRejectsToClient(fixMessage, engineID, sessionID);
+            }
+        }
+
         public void SendFixSessionToClient(FIXSession fixSession, string engineID, string commandType)
         {
             if (((IChannel)callback).State == CommunicationState.Opened)

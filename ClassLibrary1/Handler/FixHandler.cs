@@ -882,18 +882,21 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             observable.SendFixMessageUpdate(fixMessage, engineID, sessionID);
             Task.Run(() =>
             {
-                CheckForMessageRejects(sessionID, fixMessage);
+                CheckForMessageRejects(fixMessage, engineID, sessionID);
             });
         }
 
-        public void CheckForMessageRejects(string sessionID, FIXMessage fixMessage)
+        public void CheckForMessageRejects(FIXMessage fixMessage, string engineID, string sessionID)
         {
             foreach(var desc in fixMessage.keyValuePair)
             {
                 var res = EmailNotifier.FixmsgRejects.FirstOrDefault(f => f.FixTag.Equals(desc.Item1) && f.FixValue.Equals(desc.Item3));
 
                 if(res != null && res.EmailStatus)
+                {
+                    observable.SendFixRejectUpdate(fixMessage, engineID, sessionID);
                     emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
+                } 
             }
         }
 

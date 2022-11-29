@@ -110,6 +110,14 @@ namespace FIXMonitorBusinessLogicLayer
             }
         }
 
+        public void SendFixRejectUpdate(Object fixReject, string engineID, string sessionID)
+        {
+            foreach(var item in observers)
+            {
+                item.Value.OnNext(new object[] { "fixReject", fixReject, engineID, sessionID });
+            }
+        }
+
         public void Heartbeat()
         {
             //Heartbeat:

@@ -105,6 +105,9 @@ namespace FIXMonitorService
         void SendFixMessagesToClient(FIXMessage fixMessage, string engineID, string sessionID);
 
         [OperationContract]
+        void SendFixRejectsToClient(FIXMessage fixMessage, string engineID, string sessionID);
+
+        [OperationContract]
         void SendFixSessionToClient(FIXSession fixMessage, string engineID, string commandType);
 
         [OperationContract]
