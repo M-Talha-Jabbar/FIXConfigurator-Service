@@ -38,6 +38,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         Observable observable = new Observable();
         private readonly bool sendSampleFixUpdate = Convert.ToBoolean(System.Configuration.ConfigurationManager.AppSettings["sendSampleFixUpdate"].ToString());
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
+        private readonly string fixEngineRedisConfigFilePath = "redisConfigAndDB.txt";
         //Messages Stream Attributes
         private Dictionary<string, long> streamLastReadTimeStamps;
         private long streamLastPosition = 0;
@@ -76,16 +77,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             //Save The updated configuration to the file 
 
-            StreamWriter sw = new StreamWriter("redisConfigAndDB.txt");
-            foreach (var key in session_dbs.Keys)
-            {
-                foreach (var db in session_dbs[key])
-                {
-                    sw.WriteLine($"{key}:{db}");
-                }
-            }
-            sw.Flush();
-            sw.Close();
+            PersistFixEngineConfig();
 
             Task.Run(() =>
             {
@@ -95,24 +87,49 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void EnginePersistence()
         {
-            if (File.Exists("redisConfigAndDB.txt"))
-            {
-                List<string> data = File.ReadAllLines("redisConfigAndDB.txt").ToList();
-                foreach (var row in data)
+                IEnumerable<string> FixEnginesRedisConfig = FetchFixEngineRedisConfig();
+
+                foreach (var row in FixEnginesRedisConfig)
                 {
-                    var columns = row.Split(':');
-                    var db = Int32.Parse(columns[1]);
-                    if (session_dbs.ContainsKey(columns[0]))
-                    {
-                        if (!session_dbs[columns[0]].Contains(db))
-                            session_dbs[columns[0]].Add(db);
-                    }
-                    else
-                    {
-                        session_dbs.Add(columns[0], new List<int>() { db });
-                    }
-                }
+                    var columns = LineSplitter(row);
+                    InsertFixEngineRedisConfigInSessionDb(columns);
+                 }
+        }
+
+        public IEnumerable<string> FetchFixEngineRedisConfig() {
+
+            IEnumerable<string> data = new List<string>();
+
+            if (File.Exists(fixEngineRedisConfigFilePath))
+            {
+                 data = File.ReadAllLines(fixEngineRedisConfigFilePath).ToList();
+
+                return data;
             }
+
+            return data;
+        }
+
+        public string[] LineSplitter(string line, char splitter = ',') {
+            return line.Split(splitter);
+        }
+
+        public void InsertFixEngineRedisConfigInSessionDb(string[] columns) {
+            
+            string fix_engine_redis_ip_port = columns[0];
+            
+            var db = Int32.Parse(columns[1]);
+
+            if (session_dbs.ContainsKey(fix_engine_redis_ip_port))
+            {
+                if (!session_dbs[fix_engine_redis_ip_port].Contains(db))
+
+                    session_dbs[fix_engine_redis_ip_port].Add(db);
+                
+                return;
+            }
+           
+                session_dbs.Add(fix_engine_redis_ip_port, new List<int>() { db });
         }
 
         private void Initializers()
@@ -139,6 +156,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void LoadFIXEngines() { }
 
+
+        /// <summary>
+        /// getting redis configuration: ip, port and db
+        /// creating connection with redis using ip and port
+        /// remove the config from session_dbs when there is no engine is present at given redis db
+        /// creating fix engine by getting engine data
+        /// creating socket connection with engine ip and port
+        /// ReadAllExistingFixMessages
+        /// GetSessionsForEngine
+        /// SubscribeAndFaliureCallback
+        /// </summary>
         public void LoadFIXEnginesAndSessions()
         {
             foreach (var dictkey in session_dbs.Keys)
@@ -712,7 +740,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             if (!fixEnginesDB.ContainsKey(key))
             {
                 fixEnginesDB.Add(key, db);
-                PersistFixEngineConfig(fixEngine, "redisConfigAndDB.txt");
+                PersistFixEngineConfig(fixEngine, false);
             }
             else
             {
@@ -761,9 +789,40 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return fixEngine;
         }
 
-        private void PersistFixEngineConfig(FIXEngine fixEngine, string filepath) {
-            StreamWriter sw = new StreamWriter(filepath, true);
-            sw.WriteLine($"{fixEngine.redisIpAddress}:{fixEngine.redisDB}");
+        /// <summary>
+        /// write fixEngineRedisConfig in a file when new engine is created or 
+        /// when service updates sessionDb dictionary (sessionDb dictionary is updated when fixhandler's constructor is called)
+        /// </summary>
+        /// <param name="fixEngine"></param>
+        /// <param name="getConfigFromEngineDb"></param>
+        private void PersistFixEngineConfig(FIXEngine fixEngine = null, bool getConfigFromSessionDbDict = true) {
+
+            if(getConfigFromSessionDbDict)
+                
+                // session Db dictionary is updated, so we have to over write the old fix engine redis config and write the updated fix engine redis config 
+
+                File.Delete(fixEngineRedisConfigFilePath);
+
+            StreamWriter sw = new StreamWriter(fixEngineRedisConfigFilePath, true); ;
+
+            if (getConfigFromSessionDbDict) {
+
+                foreach (var key in session_dbs.Keys)
+                {
+                    foreach (var db in session_dbs[key])
+                    {
+                        // dict key is redis_ip:redis_port
+
+                        sw.WriteLine($"{key},{db}");
+                    }
+                }
+            }
+
+            if (!getConfigFromSessionDbDict)
+            {
+                sw.WriteLine($"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort},{fixEngine.redisDB}");
+            }
+
             sw.Flush();
             sw.Close();
         }
