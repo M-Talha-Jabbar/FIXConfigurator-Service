@@ -1021,7 +1021,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                             else
                             {
-                                Console.WriteLine($"Email Alert for Session {conId} is disabled");
+                                //Console.WriteLine($"Email Alert for Session {conId} is disabled");
+
+                                // Default Email Setting if an individual session is not configured.
+
+                                sessionInfo = new Sessions() { SessionId = conId };
+
+                                emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
                             }
                         }
 
