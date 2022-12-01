@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FIXMonitorBusinessLogicLayer;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -29,6 +30,8 @@ namespace FIXMonitorServiceHost
             //serviceHost.Description.Behaviors.Add(smb);
 
             serviceHost.Open();
+
+            FIXMonitorDataCacheWrapper.GetInstance();
 
             return true;
         }
