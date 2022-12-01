@@ -114,7 +114,7 @@ namespace FIXMonitorBusinessLogicLayer
         {
             foreach(var item in observers)
             {
-                item.Value.OnNext(new object[] { "fixReject", fixReject, engineID, sessionID });
+                item.Value.OnNext(new Object[] { "fixReject", fixReject, engineID, sessionID });
             }
         }
 

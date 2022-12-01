@@ -25,7 +25,7 @@ namespace FIXMonitorService
                     FIXMonitorService.GetInstance().Heartbeat();
                 }
 
-                else if (item.GetType() == typeof(FIXMessage) && item.ToString() == "fixReject")
+                else if (((Object[])value)[1].GetType() == typeof(FIXMessage) && item.ToString() == "fixReject")
                 {
                     var fixMessage = ((Object[])value)[1];
                     var engineID = ((Object[])value)[2].ToString();

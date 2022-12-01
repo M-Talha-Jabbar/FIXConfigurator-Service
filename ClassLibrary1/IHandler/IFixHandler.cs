@@ -15,6 +15,7 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         bool SetSequenceNumber(FIXSession fixSession);
         bool ResetSequenceNumber(FIXSession fixSession);
         List<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions);
+        List<FIXMessage> GetFixRejectMessages(string sessionID);
         FixEnginesKeyedCollection GetFixEngines();
         FIXEngine ConnectToFixEngine(FIXEngine fixEngine);
         FIXEngine DisconnectToFixEngine(FIXEngine fixEngine);

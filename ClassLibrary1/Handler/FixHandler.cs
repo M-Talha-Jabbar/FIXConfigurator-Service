@@ -50,6 +50,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private List<RedisValue> statusReadMessagesIDs;
 
         private Dictionary<string, List<FIXMessage>> sessionFixMessages;
+        private Dictionary<string, List<FIXMessage>> fixRejectMessages;
 
         private ConcurrentDictionary<string, FixEngineMomento> fixEngineMomentos;
 
@@ -125,6 +126,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, long>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
+            fixRejectMessages = new Dictionary<string, List<FIXMessage>>();
             fixEngineSocket = FixEngineSocket.GetSingletonInstance();
             fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
 
@@ -636,6 +638,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         }
 
+        public List<FIXMessage> GetFixRejectMessages(string sessionID)
+        {
+            if (string.IsNullOrEmpty(sessionID))
+                return new List<FIXMessage>();
+
+            return fixRejectMessages.ContainsKey(sessionID) ? fixRejectMessages[sessionID] : new List<FIXMessage>();
+        }
+
         private void SetScheduler()
         {
             foreach(var engine in fixEngines)
@@ -894,10 +904,20 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 if(res != null && res.EmailStatus)
                 {
+                    StoreFixRejectMessages(fixMessage, sessionID);
                     observable.SendFixRejectUpdate(fixMessage, engineID, sessionID);
                     emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
                 } 
             }
+        }
+
+        public void StoreFixRejectMessages(FIXMessage fixMessage, string sessionID)
+        {
+            if (fixRejectMessages.ContainsKey(sessionID))
+                fixRejectMessages[sessionID].Add(fixMessage);
+
+            else
+                fixRejectMessages.Add(sessionID, new List<FIXMessage>() { fixMessage });
         }
 
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)

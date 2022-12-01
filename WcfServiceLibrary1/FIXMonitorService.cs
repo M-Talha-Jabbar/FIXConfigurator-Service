@@ -123,6 +123,11 @@ namespace FIXMonitorService
             return this.DataCache.GetFixMessages(fixEngineID, fixSessionConnectionID, dataSourceLoadOptions);
         }
 
+        public List<FIXMessage> GetFixRejectMessages(string sessionID)
+        {
+            return this.DataCache.GetFixRejectMessages(sessionID);
+        }
+
         public void SendFixMessagesToClient(FIXMessage fixMessage, string engineID, string sessionID)
         {
             if (((IChannel)callback).State == CommunicationState.Opened)
