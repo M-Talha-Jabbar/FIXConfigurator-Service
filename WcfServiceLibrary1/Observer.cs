@@ -24,22 +24,34 @@ namespace FIXMonitorService
                 {
                     FIXMonitorService.GetInstance().Heartbeat();
                 }
+
+                else if (((Object[])value)[1].GetType() == typeof(FIXMessage) && item.ToString() == "fixReject")
+                {
+                    var fixMessage = ((Object[])value)[1];
+                    var engineID = ((Object[])value)[2].ToString();
+                    var sessionID = ((Object[])value)[3].ToString();
+                    FIXMonitorService.GetInstance().SendFixRejectsToClient((FIXMessage)fixMessage, engineID, sessionID);
+                }
+
                 else if(item.GetType() == typeof(FIXMessage))
                 {
                     var engineID = ((Object[])value)[1].ToString();
                     var sessionID = ((Object[])value)[2].ToString();
                     FIXMonitorService.GetInstance().SendFixMessagesToClient((FIXMessage)item, engineID, sessionID);
                 }
+
                 else if (item.GetType() == typeof(FIXSession))
                 {
                     var engineID = ((Object[])value)[1].ToString();
                     var commandType = ((Object[])value)[2].ToString();
                     FIXMonitorService.GetInstance().SendFixSessionToClient((FIXSession)item, engineID, commandType);
                 }
+
                 else if (item.GetType() == typeof(AlertFlag))
                 {
                     FIXMonitorService.GetInstance().SendAlertFlag((AlertFlag)item);
                 }
+
             }
             catch (Exception ex)
             {

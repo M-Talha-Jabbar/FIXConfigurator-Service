@@ -163,6 +163,11 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return fixHandler.GetFixMessages(fixEngineID, fixSessionConnectionID, dataSourceLoadOptions);
         }
+
+        public List<FIXMessage> GetFixRejectMessages(string sessionID)
+        {
+            return fixHandler.GetFixRejectMessages(sessionID);
+        }
         #endregion
 
         #region Alerts

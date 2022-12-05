@@ -10,8 +10,6 @@ namespace FIXMonitorServiceHost
     {
         static void Main(string[] args)
         {
-            FIXMonitorDataCacheWrapper.GetInstance();
-
             HostFactory.Run(x =>
             {
                 x.Service<TopShelfFIXMonitorWindowService>();

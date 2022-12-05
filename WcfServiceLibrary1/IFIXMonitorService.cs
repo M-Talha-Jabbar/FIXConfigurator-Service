@@ -60,6 +60,9 @@ namespace FIXMonitorService
         IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions);
 
         [OperationContract]
+        List<FIXMessage> GetFixRejectMessages(string sessionID);
+
+        [OperationContract]
         List<AlertFlag> GetAlertCache();
 
         [OperationContract]
@@ -103,6 +106,9 @@ namespace FIXMonitorService
        
         [OperationContract]
         void SendFixMessagesToClient(FIXMessage fixMessage, string engineID, string sessionID);
+
+        [OperationContract]
+        void SendFixRejectsToClient(FIXMessage fixMessage, string engineID, string sessionID);
 
         [OperationContract]
         void SendFixSessionToClient(FIXSession fixMessage, string engineID, string commandType);
