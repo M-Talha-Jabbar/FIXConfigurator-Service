@@ -56,6 +56,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private EmailNotifier emailNotifier;
         
         private FixEngineSocket fixEngineSocket;
+
+        private int fixMessageNotification = 0;
+
+        private int fixMessageRead = 0;
         
         public FixHandler()
         {
@@ -302,6 +306,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
+        private static readonly ConcurrentDictionary<string, object> s_engineLocks = new ConcurrentDictionary<string, object>();
+
+        public void fixMessageNotificationReader()
+        {
+            fixMessageNotification++;
+        }
+
         public void GetFixMessagesFromRedis(ConnectionMultiplexer muxer, RedisChannel channel, RedisValue message, FIXEngine fixEngine)
         {
             Logging.LogMessage($"received {message} on {channel}");
@@ -326,7 +337,26 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 StreamEntry[] messages;
                 if (key == redisStreamName)
                 {
-                    GetStreamMessages(muxer, fixEngine.engineName, key, db, out client, out messages);
+
+                    fixMessageNotificationReader();
+
+                    if (fixMessageNotification <= fixMessageRead)
+                    {
+                        return;
+                    }
+
+                    lock (FixMessageLog.GetLockObj(fixEngine.engineName)) {
+
+                        GetStreamMessages(muxer, fixEngine.engineName, key, db, out client, out messages);
+
+                        fixMessageRead += messages.Length;
+
+                        UpdateStreamPosition(messages[messages.Length - 1], fixEngine.engineName, readMessagesIDs);
+                    }
+
+
+                    Console.WriteLine("fix message update " + messages.Length);
+
                     ProcessAndSendMessages(messages, key, fixEngine);
                     if (readMessagesIDs.Count > 0)
                     {
@@ -416,7 +446,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             foreach (var message in messages)
             {
-                UpdateStreamPosition(message,fixEngine.engineName, readMessagesIDs);
+                //UpdateStreamPosition(message,fixEngine.engineName, readMessagesIDs);
                 for (int i = 0; i < message.Values.Length; i++)
                 {
                     try
@@ -453,7 +483,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                                 SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
                                 if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message"); 
-                                Task.Run(() =>
+                                Task t = Task.Run(() =>
                                 {
                                     FixMessageLog.FixMessageLogger(_key, fixEngine, fixMessage);
                                 });
@@ -789,7 +819,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             muxer.GetSubscriber().Subscribe(CacheKeyEvent,
                                                         (channel, message) => GetFixMessagesFromRedis(muxer, channel, message, fixEngine));
+
         }
+
+       
 
         public FIXEngine DisconnectToFixEngine(FIXEngine fixEngine)
         {
