@@ -145,5 +145,75 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
             };
         }
 
+        public static implicit operator proto.Config(FIXSession session)
+        {
+            return new proto.Config
+            {
+                ConnectionID = session.ConnectionID,
+
+                Status = session.Status.Equals("CONNECTED", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.CONNECTED : session.Status.Equals("DISCONNECTED", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.DISCONNECTED : session.Status.Equals("UNAVAILABLE", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.UNAVAILABLE : proto.MessageStatus.Default,
+                
+                SenderCompID = session.SenderCompID,
+
+                TargetCompID = session.TargetCompID,
+
+                IPAddress = session.IPAddress,
+
+                BackUpIPAddress = session.BackUpIPAddress,
+
+                Port = session.Port,
+
+                BackUpPort = session.BackUpPort,
+
+                Validate = session.Validate,
+
+                HandleResend = session.HandleResend,
+
+                HeartBeatInterval = session.HeartBeatInterval,
+
+                MaxLatency = session.MaxLatency,
+
+                ResetConnection = session.ResetConnection,
+
+                EnableConnection = session.EnableConnection,
+
+                FIXVersion = session.FIXVersion,
+
+                InternalFIXVersion = session.InternalFIXVersion,
+
+                Mode = session.Mode,
+
+                DBEnabled = session.DBEnabled,
+
+                LatencyEnabled = session.LatencyEnabled,
+
+                AutoConnect = session.AutoConnect,
+
+                AutoReconnect = session.AutoReconnect,
+
+                ReconnectDelay = session.ReconnectDelay,
+
+                ConnectRetry = session.ConnectRetry,
+
+                LogonRawData = session.LogonRawData,
+
+                MilliSecondTime = session.MilliSecondTime,
+
+                QEnabled = session.QEnabled.HasValue ? session.QEnabled.Value : false,
+
+                SessionStart = (ulong)session.SessionStart.Ticks,
+
+                SessionEnd = (ulong)session.SessionEnd.Ticks,
+
+                TaskReset = session.TaskReset,
+
+                InSeqNum = session.InSeqNum,
+
+                OutSeqNum = session.OutSeqNum,
+
+                LastUpdated = (ulong)session.LastUpdated.Ticks
+            };
+        }
+
     }
 }
