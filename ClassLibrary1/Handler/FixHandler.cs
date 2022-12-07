@@ -1008,7 +1008,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     StoreFixRejectMessages(fixMessage, sessionID);
                     observable.SendFixRejectUpdate(fixMessage, engineID, sessionID);
-                    //emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
+                    emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
                 } 
             }
         }

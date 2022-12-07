@@ -152,7 +152,7 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
                 ConnectionID = session.ConnectionID,
 
                 Status = session.Status.Equals("CONNECTED", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.CONNECTED : session.Status.Equals("DISCONNECTED", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.DISCONNECTED : session.Status.Equals("UNAVAILABLE", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.UNAVAILABLE : proto.MessageStatus.Default,
-                
+
                 SenderCompID = session.SenderCompID,
 
                 TargetCompID = session.TargetCompID,
@@ -177,11 +177,11 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
                 EnableConnection = session.EnableConnection,
 
-                FIXVersion = session.FIXVersion,
+                FIXVersion = session.FIXVersion == null ? "" : session.FIXVersion,
 
-                InternalFIXVersion = session.InternalFIXVersion,
+                InternalFIXVersion = session.InternalFIXVersion == null ? "" : session.InternalFIXVersion,
 
-                Mode = session.Mode,
+                Mode = session.Mode == null ? "" : session.Mode,
 
                 DBEnabled = session.DBEnabled,
 
@@ -195,7 +195,7 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
                 ConnectRetry = session.ConnectRetry,
 
-                LogonRawData = session.LogonRawData,
+                LogonRawData = session.LogonRawData == null ? "" : session.LogonRawData,
 
                 MilliSecondTime = session.MilliSecondTime,
 
@@ -205,7 +205,7 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
                 SessionEnd = (ulong)session.SessionEnd.Ticks,
 
-                TaskReset = session.TaskReset,
+                TaskReset = session.TaskReset == null ? "" : session.TaskReset,
 
                 InSeqNum = session.InSeqNum,
 
