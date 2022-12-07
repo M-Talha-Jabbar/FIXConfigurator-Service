@@ -932,7 +932,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
 
             var engine = fixEngines[engineID];
-            engine.fixSessions.Add(fixSession);
+            //engine.fixSessions.Add(fixSession);
             int db = fixEnginesDB[$"{engine.engineID}"];
 
             proto.Config session = fixSession;
