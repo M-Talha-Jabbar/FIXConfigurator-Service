@@ -23,7 +23,7 @@ using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.Notifier;
 using System.Collections.Concurrent;
 using FIXMonitorBusinessLogicLayer.Converter;
-using FIXMonitorBusinessLogicLayer;
+using FIXMonitorBusinessLogicLayer.LocksManager;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -40,7 +40,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
         private readonly string fixEngineRedisConfigFilePath = "redisConfigAndDB.txt";
         //Messages Stream Attributes
-        private Dictionary<string, long> streamLastReadTimeStamps;
+        private Dictionary<string, string > streamLastReadTimeStamps;
         private long streamLastPosition = 0;
         //private List<RedisValue> readMessagesIDs;
 
@@ -62,6 +62,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private int fixMessageNotification = 0;
 
         private int fixMessageRead = 0;
+
+        private LockObjectsManager locksforConcurrentFixMessageRead;
         
         public FixHandler()
         {
@@ -145,11 +147,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             session_dbs = new Dictionary<string, List<int>>();
             readMessagesIDs = new ConcurrentStack<RedisValue>();
             statusReadMessagesIDs = new List<RedisValue>();
-            streamLastReadTimeStamps = new Dictionary<string, long>();
+            streamLastReadTimeStamps = new Dictionary<string, string>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
             fixRejectMessages = new Dictionary<string, List<FIXMessage>>();
             fixEngineSocket = FixEngineSocket.GetSingletonInstance();
             fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
+            locksforConcurrentFixMessageRead = new LockObjectsManager();
 
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
             GenerateDictionary(fixMsgTypes, msgTypes);
@@ -241,6 +244,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             var stream = client.StreamReadAsync(redisStreamName, streamLastReadTimeStamps[FIXEngine.engineName]);
             stream.Wait();
             var result = stream.Result;
+            UpdateStreamPosition(result, FIXEngine.engineName, readMessagesIDs);
             ProcessAndSendMessages(result, "", FIXEngine, false);
         }
 
@@ -258,8 +262,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             
             fixEnginesDB.Add($"{fixEngine.engineID}", db);
             fixEngines.Add(fixEngine);
-            streamLastReadTimeStamps.Add(fixEngine.engineName, 0);
-            streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", 0); 
+            streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
+            streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0"); 
             return fixEngine;
         }
 
@@ -370,12 +374,18 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     fixMessageNotificationReader();
 
-                    if (fixMessageNotification <= fixMessageRead)
-                    {
-                        return;
-                    }
+                    //if (fixMessageNotification <= fixMessageRead)
+                    //{
+                    //    return;
+                    //}
 
-                    lock (FixMessageLog.GetLockObj(fixEngine.engineName)) {
+                    lock (locksforConcurrentFixMessageRead.GetLockObj(fixEngine.engineName)) {
+
+                        if (fixMessageNotification <= fixMessageRead)
+                        {
+                            return;
+                        }
+
 
                         GetStreamMessages(muxer, fixEngine.engineName, key, db, out client, out messages);
 
@@ -806,8 +816,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var setEngines = client.HashSetAsync("Engine", fixEngine.engineID, fixEngine.engineName.ToUpper());
                 setEngines.Wait();
 
-                streamLastReadTimeStamps.Add(fixEngine.engineName, 0);
-                streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", 0);
+                streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
+                streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
 
                 Thread thread1 = new Thread(
                     unused => GetSessionsForEngine(muxer, db, client, fixEngine)
@@ -1167,18 +1177,22 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void UpdateStreamPosition(StreamEntry item, string engineName, ConcurrentStack<RedisValue> readIDs)
         {
-            string[] timestamp_seq = item.Id.ToString().Split('-');
             readIDs.Push(item.Id);
-            string lastTimeStamp = timestamp_seq[0];
-            streamLastReadTimeStamps[engineName] = long.Parse(lastTimeStamp);
+            streamLastReadTimeStamps[engineName] = item.Id;
         }
+
+        private void UpdateStreamPosition(StreamEntry[] streamValues, string engineName, ConcurrentStack<RedisValue> readIDs) {
+            foreach (var streamValue in streamValues) {
+                readIDs.Push(streamValue.Id);
+            }
+
+            if(streamValues.Length > 0) streamLastReadTimeStamps[engineName] = streamValues[streamValues.Length - 1].Id;
+        } 
 
         private void UpdateStreamPosition(StreamEntry item, string engineName, List<RedisValue> readIDs)
         {
-            string[] timestamp_seq = item.Id.ToString().Split('-');
             readIDs.Add(item.Id);
-            string lastTimeStamp = timestamp_seq[0];
-            streamLastReadTimeStamps[engineName] = long.Parse(lastTimeStamp);
+            streamLastReadTimeStamps[engineName] = item.Id;
         }
 
         private void UpdateSessionStatus(bool isConnected, FIXEngine fixEngine)

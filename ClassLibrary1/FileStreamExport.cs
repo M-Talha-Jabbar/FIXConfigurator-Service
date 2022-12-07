@@ -6,12 +6,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Threading;
+using FIXMonitorBusinessLogicLayer.LocksManager;
 
 namespace FIXMonitorBusinessLogicLayer
 {
     class FileStreamExport
     {
-        public static Stream fsExport(string filePath)
+        public static Stream fsExport(string filePath, object lockObject)
         {
 
             if (filePath == null)
@@ -21,7 +22,7 @@ namespace FIXMonitorBusinessLogicLayer
           
             FileStream fs;
 
-            lock (FixMessageLog.GetLockObj(filePath))
+            lock (lockObject)
             {
                 try
                 {

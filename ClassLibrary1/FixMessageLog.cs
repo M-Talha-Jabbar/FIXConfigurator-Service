@@ -1,4 +1,5 @@
 ﻿using FIXMonitorBusinessLogicLayer.DataModels;
+using FIXMonitorBusinessLogicLayer.LocksManager;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -24,6 +25,7 @@ namespace FIXMonitorBusinessLogicLayer
         private static ConcurrentDictionary<string, string> CreatedFiles = new ConcurrentDictionary<string, string>();
         private static readonly ConcurrentDictionary<string, object> s_fileLocks = new ConcurrentDictionary<string, object>();
         private static string FixMessageLogDirectoryPath = ConfigurationManager.AppSettings["FixMessageLogDirectoryPath"];
+        public static readonly LockObjectsManager locksforConcurrentFileAccess = new LockObjectsManager();
 
 
         public static bool IsFileCreated(string sessionId, string engineName)
@@ -31,24 +33,9 @@ namespace FIXMonitorBusinessLogicLayer
             return CreatedFiles.ContainsKey($"{engineName}-{sessionId}") ? true : false;
         }
 
-        public static object GetLockObj(string filePath) {
-            object lockForThisFile;
-            if (s_fileLocks.ContainsKey(filePath))
-            {
-                lockForThisFile = s_fileLocks[filePath];
-            }
-            else
-            {
-                lockForThisFile = new object();
-                s_fileLocks.TryAdd(filePath, lockForThisFile);
-            }
-
-            return lockForThisFile;
-        }
-
         public static void AddFixMessageLog(string fixMessageLog, string filePath) /// ////
         {
-            lock (GetLockObj(filePath))
+            lock (locksforConcurrentFileAccess.GetLockObj(filePath))
             {
                 using (StreamWriter sw = File.AppendText(filePath))
                 {
