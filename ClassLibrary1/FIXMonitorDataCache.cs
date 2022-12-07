@@ -219,7 +219,8 @@ namespace FIXMonitorBusinessLogicLayer
 
         public Stream GetFixMessageLogFileStream(string sessionId, string engineName)
         {
-            return FileStreamExport.fsExport(FixMessageLog.GetFixMessageLogFilePath(sessionId, engineName));
+            string filepath = FixMessageLog.GetFixMessageLogFilePath(sessionId, engineName);
+            return FileStreamExport.fsExport(filepath, FixMessageLog.locksforConcurrentFileAccess.GetLockObj(filepath));
         }
 
         public FIXEngine GetFixEngine(string engineID) { 
