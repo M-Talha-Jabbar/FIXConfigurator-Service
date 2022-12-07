@@ -935,7 +935,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             //engine.fixSessions.Add(fixSession);
             int db = fixEnginesDB[$"{engine.engineID}"];
 
-            proto.Config session = fixSession;
+            proto.Config session = (proto.Config)fixSession;
             FBE.proto.ConfigModel configModel = new FBE.proto.ConfigModel();
             configModel.Serialize(session);
 

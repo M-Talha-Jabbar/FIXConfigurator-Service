@@ -145,7 +145,12 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
             };
         }
 
-        public static implicit operator proto.Config(FIXSession session)
+        public static explicit operator bool(FIXSession session)
+        {
+            return session.QEnabled.HasValue ? session.QEnabled.Value : false;
+        }
+
+        public static explicit operator proto.Config(FIXSession session)
         {
             return new proto.Config
             {
@@ -199,7 +204,7 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
                 MilliSecondTime = session.MilliSecondTime,
 
-                QEnabled = session.QEnabled.HasValue ? session.QEnabled.Value : false,
+                QEnabled = (bool)session,
 
                 SessionStart = (ulong)session.SessionStart.Ticks,
 
