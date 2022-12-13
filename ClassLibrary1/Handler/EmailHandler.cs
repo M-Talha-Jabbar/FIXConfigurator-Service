@@ -301,6 +301,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return false;
         }
 
+       
         public bool DeleteFixMessageReject(int id)
         {
             using (var context = new FIXMonitorContext())
@@ -309,7 +310,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 if(reject != null)
                 {
-                    EmailNotifier.FixmsgRejects.Remove(reject);
+                    EmailNotifier.FixmsgRejects.Remove(EmailNotifier.FixmsgRejects.FirstOrDefault(r => r.Id == reject.Id));
 
                     context.FixmessageRejects.Remove(reject);
                     context.SaveChanges();
