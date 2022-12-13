@@ -226,5 +226,10 @@ namespace FIXMonitorService
         {
             return this.DataCache.GetFixEngine(engineID);
         }
+
+        public bool TcpConnection(string ipAddress, int port)
+        {
+            return this.DataCache.TcpConnection(ipAddress, port);
+        }
     }
 }
