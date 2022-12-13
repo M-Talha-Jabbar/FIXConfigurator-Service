@@ -391,13 +391,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                         fixMessageRead += messages.Length;
 
+                        ProcessAndSendMessages(messages, key, fixEngine);
+
                         UpdateStreamPosition(messages[messages.Length - 1], fixEngine.engineName, readMessagesIDs);
                     }
 
 
                     Console.WriteLine("fix message update " + messages.Length);
-
-                    ProcessAndSendMessages(messages, key, fixEngine);
+          
                     if (readMessagesIDs.Count > 0)
                     {
                         client.StreamAcknowledgeAsync(key, "", readMessagesIDs.ToArray()).Wait();
