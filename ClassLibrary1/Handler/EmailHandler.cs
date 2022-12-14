@@ -93,7 +93,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 emailData.CommaSeperatedToEmails = fixmessageRejects.ToEmails;
                 emailData.CommaSeperatedCCEmails = fixmessageRejects.CcEmails;
                 emailData.Subject = string.IsNullOrEmpty(fixmessageRejects.Subject) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue})" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
-                emailData.Body = string.IsNullOrEmpty(fixmessageRejects.Body) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
+                emailData.Body = string.IsNullOrEmpty(fixmessageRejects.Body) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
             }
 
             DispatchEmail(emailData);
