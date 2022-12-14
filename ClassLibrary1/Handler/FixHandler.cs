@@ -714,6 +714,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return fixRejectMessages.ContainsKey(sessionID) ? fixRejectMessages[sessionID] : new List<FIXMessage>();
         }
 
+        /*
         private void FilteringEachListOnSeparateThreadFromThreadPool(List<FIXMessage> fixMessagesList, FixmessageRejects reject)
         {
             var fixMsgList = fixMessagesList.ToList();
@@ -755,6 +756,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             Task.WaitAll(tasks.ToArray());
         }
+        */
 
         private void SetScheduler()
         {
@@ -1042,16 +1044,22 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void CheckForMessageRejects(FIXMessage fixMessage, string engineID, string sessionID)
         {
+            var IsUpdateSentToObservers = false;
+
             foreach(var desc in fixMessage.keyValuePair)
             {
                 var res = EmailNotifier.FixmsgRejects.FirstOrDefault(f => f.FixTag.Equals(desc.Item1) && f.FixValue.Equals(desc.Item3));
 
                 if(res != null && res.EmailStatus)
                 {
-                    StoreFixRejectMessages(fixMessage, sessionID);
-                    observable.SendFixRejectUpdate(fixMessage, engineID, sessionID);
                     emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
-                    break;
+
+                    if (!IsUpdateSentToObservers)
+                    {
+                        StoreFixRejectMessages(fixMessage, sessionID);
+                        observable.SendFixRejectUpdate(fixMessage, engineID, sessionID);
+                        IsUpdateSentToObservers = true;
+                    }   
                 } 
             }
         }
