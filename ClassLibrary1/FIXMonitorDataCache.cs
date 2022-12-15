@@ -20,6 +20,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using RedisCacheService;
 using FIXMonitorBusinessLogicLayer.IComparers;
+using FIXMonitorBusinessLogicLayer.TcpConnection;
 
 namespace FIXMonitorBusinessLogicLayer
 {
@@ -230,6 +231,10 @@ namespace FIXMonitorBusinessLogicLayer
 
         public FIXEngine GetFixEngine(string engineID) { 
             return fixHandler.GetFixEngine(engineID);
+        }
+
+        public bool TcpConnection(string ipAddress, int port) {
+            return new TcpConnection.TcpConnection(ipAddress, port).TcpConnectionBuilder();
         }
     }
 

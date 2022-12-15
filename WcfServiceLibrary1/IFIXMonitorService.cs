@@ -98,6 +98,9 @@ namespace FIXMonitorService
         [OperationContract]
         FIXEngine GetFixEngine(string engineID);
 
+        [OperationContract]
+        bool TcpConnection(string ipAddress, int port);
+
         // TODO: Add your service operations here
     }
 
