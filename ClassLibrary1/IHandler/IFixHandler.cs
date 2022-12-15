@@ -16,6 +16,8 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         bool ResetSequenceNumber(FIXSession fixSession);
         List<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions);
         List<FIXMessage> GetFixRejectMessages(string sessionID);
+
+        //void FiltrationOfFixMessagesWithRespectToCurrentConfiguredTagValuePairs(int id); // 'id' refers to the deleted Tag/Value Pair
         FixEnginesKeyedCollection GetFixEngines();
         FIXEngine ConnectToFixEngine(FIXEngine fixEngine);
         FIXEngine DisconnectToFixEngine(FIXEngine fixEngine);

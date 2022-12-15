@@ -93,7 +93,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 emailData.CommaSeperatedToEmails = fixmessageRejects.ToEmails;
                 emailData.CommaSeperatedCCEmails = fixmessageRejects.CcEmails;
                 emailData.Subject = string.IsNullOrEmpty(fixmessageRejects.Subject) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue})" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
-                emailData.Body = string.IsNullOrEmpty(fixmessageRejects.Body) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
+                emailData.Body = string.IsNullOrEmpty(fixmessageRejects.Body) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
             }
 
             DispatchEmail(emailData);
@@ -301,6 +301,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return false;
         }
 
+       
         public bool DeleteFixMessageReject(int id)
         {
             using (var context = new FIXMonitorContext())
@@ -309,7 +310,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 if(reject != null)
                 {
-                    EmailNotifier.FixmsgRejects.Remove(reject);
+                    EmailNotifier.FixmsgRejects.Remove(EmailNotifier.FixmsgRejects.FirstOrDefault(r => r.Id == reject.Id));
 
                     context.FixmessageRejects.Remove(reject);
                     context.SaveChanges();

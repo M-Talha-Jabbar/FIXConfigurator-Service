@@ -215,6 +215,7 @@ namespace FIXMonitorBusinessLogicLayer
 
         public bool DeleteFixMessageReject(int id)
         {
+            //fixHandler.FiltrationOfFixMessagesWithRespectToCurrentConfiguredTagValuePairs(id);
             return emailHandler.DeleteFixMessageReject(id);
         }
 
