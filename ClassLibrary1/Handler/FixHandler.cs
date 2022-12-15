@@ -930,6 +930,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixSession.ConnectionID = fixSession.SenderCompID + "-" + fixSession.TargetCompID;
             fixSession.Status = "disconnected";
             fixSession.LastUpdated = DateTime.Now;
+
             if (String.IsNullOrEmpty(fixSession.BackUpIPAddress))
             {
                 fixSession.BackUpIPAddress = fixSession.IPAddress;
@@ -939,15 +940,24 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 fixSession.BackUpPort = fixSession.Port;
             }
+
             var engine = fixEngines[engineID];
-            engine.fixSessions.Add(fixSession);
+            //engine.fixSessions.Add(fixSession);
             int db = fixEnginesDB[$"{engine.engineID}"];
-            var sessionHash = new HashEntry[0]; //FIXSession.getHashFromObject(fixSession);
+
+            proto.Config session = (proto.Config)fixSession;
+            FBE.proto.ConfigModel configModel = new FBE.proto.ConfigModel();
+            configModel.Serialize(session);
+
+            var sessionHash = new HashEntry[1] { new HashEntry(fixSession.ConnectionID + "-Config", configModel.Buffer.Data) } ; //FIXSession.getHashFromObject(fixSession);
             
             var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
             var client = muxer.GetDatabase(db);
-            client.HashSet(fixSession.ConnectionID + "-Config", sessionHash);
+            //client.HashSet(fixSession.ConnectionID + "-Config", sessionHash);
+            client.HashSet("Sessions-To-Be-Added", sessionHash);
+
             //SendFixSessionUpdates(fixSession, engineID, "insert");
+
             return fixSession;
         }
 
