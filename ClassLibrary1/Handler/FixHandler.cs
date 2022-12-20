@@ -335,7 +335,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 sessionFixMessages.Remove(session.ConnectionID);
                 foreach (var message in session.FixMessages)
                 {
-                    SendFixMessageUpdates(message, engineID, session.ConnectionID);
+                    SendFixMessageUpdates(message, engineID, session.ConnectionID, false);
                 }
             }
         }
@@ -521,7 +521,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             if (IsSendMessage)
                             {
                                 //observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
-                                SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key);
+                                SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key, true);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
                                 if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message"); 
                                 Task t = Task.Run(() =>
@@ -1027,7 +1027,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     fixEngines[engineID].fixSessions[j].FixMessages.Add(message);
                     fixEngines[engineID].fixSessions.Add(session);
                     CoreLogging.Logging.LogMessage($"Fix Message sent for EngineID { engineID } SessionID: { sessionID }");
-                    SendFixMessageUpdates(message, engineID, sessionID);
+                    SendFixMessageUpdates(message, engineID, sessionID, false);
                     SendFixSessionUpdates(session, engineID, "insert");
                 }
                 catch (Exception e)
@@ -1044,27 +1044,33 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             observable.SendFixSessionUpdate(fixSession, engineID, updateType);
         }
 
-        public void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID)
+        public void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime) 
         {
             observable.SendFixMessageUpdate(fixMessage, engineID, sessionID);
             Task.Run(() =>
             {
-                CheckForMessageRejects(fixMessage, engineID, sessionID);
+                CheckForMessageRejects(fixMessage, engineID, sessionID, isRealTime);
             });
         }
 
-        public void CheckForMessageRejects(FIXMessage fixMessage, string engineID, string sessionID)
+        public void CheckForMessageRejects(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime)
         {
             var IsUpdateSentToObservers = false;
 
             foreach(var desc in fixMessage.keyValuePair)
             {
+                if (!isRealTime && IsUpdateSentToObservers)
+                    break;
+
                 var res = EmailNotifier.FixmsgRejects.FirstOrDefault(f => f.FixTag.Equals(desc.Item1) && f.FixValue.Equals(desc.Item3));
 
-                if(res != null && res.EmailStatus)
+                if(res != null)
                 {
-                    emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
-                    Logging.LogMessage(LOGTYPE.Info, $"Fix Message Email sent for Configured Tag/Value Pair {desc.Item1}/{desc.Item3} in it");
+                    if (isRealTime && res.EmailStatus)
+                    {
+                        emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
+                        Logging.LogMessage(LOGTYPE.Info, $"Fix Message Email sent for Configured Tag/Value Pair {desc.Item1}/{desc.Item3} in it");
+                    }
 
                     if (!IsUpdateSentToObservers)
                     {

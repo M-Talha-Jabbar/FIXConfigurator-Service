@@ -24,7 +24,7 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         FIXSession ConnectToFixSession(string engineID, FIXSession fixSession);
         //List<Tuple<string, string, string>> ParseAndStoreFixMessage(string fixMessage);
         void SendFixSessionUpdates(FIXSession fixSession, string engineID, string updateType);
-        void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID);
+        void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime);
         //string GetFixTagValue(string fixMessage, string tag);
         FixSessionKeyedCollection GetFixSession(string FixEngineID);
         FIXMessage getObjectFromFixMessage(string msg);
