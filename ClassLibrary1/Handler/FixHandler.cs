@@ -1064,6 +1064,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 if(res != null && res.EmailStatus)
                 {
                     emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
+                    Logging.LogMessage(LOGTYPE.Info, $"Fix Message Email sent for Configured Tag/Value Pair {desc.Item1}/{desc.Item3} in it");
 
                     if (!IsUpdateSentToObservers)
                     {
@@ -1166,7 +1167,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     if (sendEmail)
                     {
-
                         using (var context = new FIXMonitorContext())
                         {
                             var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
@@ -1218,9 +1218,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             }
                         }
 
+                        Logging.LogMessage(LOGTYPE.Info, $"Fix Session Email sent for SessionID: {session.ConnectionID}");
                     }
                 }
-                CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
+                CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID: { engine.engineID } SessionID: { session.ConnectionID }");
             }
             catch (Exception e)
             {
