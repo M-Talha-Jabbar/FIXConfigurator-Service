@@ -243,48 +243,48 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return false;
         }
 
-        public List<FIXMessageRejects> GetAllFixMessageRejects()
+        public List<FixTagValueConfiguration> GetAllFixMessageConfiguration()
         {
             using(var context = new FIXMonitorContext())
             {
-                List<FIXMessageRejects> allRejects = new List<FIXMessageRejects>();
+                List<FixTagValueConfiguration> allFixTagValueConfigurations = new List<FixTagValueConfiguration>();
 
                 var res = context.FixmessageRejects.ToList();
 
                 if (res.Count > 0)
                 {
-                    allRejects = res.Select(reject => new FIXMessageRejects()
+                    allFixTagValueConfigurations = res.Select(config => new FixTagValueConfiguration()
                     {
-                        Id = reject.Id,
-                        FixTag = reject.FixTag,
-                        FixValue = reject.FixValue,
-                        ToEmails = reject.ToEmails,
-                        CcEmails = reject.CcEmails,
-                        EmailStatus = reject.EmailStatus,
-                        Subject = reject.Subject,
-                        Body = reject.Body
+                        Id = config.Id,
+                        FixTag = config.FixTag,
+                        FixValue = config.FixValue,
+                        ToEmails = config.ToEmails,
+                        CcEmails = config.CcEmails,
+                        EmailStatus = config.EmailStatus,
+                        Subject = config.Subject,
+                        Body = config.Body
                     }).ToList();
 
-                    return allRejects;
+                    return allFixTagValueConfigurations;
                 }
 
-                return allRejects;
+                return allFixTagValueConfigurations;
             }
         }
 
-        public bool AddFixMessageReject(FIXMessageRejects fixMessageRejects)
+        public bool AddFixMessageConfiguration(FixTagValueConfiguration fixTagValueConfiguration)
         {
-            if(fixMessageRejects != null)
+            if(fixTagValueConfiguration != null)
             {
                 var rejectConfiguration = new FixmessageRejects()
                 {
-                    FixTag = fixMessageRejects.FixTag,
-                    FixValue = fixMessageRejects.FixValue,
-                    ToEmails = fixMessageRejects.ToEmails,
-                    CcEmails = fixMessageRejects.CcEmails,
-                    EmailStatus = fixMessageRejects.EmailStatus,
-                    Subject = fixMessageRejects.Subject,
-                    Body = fixMessageRejects.Body
+                    FixTag = fixTagValueConfiguration.FixTag,
+                    FixValue = fixTagValueConfiguration.FixValue,
+                    ToEmails = fixTagValueConfiguration.ToEmails,
+                    CcEmails = fixTagValueConfiguration.CcEmails,
+                    EmailStatus = fixTagValueConfiguration.EmailStatus,
+                    Subject = fixTagValueConfiguration.Subject,
+                    Body = fixTagValueConfiguration.Body
                 };
 
                 EmailNotifier.FixmsgRejects.Add(rejectConfiguration);
@@ -302,7 +302,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         }
 
        
-        public bool DeleteFixMessageReject(int id)
+        public bool DeleteFixMessageConfiguration(int id)
         {
             using (var context = new FIXMonitorContext())
             {

@@ -123,9 +123,9 @@ namespace FIXMonitorService
             return this.DataCache.GetFixMessages(fixEngineID, fixSessionConnectionID, dataSourceLoadOptions);
         }
 
-        public List<FIXMessage> GetFixRejectMessages(string sessionID)
+        public List<FIXMessage> GetFixMessagesHavingAnyConfiguredFixTagValuePair(string sessionID)
         {
-            return this.DataCache.GetFixRejectMessages(sessionID);
+            return this.DataCache.GetFixMessagesHavingAnyConfiguredFixTagValuePair(sessionID);
         }
 
         public void SendFixMessagesToClient(FIXMessage fixMessage, string engineID, string sessionID)
@@ -197,19 +197,19 @@ namespace FIXMonitorService
             return this.DataCache.DeleteSessionAlertConfiguration(SessionId);
         }
 
-        public List<FIXMessageRejects> GetAllFixMessageRejects()
+        public List<FixTagValueConfiguration> GetAllFixMessageConfiguration()
         {
-            return this.DataCache.GetAllFixMessageRejects();
+            return this.DataCache.GetAllFixMessageConfiguration();
         }
 
-        public bool AddFixMessageReject(FIXMessageRejects fixMessageRejects)
+        public bool AddFixMessageConfiguration(FixTagValueConfiguration fixTagValueConfiguration)
         {
-            return this.DataCache.AddFixMessageReject(fixMessageRejects);
+            return this.DataCache.AddFixMessageConfiguration(fixTagValueConfiguration);
         }
 
-        public bool DeleteFixMessageReject(int id)
+        public bool DeleteFixMessageConfiguration(int id)
         {
-            return this.DataCache.DeleteFixMessageReject(id);
+            return this.DataCache.DeleteFixMessageConfiguration(id);
         }
 
         public Stream GetFixMessageLogFileStream(string sessionId, string engineName)

@@ -249,7 +249,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Converter\TimeConverter.cs" />
-    <Compile Include="DataModels\FIXMessageRejects.cs" />
+    <Compile Include="DataModels\FixTagValueConfiguration.cs" />
     <Compile Include="DataModels\SessionEmails.cs" />
     <Compile Include="Data\AspNetRoleClaims.cs" />
     <Compile Include="Data\AspNetRoles.cs" />

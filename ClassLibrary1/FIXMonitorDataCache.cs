@@ -165,9 +165,9 @@ namespace FIXMonitorBusinessLogicLayer
             return fixHandler.GetFixMessages(fixEngineID, fixSessionConnectionID, dataSourceLoadOptions);
         }
 
-        public List<FIXMessage> GetFixRejectMessages(string sessionID)
+        public List<FIXMessage> GetFixMessagesHavingAnyConfiguredFixTagValuePair(string sessionID)
         {
-            return fixHandler.GetFixRejectMessages(sessionID);
+            return fixHandler.GetFixMessagesHavingAnyConfiguredFixTagValuePair(sessionID);
         }
         #endregion
 
@@ -203,20 +203,20 @@ namespace FIXMonitorBusinessLogicLayer
             return emailHandler.DeleteSessionAlertConfiguration(SessionId);
         }
 
-        public List<FIXMessageRejects> GetAllFixMessageRejects()
+        public List<FixTagValueConfiguration> GetAllFixMessageConfiguration()
         {
-            return emailHandler.GetAllFixMessageRejects();
+            return emailHandler.GetAllFixMessageConfiguration();
         }
 
-        public bool AddFixMessageReject(FIXMessageRejects fixMessageRejects)
+        public bool AddFixMessageConfiguration(FixTagValueConfiguration fixTagValueConfiguration)
         {
-            return emailHandler.AddFixMessageReject(fixMessageRejects);
+            return emailHandler.AddFixMessageConfiguration(fixTagValueConfiguration);
         }
 
-        public bool DeleteFixMessageReject(int id)
+        public bool DeleteFixMessageConfiguration(int id)
         {
             //fixHandler.FiltrationOfFixMessagesWithRespectToCurrentConfiguredTagValuePairs(id);
-            return emailHandler.DeleteFixMessageReject(id);
+            return emailHandler.DeleteFixMessageConfiguration(id);
         }
 
         public bool FileExists(string sessionId, string engineName)

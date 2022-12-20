@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FIXMonitorBusinessLogicLayer.DataModels
 {
-    public class FIXMessageRejects
+    public class FixTagValueConfiguration
     {
         public int Id { get; set; }
         public string FixTag { get; set; }

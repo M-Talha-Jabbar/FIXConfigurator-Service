@@ -51,7 +51,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private List<RedisValue> statusReadMessagesIDs;
 
         private Dictionary<string, List<FIXMessage>> sessionFixMessages;
-        private Dictionary<string, List<FIXMessage>> fixRejectMessages;
+        private Dictionary<string, List<FIXMessage>> fixMessagesContainingConfiguredFixTagValuePair;
 
         private ConcurrentDictionary<string, FixEngineMomento> fixEngineMomentos;
 
@@ -149,7 +149,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, string>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
-            fixRejectMessages = new Dictionary<string, List<FIXMessage>>();
+            fixMessagesContainingConfiguredFixTagValuePair = new Dictionary<string, List<FIXMessage>>();
             fixEngineSocket = FixEngineSocket.GetSingletonInstance();
             fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
             locksforConcurrentFixMessageRead = new LockObjectsManager();
@@ -707,12 +707,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         }
 
-        public List<FIXMessage> GetFixRejectMessages(string sessionID)
+        public List<FIXMessage> GetFixMessagesHavingAnyConfiguredFixTagValuePair(string sessionID)
         {
             if (string.IsNullOrEmpty(sessionID))
                 return new List<FIXMessage>();
 
-            return fixRejectMessages.ContainsKey(sessionID) ? fixRejectMessages[sessionID] : new List<FIXMessage>();
+            return fixMessagesContainingConfiguredFixTagValuePair.ContainsKey(sessionID) ? fixMessagesContainingConfiguredFixTagValuePair[sessionID] : new List<FIXMessage>();
         }
 
         /*
@@ -743,7 +743,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 if(reject != null)
                 {
-                    foreach(var msgList in fixRejectMessages.Values)
+                    foreach(var msgList in fixMessagesContainingConfiguredFixTagValuePair.Values)
                     {
                         var task = Task.Run(() =>
                         {
@@ -1084,11 +1084,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void StoreFixRejectMessages(FIXMessage fixMessage, string sessionID)
         {
-            if (fixRejectMessages.ContainsKey(sessionID))
-                fixRejectMessages[sessionID].Add(fixMessage);
+            if (fixMessagesContainingConfiguredFixTagValuePair.ContainsKey(sessionID))
+                fixMessagesContainingConfiguredFixTagValuePair[sessionID].Add(fixMessage);
 
             else
-                fixRejectMessages.Add(sessionID, new List<FIXMessage>() { fixMessage });
+                fixMessagesContainingConfiguredFixTagValuePair.Add(sessionID, new List<FIXMessage>() { fixMessage });
         }
 
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)

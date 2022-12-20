@@ -23,14 +23,14 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         public static Dictionary<string, int> recurringEmailsCount = new Dictionary<string, int>();
         public static List<FixmessageRejects> FixmsgRejects = new List<FixmessageRejects>();
 
-        public EmailNotifier(string conId, string status, Sessions sessionInfo) 
+        public EmailNotifier(string conId, string status, Sessions sessionInfo) // Email Alert without Timer
         {
             this.conId = conId;
             this.status = status;
             this.sessionInfo = sessionInfo;
         }
 
-        public EmailNotifier(int interval, string conId, string status, Sessions sessionInfo) 
+        public EmailNotifier(int interval, string conId, string status, Sessions sessionInfo) // Email Alert with Time defined (can be both Recurring & Non-Recurring)
         {
             timer = new Timer(interval);
             timer.Elapsed += OnEventExecution;
@@ -46,7 +46,7 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             timer.Start();
         }
 
-        public EmailNotifier(int interval, FIXSession fixSession, Sessions sessionInfo) 
+        public EmailNotifier(int interval, FIXSession fixSession, Sessions sessionInfo) // Scheduled Check
         {
             timer = new Timer(interval);
             timer.Elapsed += OnScheduledCheckExecution;
@@ -59,7 +59,7 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             timer.Start();
         }
 
-        public EmailNotifier(string conId, FixmessageRejects fixmessageRejects)
+        public EmailNotifier(string conId, FixmessageRejects fixmessageRejects) // Email Alert for Fix Message Having Any Configured Tag/Value Pair
         {
             this.conId = conId;
             this.fixmessageRejects = fixmessageRejects;
