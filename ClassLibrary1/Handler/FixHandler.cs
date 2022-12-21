@@ -160,7 +160,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             string[] fixTags = File.ReadAllLines("fixTagValuePair.csv");
             GenerateDictionary(fixTagValues, fixTags);
 
-            LoadFIXMessageRejects();
+            LoadFixTagValueConfigurations();
         }
 
         public void LoadFIXEngines() { }
@@ -212,13 +212,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             //fixEngines.Add(new FIXEngine() { engineID = "ATS_FIX", engineName = "ATS_FIX", ipAddress = "192.168.0.1", port = 4044 });
         }
 
-        public void LoadFIXMessageRejects()
+        public void LoadFixTagValueConfigurations()
         {
             using(var context = new FIXMonitorContext())
             {
-                var FixmessageRejects = context.FixTagValues.ToList();
+                var allFixTagValueConfigurations = context.FixTagValues.ToList();
 
-                EmailNotifier.fixTagValueConfigurations = FixmessageRejects;
+                EmailNotifier.fixTagValueConfigurations = allFixTagValueConfigurations;
             }
         }
 
