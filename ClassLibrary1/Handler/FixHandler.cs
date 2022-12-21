@@ -51,7 +51,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private List<RedisValue> statusReadMessagesIDs;
 
         private Dictionary<string, List<FIXMessage>> sessionFixMessages;
-        private Dictionary<string, List<FIXMessage>> fixRejectMessages;
+        private Dictionary<string, List<FIXMessage>> fixMessagesContainingConfiguredFixTagValuePair;
 
         private ConcurrentDictionary<string, FixEngineMomento> fixEngineMomentos;
 
@@ -149,7 +149,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, string>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
-            fixRejectMessages = new Dictionary<string, List<FIXMessage>>();
+            fixMessagesContainingConfiguredFixTagValuePair = new Dictionary<string, List<FIXMessage>>();
             fixEngineSocket = FixEngineSocket.GetSingletonInstance();
             fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
             locksforConcurrentFixMessageRead = new LockObjectsManager();
@@ -160,7 +160,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             string[] fixTags = File.ReadAllLines("fixTagValuePair.csv");
             GenerateDictionary(fixTagValues, fixTags);
 
-            LoadFIXMessageRejects();
+            LoadFixTagValueConfigurations();
         }
 
         public void LoadFIXEngines() { }
@@ -212,13 +212,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             //fixEngines.Add(new FIXEngine() { engineID = "ATS_FIX", engineName = "ATS_FIX", ipAddress = "192.168.0.1", port = 4044 });
         }
 
-        public void LoadFIXMessageRejects()
+        public void LoadFixTagValueConfigurations()
         {
             using(var context = new FIXMonitorContext())
             {
-                var FixmessageRejects = context.FixmessageRejects.ToList();
+                var allFixTagValueConfigurations = context.FixTagValues.ToList();
 
-                EmailNotifier.FixmsgRejects = FixmessageRejects;
+                EmailNotifier.fixTagValueConfigurations = allFixTagValueConfigurations;
             }
         }
 
@@ -335,7 +335,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 sessionFixMessages.Remove(session.ConnectionID);
                 foreach (var message in session.FixMessages)
                 {
-                    SendFixMessageUpdates(message, engineID, session.ConnectionID);
+                    SendFixMessageUpdates(message, engineID, session.ConnectionID, false);
                 }
             }
         }
@@ -521,7 +521,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             if (IsSendMessage)
                             {
                                 //observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
-                                SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key);
+                                SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key, true);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
                                 if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message"); 
                                 Task t = Task.Run(() =>
@@ -707,12 +707,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         }
 
-        public List<FIXMessage> GetFixRejectMessages(string sessionID)
+        public List<FIXMessage> GetFixMessagesHavingAnyConfiguredFixTagValuePair(string sessionID)
         {
             if (string.IsNullOrEmpty(sessionID))
                 return new List<FIXMessage>();
 
-            return fixRejectMessages.ContainsKey(sessionID) ? fixRejectMessages[sessionID] : new List<FIXMessage>();
+            return fixMessagesContainingConfiguredFixTagValuePair.ContainsKey(sessionID) ? fixMessagesContainingConfiguredFixTagValuePair[sessionID] : new List<FIXMessage>();
         }
 
         /*
@@ -743,7 +743,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 if(reject != null)
                 {
-                    foreach(var msgList in fixRejectMessages.Values)
+                    foreach(var msgList in fixMessagesContainingConfiguredFixTagValuePair.Values)
                     {
                         var task = Task.Run(() =>
                         {
@@ -1027,7 +1027,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     fixEngines[engineID].fixSessions[j].FixMessages.Add(message);
                     fixEngines[engineID].fixSessions.Add(session);
                     CoreLogging.Logging.LogMessage($"Fix Message sent for EngineID { engineID } SessionID: { sessionID }");
-                    SendFixMessageUpdates(message, engineID, sessionID);
+                    SendFixMessageUpdates(message, engineID, sessionID, false);
                     SendFixSessionUpdates(session, engineID, "insert");
                 }
                 catch (Exception e)
@@ -1044,44 +1044,51 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             observable.SendFixSessionUpdate(fixSession, engineID, updateType);
         }
 
-        public void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID)
+        public void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime) 
         {
             observable.SendFixMessageUpdate(fixMessage, engineID, sessionID);
             Task.Run(() =>
             {
-                CheckForMessageRejects(fixMessage, engineID, sessionID);
+                CheckForConfiguredFixTagValuePair(fixMessage, engineID, sessionID, isRealTime);
             });
         }
 
-        public void CheckForMessageRejects(FIXMessage fixMessage, string engineID, string sessionID)
+        public void CheckForConfiguredFixTagValuePair(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime)
         {
             var IsUpdateSentToObservers = false;
 
             foreach(var desc in fixMessage.keyValuePair)
             {
-                var res = EmailNotifier.FixmsgRejects.FirstOrDefault(f => f.FixTag.Equals(desc.Item1) && f.FixValue.Equals(desc.Item3));
+                if (!isRealTime && IsUpdateSentToObservers)
+                    break;
 
-                if(res != null && res.EmailStatus)
+                var res = EmailNotifier.fixTagValueConfigurations.FirstOrDefault(f => f.FixTag.Equals(desc.Item1) && f.FixValue.Equals(desc.Item3));
+
+                if(res != null)
                 {
-                    emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
+                    if (isRealTime && res.EmailStatus)
+                    {
+                        emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
+                        Logging.LogMessage(LOGTYPE.Info, $"Fix Message Email sent for Configured Tag/Value Pair {desc.Item1}/{desc.Item3} in it");
+                    }
 
                     if (!IsUpdateSentToObservers)
                     {
-                        StoreFixRejectMessages(fixMessage, sessionID);
-                        observable.SendFixRejectUpdate(fixMessage, engineID, sessionID);
+                        StoreFixMessagesContainingConfiguredFixTagValuePair(fixMessage, sessionID);
+                        observable.SendFixMessageContainingConfiguredFixTagValuePairUpdate(fixMessage, engineID, sessionID);
                         IsUpdateSentToObservers = true;
                     }   
                 } 
             }
         }
 
-        public void StoreFixRejectMessages(FIXMessage fixMessage, string sessionID)
+        public void StoreFixMessagesContainingConfiguredFixTagValuePair(FIXMessage fixMessage, string sessionID)
         {
-            if (fixRejectMessages.ContainsKey(sessionID))
-                fixRejectMessages[sessionID].Add(fixMessage);
+            if (fixMessagesContainingConfiguredFixTagValuePair.ContainsKey(sessionID))
+                fixMessagesContainingConfiguredFixTagValuePair[sessionID].Add(fixMessage);
 
             else
-                fixRejectMessages.Add(sessionID, new List<FIXMessage>() { fixMessage });
+                fixMessagesContainingConfiguredFixTagValuePair.Add(sessionID, new List<FIXMessage>() { fixMessage });
         }
 
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)
@@ -1166,7 +1173,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     if (sendEmail)
                     {
-
                         using (var context = new FIXMonitorContext())
                         {
                             var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
@@ -1218,9 +1224,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             }
                         }
 
+                        Logging.LogMessage(LOGTYPE.Info, $"Fix Session Email sent for SessionID: {session.ConnectionID}");
                     }
                 }
-                CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID { engine.engineID } SessionID: { session.ConnectionID }");
+                CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID: { engine.engineID } SessionID: { session.ConnectionID }");
             }
             catch (Exception e)
             {

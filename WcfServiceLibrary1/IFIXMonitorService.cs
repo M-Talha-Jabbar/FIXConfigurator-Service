@@ -60,7 +60,7 @@ namespace FIXMonitorService
         IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions);
 
         [OperationContract]
-        List<FIXMessage> GetFixRejectMessages(string sessionID);
+        List<FIXMessage> GetFixMessagesHavingAnyConfiguredFixTagValuePair(string sessionID);
 
         [OperationContract]
         List<AlertFlag> GetAlertCache();
@@ -81,13 +81,13 @@ namespace FIXMonitorService
         bool DeleteSessionAlertConfiguration(string SessionId);
 
         [OperationContract]
-        List<FIXMessageRejects> GetAllFixMessageRejects();
+        List<FixTagValueConfiguration> GetAllFixMessageConfiguration();
 
         [OperationContract]
-        bool AddFixMessageReject(FIXMessageRejects fixMessageRejects);
+        bool AddFixMessageConfiguration(FixTagValueConfiguration fixTagValueConfiguration);
 
         [OperationContract]
-        bool DeleteFixMessageReject(int id);
+        bool DeleteFixMessageConfiguration(int id);
 
         [OperationContract]
         Stream GetFixMessageLogFileStream(string sessionId, string engineName);
@@ -111,7 +111,7 @@ namespace FIXMonitorService
         void SendFixMessagesToClient(FIXMessage fixMessage, string engineID, string sessionID);
 
         [OperationContract]
-        void SendFixRejectsToClient(FIXMessage fixMessage, string engineID, string sessionID);
+        void SendFixMessageWithConfiguredFixTagValuePairToClient(FIXMessage fixMessage, string engineID, string sessionID);
 
         [OperationContract]
         void SendFixSessionToClient(FIXSession fixMessage, string engineID, string commandType);

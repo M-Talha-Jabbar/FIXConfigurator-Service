@@ -13,13 +13,13 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
     {
         void DispatchEmail(EmailData emailData);
         void SendEmail(string sessionId, string status, Sessions sessionInfo);
-        void SendEmail(string sessionId, FixmessageRejects fixmessageRejects);
+        void SendEmail(string sessionId, FixTagValues fixTagValues);
         SessionEmails GetSessionAlertConfiguration(string SessionId);
         bool AddSessionAlertConfiguration(SessionEmails sessionEmails);
         bool UpdateSessionAlertConfiguration(SessionEmails sessionEmails);
         bool DeleteSessionAlertConfiguration(string SessionId);
-        List<FIXMessageRejects> GetAllFixMessageRejects();
-        bool AddFixMessageReject(FIXMessageRejects fixmessageRejects);
-        bool DeleteFixMessageReject(int id);
+        List<FixTagValueConfiguration> GetAllFixMessageConfiguration();
+        bool AddFixMessageConfiguration(FixTagValueConfiguration fixTagValueConfiguration);
+        bool DeleteFixMessageConfiguration(int id);
     }
 }

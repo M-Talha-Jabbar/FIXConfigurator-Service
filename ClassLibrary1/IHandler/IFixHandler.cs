@@ -15,7 +15,7 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         bool SetSequenceNumber(FIXSession fixSession);
         bool ResetSequenceNumber(FIXSession fixSession);
         List<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions);
-        List<FIXMessage> GetFixRejectMessages(string sessionID);
+        List<FIXMessage> GetFixMessagesHavingAnyConfiguredFixTagValuePair(string sessionID);
 
         //void FiltrationOfFixMessagesWithRespectToCurrentConfiguredTagValuePairs(int id); // 'id' refers to the deleted Tag/Value Pair
         FixEnginesKeyedCollection GetFixEngines();
@@ -24,7 +24,7 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         FIXSession ConnectToFixSession(string engineID, FIXSession fixSession);
         //List<Tuple<string, string, string>> ParseAndStoreFixMessage(string fixMessage);
         void SendFixSessionUpdates(FIXSession fixSession, string engineID, string updateType);
-        void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID);
+        void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime);
         //string GetFixTagValue(string fixMessage, string tag);
         FixSessionKeyedCollection GetFixSession(string FixEngineID);
         FIXMessage getObjectFromFixMessage(string msg);
