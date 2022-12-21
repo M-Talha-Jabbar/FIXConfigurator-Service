@@ -216,9 +216,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             using(var context = new FIXMonitorContext())
             {
-                var FixmessageRejects = context.FixmessageRejects.ToList();
+                var FixmessageRejects = context.FixTagValues.ToList();
 
-                EmailNotifier.FixmsgRejects = FixmessageRejects;
+                EmailNotifier.fixTagValueConfigurations = FixmessageRejects;
             }
         }
 
@@ -1049,11 +1049,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             observable.SendFixMessageUpdate(fixMessage, engineID, sessionID);
             Task.Run(() =>
             {
-                CheckForMessageRejects(fixMessage, engineID, sessionID, isRealTime);
+                CheckForConfiguredFixTagValuePair(fixMessage, engineID, sessionID, isRealTime);
             });
         }
 
-        public void CheckForMessageRejects(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime)
+        public void CheckForConfiguredFixTagValuePair(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime)
         {
             var IsUpdateSentToObservers = false;
 
@@ -1062,7 +1062,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 if (!isRealTime && IsUpdateSentToObservers)
                     break;
 
-                var res = EmailNotifier.FixmsgRejects.FirstOrDefault(f => f.FixTag.Equals(desc.Item1) && f.FixValue.Equals(desc.Item3));
+                var res = EmailNotifier.fixTagValueConfigurations.FirstOrDefault(f => f.FixTag.Equals(desc.Item1) && f.FixValue.Equals(desc.Item3));
 
                 if(res != null)
                 {
@@ -1074,7 +1074,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     if (!IsUpdateSentToObservers)
                     {
-                        StoreFixRejectMessages(fixMessage, sessionID);
+                        StoreFixMessagesContainingConfiguredFixTagValuePair(fixMessage, sessionID);
                         observable.SendFixRejectUpdate(fixMessage, engineID, sessionID);
                         IsUpdateSentToObservers = true;
                     }   
@@ -1082,7 +1082,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        public void StoreFixRejectMessages(FIXMessage fixMessage, string sessionID)
+        public void StoreFixMessagesContainingConfiguredFixTagValuePair(FIXMessage fixMessage, string sessionID)
         {
             if (fixMessagesContainingConfiguredFixTagValuePair.ContainsKey(sessionID))
                 fixMessagesContainingConfiguredFixTagValuePair[sessionID].Add(fixMessage);

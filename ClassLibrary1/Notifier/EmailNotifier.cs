@@ -17,11 +17,11 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         private string status;
         private Sessions sessionInfo;
         private FIXSession FIXSession;
-        private FixmessageRejects fixmessageRejects; 
+        private FixTagValues fixTagValues; 
 
         public static Dictionary<string, Timer> emailTimer = new Dictionary<string, Timer>();
         public static Dictionary<string, int> recurringEmailsCount = new Dictionary<string, int>();
-        public static List<FixmessageRejects> FixmsgRejects = new List<FixmessageRejects>();
+        public static List<FixTagValues> fixTagValueConfigurations = new List<FixTagValues>();
 
         public EmailNotifier(string conId, string status, Sessions sessionInfo) // Email Alert without Timer
         {
@@ -59,10 +59,10 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             timer.Start();
         }
 
-        public EmailNotifier(string conId, FixmessageRejects fixmessageRejects) // Email Alert for Fix Message Having Any Configured Tag/Value Pair
+        public EmailNotifier(string conId, FixTagValues fixTagValues) // Email Alert for Fix Message Having Any Configured Tag/Value Pair
         {
             this.conId = conId;
-            this.fixmessageRejects = fixmessageRejects;
+            this.fixTagValues = fixTagValues;
         }
 
         private void OnEventExecution(Object sender, ElapsedEventArgs eventArgs)
@@ -92,7 +92,7 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
 
         public EmailNotifier SendEmailForFIXMessageReject()
         {
-            emailHandler.SendEmail(conId, fixmessageRejects);
+            emailHandler.SendEmail(conId, fixTagValues);
             return this;
         }
 

@@ -77,23 +77,23 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             //emailService.SendEmailAsync(emailData);
         }
 
-        public void SendEmail(string sessionId, FixmessageRejects fixmessageRejects)
+        public void SendEmail(string sessionId, FixTagValues fixTagValues)
         {
             EmailData emailData = new EmailData();
 
-            if (string.IsNullOrEmpty(fixmessageRejects.ToEmails))
+            if (string.IsNullOrEmpty(fixTagValues.ToEmails))
             {
                 emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
                 emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
-                emailData.Subject = $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue})";
-                emailData.Body = $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue}) -> {Environment} Environment";
+                emailData.Subject = $"Session {sessionId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue})";
+                emailData.Body = $"Session {sessionId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue}) -> {Environment} Environment";
             }
             else
             {
-                emailData.CommaSeperatedToEmails = fixmessageRejects.ToEmails;
-                emailData.CommaSeperatedCCEmails = fixmessageRejects.CcEmails;
-                emailData.Subject = string.IsNullOrEmpty(fixmessageRejects.Subject) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue})" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
-                emailData.Body = string.IsNullOrEmpty(fixmessageRejects.Body) ? $"Session {sessionId} received a message with Tag/Value ({fixmessageRejects.FixTag}={fixmessageRejects.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixmessageRejects.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixmessageRejects.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixmessageRejects.FixValue, RegexOptions.IgnoreCase);
+                emailData.CommaSeperatedToEmails = fixTagValues.ToEmails;
+                emailData.CommaSeperatedCCEmails = fixTagValues.CcEmails;
+                emailData.Subject = string.IsNullOrEmpty(fixTagValues.Subject) ? $"Session {sessionId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue})" : Regex.Replace(Regex.Replace(Regex.Replace(fixTagValues.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixTagValues.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixTagValues.FixValue, RegexOptions.IgnoreCase);
+                emailData.Body = string.IsNullOrEmpty(fixTagValues.Body) ? $"Session {sessionId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixTagValues.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixTagValues.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixTagValues.FixValue, RegexOptions.IgnoreCase);
             }
 
             DispatchEmail(emailData);
@@ -249,7 +249,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 List<FixTagValueConfiguration> allFixTagValueConfigurations = new List<FixTagValueConfiguration>();
 
-                var res = context.FixmessageRejects.ToList();
+                var res = context.FixTagValues.ToList();
 
                 if (res.Count > 0)
                 {
@@ -276,7 +276,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             if(fixTagValueConfiguration != null)
             {
-                var rejectConfiguration = new FixmessageRejects()
+                var newFixTagValueConfiguration = new FixTagValues()
                 {
                     FixTag = fixTagValueConfiguration.FixTag,
                     FixValue = fixTagValueConfiguration.FixValue,
@@ -287,11 +287,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     Body = fixTagValueConfiguration.Body
                 };
 
-                EmailNotifier.FixmsgRejects.Add(rejectConfiguration);
+                EmailNotifier.fixTagValueConfigurations.Add(newFixTagValueConfiguration);
 
                 using(var context = new FIXMonitorContext())
                 {
-                    context.FixmessageRejects.Add(rejectConfiguration);
+                    context.FixTagValues.Add(newFixTagValueConfiguration);
                     context.SaveChanges();
                 }
 
@@ -306,13 +306,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             using (var context = new FIXMonitorContext())
             {
-                var reject = context.FixmessageRejects.FirstOrDefault(r => r.Id == id);
+                var fixTagValueConfiguration = context.FixTagValues.FirstOrDefault(r => r.Id == id);
 
-                if(reject != null)
+                if(fixTagValueConfiguration != null)
                 {
-                    EmailNotifier.FixmsgRejects.Remove(EmailNotifier.FixmsgRejects.FirstOrDefault(r => r.Id == reject.Id));
+                    EmailNotifier.fixTagValueConfigurations.Remove(EmailNotifier.fixTagValueConfigurations.FirstOrDefault(r => r.Id == fixTagValueConfiguration.Id));
 
-                    context.FixmessageRejects.Remove(reject);
+                    context.FixTagValues.Remove(fixTagValueConfiguration);
                     context.SaveChanges();
 
                     return true;

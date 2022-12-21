@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace FIXMonitorBusinessLogicLayer.Data
 {
-    public partial class FixmessageRejects
+    public partial class FixTagValues
     {
         public int Id { get; set; }
         public string FixTag { get; set; }
