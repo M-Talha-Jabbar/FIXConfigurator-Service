@@ -25,12 +25,12 @@ namespace FIXMonitorService
                     FIXMonitorService.GetInstance().Heartbeat();
                 }
 
-                else if (((Object[])value)[1].GetType() == typeof(FIXMessage) && item.ToString() == "fixReject")
+                else if (((Object[])value)[1].GetType() == typeof(FIXMessage) && item.ToString() == "fixMessageWithConfiguredFixTagValuePair")
                 {
                     var fixMessage = ((Object[])value)[1];
                     var engineID = ((Object[])value)[2].ToString();
                     var sessionID = ((Object[])value)[3].ToString();
-                    FIXMonitorService.GetInstance().SendFixRejectsToClient((FIXMessage)fixMessage, engineID, sessionID);
+                    FIXMonitorService.GetInstance().SendFixMessageWithConfiguredFixTagValuePairToClient((FIXMessage)fixMessage, engineID, sessionID);
                 }
 
                 else if(item.GetType() == typeof(FIXMessage))

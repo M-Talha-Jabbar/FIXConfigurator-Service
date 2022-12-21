@@ -110,11 +110,11 @@ namespace FIXMonitorBusinessLogicLayer
             }
         }
 
-        public void SendFixRejectUpdate(Object fixReject, string engineID, string sessionID)
+        public void SendFixMessageContainingConfiguredFixTagValuePairUpdate(Object fixMessage, string engineID, string sessionID)
         {
             foreach(var item in observers)
             {
-                item.Value.OnNext(new Object[] { "fixReject", fixReject, engineID, sessionID });
+                item.Value.OnNext(new Object[] { "fixMessageWithConfiguredFixTagValuePair", fixMessage, engineID, sessionID });
             }
         }
 

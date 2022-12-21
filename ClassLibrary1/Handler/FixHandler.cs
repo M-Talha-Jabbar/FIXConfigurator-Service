@@ -1075,7 +1075,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     if (!IsUpdateSentToObservers)
                     {
                         StoreFixMessagesContainingConfiguredFixTagValuePair(fixMessage, sessionID);
-                        observable.SendFixRejectUpdate(fixMessage, engineID, sessionID);
+                        observable.SendFixMessageContainingConfiguredFixTagValuePairUpdate(fixMessage, engineID, sessionID);
                         IsUpdateSentToObservers = true;
                     }   
                 } 

@@ -136,11 +136,11 @@ namespace FIXMonitorService
             }
         }
 
-        public void SendFixRejectsToClient(FIXMessage fixMessage, string engineID, string sessionID)
+        public void SendFixMessageWithConfiguredFixTagValuePairToClient(FIXMessage fixMessage, string engineID, string sessionID)
         {
             if (((IChannel)callback).State == CommunicationState.Opened)
             {
-                callback.SendFixRejectsToClient(fixMessage, engineID, sessionID);
+                callback.SendFixMessageWithConfiguredFixTagValuePairToClient(fixMessage, engineID, sessionID);
             }
         }
 
