@@ -1,12 +1,14 @@
-﻿using Newtonsoft.Json;
+﻿using FIXMonitorBusinessLogicLayer.ICloneable;
+using Newtonsoft.Json;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 
 namespace FIXMonitorBusinessLogicLayer.DataModels
 {
-    public class FIXSession
+    public class FIXSession : ICloneable<FIXSession>
     {
         public string ConnectionID { get; set; }
 
@@ -218,6 +220,14 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
                 LastUpdated = (ulong)session.LastUpdated.Ticks
             };
+        }
+
+        public FIXSession GetClone()
+        {
+            FIXSession fixSession = (FIXSession)this.MemberwiseClone();
+            fixSession.FixMessages = new List<FIXMessage>();
+
+            return fixSession;
         }
 
     }

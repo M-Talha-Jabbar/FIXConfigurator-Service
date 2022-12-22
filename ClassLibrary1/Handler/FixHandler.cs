@@ -782,7 +782,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public FixEnginesKeyedCollection GetFixEngines()
         {
-            return fixEngines;
+            return fixEngines.GetClone();
         }
 
         public FIXEngine GetFixEngine(string engineID) {

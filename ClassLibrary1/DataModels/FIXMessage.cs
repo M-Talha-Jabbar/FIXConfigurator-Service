@@ -1,4 +1,5 @@
 ﻿using FIXMonitorBusinessLogicLayer.Handler;
+using FIXMonitorBusinessLogicLayer.ICloneable;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace FIXMonitorBusinessLogicLayer.DataModels
 {
-    public class FIXMessage
+    public class FIXMessage : ICloneable<FIXMessage>
     {
         const char FIX_MESSAGE_DELIMITER = '|';
 
@@ -61,7 +62,14 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
             }
             return "";
         }
-    }
 
-    
+        public FIXMessage GetClone()
+        {
+            FIXMessage fixMessage = (FIXMessage)this.MemberwiseClone();
+            fixMessage.keyValuePair = keyValuePair.ToList();
+
+            return fixMessage;
+        }
+
+    }
 }
