@@ -276,6 +276,7 @@
     <Compile Include="Handler\EmailHandler.cs" />
     <Compile Include="Handler\FixHandler.cs" />
     <Compile Include="Handler\SocketHandler.cs" />
+    <Compile Include="ICloneable\ICloneable.cs" />
     <Compile Include="IComparers\FixMessageSorter.cs" />
     <Compile Include="IHandler\IEmailHandler.cs" />
     <Compile Include="IHandler\IFixHandler.cs" />
@@ -312,6 +313,7 @@
       <Name>RedisCacheService</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>

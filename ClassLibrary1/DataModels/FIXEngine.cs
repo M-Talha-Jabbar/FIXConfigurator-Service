@@ -1,4 +1,5 @@
-﻿using FIXMonitorBusinessLogicLayer.KeyedCollections;
+﻿using FIXMonitorBusinessLogicLayer.ICloneable;
+using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using Newtonsoft.Json;
 using StackExchange.Redis;
 using System;
@@ -7,7 +8,7 @@ using System.ComponentModel;
 
 namespace FIXMonitorBusinessLogicLayer.DataModels
 {
-    public class FIXEngine
+    public class FIXEngine : ICloneable<FIXEngine>
     {
         public string engineID { get; set; } = Guid.NewGuid().ToString();
         public string engineName { get; set; }
@@ -48,5 +49,12 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
             };
         }
 
+        public FIXEngine GetClone()
+        {
+            FIXEngine fixEngine = (FIXEngine)this.MemberwiseClone();
+            fixEngine.fixSessions = fixSessions.GetClone();
+
+            return fixEngine;
+        }
     }
 }
