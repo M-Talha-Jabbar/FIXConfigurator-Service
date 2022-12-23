@@ -13,7 +13,6 @@ namespace FIXMonitorBusinessLogicLayer.KeyedCollections
 
         public FixSessionKeyedCollection GetClone()
         {
-
             FixSessionKeyedCollection fixSessionKeyedColection = new FixSessionKeyedCollection();
             foreach(var item in this.Items) fixSessionKeyedColection.Add(item.GetClone());
 

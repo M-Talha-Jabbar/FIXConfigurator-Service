@@ -782,12 +782,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public FixEnginesKeyedCollection GetFixEngines()
         {
-            return fixEngines.GetClone();
+            return fixEngines.GetClone(); // Cloning exclude copying fixMessages since we need to reduce the payload in order to fasten the rendering time of UI
         }
 
         public FIXEngine GetFixEngine(string engineID) {
 
-           return fixEngines.Contains(engineID) ? fixEngines[engineID] : null;
+           return fixEngines.Contains(engineID) ? fixEngines[engineID].GetClone() : null;
         }
 
         public FIXEngine ConnectToFixEngine(FIXEngine fixEngine)
