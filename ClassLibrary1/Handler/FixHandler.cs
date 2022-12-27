@@ -951,8 +951,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         public FIXEngine DisconnectToFixEngine(FIXEngine fixEngine)
         {
             var key = $"{fixEngine.engineID}";
-            //bool isRemoved = fixEngines.Remove(fixEngine);
-            var engine = fixEngines.SingleOrDefault(x => x.redisIpAddress == fixEngine.redisIpAddress && x.redisIpPort == fixEngine.redisIpPort);
+
+            string[] separator = { "::" };
+            var columns = key.Split(separator, System.StringSplitOptions.RemoveEmptyEntries);
+            var nestColumns = LineSplitter(columns.First(), ':');
+
+            fixEngine.redisIpPort = nestColumns.Last();
+            fixEngine.redisDB = Convert.ToInt32(columns.Last());
+
+            var engine = fixEngines.SingleOrDefault(x => x.redisIpAddress == fixEngine.redisIpAddress && x.redisIpPort == fixEngine.redisIpPort && x.redisDB == fixEngine.redisDB);
+
             if(engine != null)
             {
                 fixEngines.Remove(engine);
