@@ -27,6 +27,9 @@ namespace FIXMonitorService
         FixSessionKeyedCollection GetFixSessions(string FixEngineID);
 
         [OperationContract]
+        IEnumerable<FIXSessionsConnectivityStatus> GetFixSessionsConnectivityStatus();
+
+        [OperationContract]
         bool ConnectToFIX(FIXSession fixSession);
 
         [OperationContract]

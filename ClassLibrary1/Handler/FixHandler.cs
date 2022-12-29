@@ -861,8 +861,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var setEngines = client.HashSetAsync("Engine", fixEngine.engineID, fixEngine.engineName.ToUpper());
                 setEngines.Wait();
 
-                streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
+                if (streamLastReadTimeStamps.ContainsKey(fixEngine.engineName))
+                {
+                    streamLastReadTimeStamps[fixEngine.engineName] = "0";
+                    streamLastReadTimeStamps[fixEngine.engineName + ":Statuses"] = "0";
+                }
+                else
+                {
+                    streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
                 streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
+                }
 
                 Thread thread1 = new Thread(
                     unused => GetSessionsForEngine(muxer, db, client, fixEngine)
@@ -951,8 +959,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         public FIXEngine DisconnectToFixEngine(FIXEngine fixEngine)
         {
             var key = $"{fixEngine.engineID}";
-            //bool isRemoved = fixEngines.Remove(fixEngine);
-            var engine = fixEngines.SingleOrDefault(x => x.redisIpAddress == fixEngine.redisIpAddress && x.redisIpPort == fixEngine.redisIpPort);
+
+            string[] separator = { "::" };
+            var columns = key.Split(separator, System.StringSplitOptions.RemoveEmptyEntries);
+            var nestColumns = LineSplitter(columns.First(), ':');
+
+            fixEngine.redisIpPort = nestColumns.Last();
+            fixEngine.redisDB = Convert.ToInt32(columns.Last());
+
+            var engine = fixEngines.SingleOrDefault(x => x.redisIpAddress == fixEngine.redisIpAddress && x.redisIpPort == fixEngine.redisIpPort && x.redisDB == fixEngine.redisDB);
+
             if(engine != null)
             {
                 fixEngines.Remove(engine);
@@ -1091,6 +1107,19 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 fixMessagesContainingConfiguredFixTagValuePair.Add(sessionID, new List<FIXMessage>() { fixMessage });
         }
 
+        public IEnumerable<FIXSessionsConnectivityStatus> GetFixSessionsConnectivityStatus()
+        {
+            var fixSessionsConnectivityStatusList = fixEngines.SelectMany(engine => engine.fixSessions.Select(session => new FIXSessionsConnectivityStatus()
+            {
+                engineID = engine.engineID,
+                engineName = engine.engineName,
+                ConnectionID = session.ConnectionID,
+                Status = session.Status
+            }));
+
+            return fixSessionsConnectivityStatusList;
+        }
+
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)
         {
             return fixEngines[FixEngineID].fixSessions;
@@ -1173,6 +1202,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     if (sendEmail)
                     {
+                        SendFixSessionUpdates(session, engine.engineID, "update_status_in_fix_sessions_dropdown");
+
                         using (var context = new FIXMonitorContext())
                         {
                             var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
@@ -1277,14 +1308,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     FixEngineMomento engineMomento;
                     var isEngineMomentoExists = fixEngineMomentos.TryGetValue(fixEngine.engineID, out engineMomento);
 
-
                     if (isEngineMomentoExists) {
                         engineMomento.SetState(fixEngine);
                     } else {
                         Logging.LogMessage(LOGTYPE.Error, "Could not get engine Momento object");
                     }
-                       
-
 
                     //if (isConnected)
                     //{
@@ -1295,12 +1323,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     // only sending updates to individual fix engine
 
-                        foreach (var session in fixEngine.fixSessions)
-                        {
-                            if (!isConnected)
-                                session.Status = "UNAVAILABLE";
-                            SendFixSessionUpdates(session, fixEngine.engineID, "update");
-                        }
+                    foreach (var session in fixEngine.fixSessions)
+                    {
+                        if (!isConnected)
+                            session.Status = "UNAVAILABLE";
+                        SendFixSessionUpdates(session, fixEngine.engineID, "update");
+                        //SendFixSessionUpdates(session, fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
+                    }
                 }
             }
             catch (Exception e)
@@ -1311,7 +1340,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private static void LogException(Exception e)
         {
-
             Logging.LogMessage(LOGTYPE.Error, "Exception : " + e.Message);
             Logging.LogMessage(LOGTYPE.Error, "StackTrace : " + e.StackTrace);
             if (e.InnerException != null)

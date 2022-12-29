@@ -64,6 +64,11 @@ namespace FIXMonitorService
             return this.DataCache.GetFixSessions(FixEngineID);
         }
 
+        public IEnumerable<FIXSessionsConnectivityStatus> GetFixSessionsConnectivityStatus()
+        {
+            return this.DataCache.GetFixSessionsConnectivityStatus();
+        }
+
         public bool ConnectToFIX(FIXSession fixSession)
         {
             return this.DataCache.ConnectFixSession(fixSession);
