@@ -861,8 +861,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var setEngines = client.HashSetAsync("Engine", fixEngine.engineID, fixEngine.engineName.ToUpper());
                 setEngines.Wait();
 
-                streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
-                streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
+                if (streamLastReadTimeStamps.ContainsKey(fixEngine.engineName))
+                {
+                    streamLastReadTimeStamps[fixEngine.engineName] = "0";
+                    streamLastReadTimeStamps[fixEngine.engineName + ":Statuses"] = "0";
+                }
+                else
+                {
+                    streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
+                    streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
+                }
 
                 Thread thread1 = new Thread(
                     unused => GetSessionsForEngine(muxer, db, client, fixEngine)
