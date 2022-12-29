@@ -1181,6 +1181,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     if (sendEmail)
                     {
+                        SendFixSessionUpdates(session, engine.engineID, "update_status_in_fix_sessions_dropdown");
+
                         using (var context = new FIXMonitorContext())
                         {
                             var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
@@ -1285,14 +1287,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     FixEngineMomento engineMomento;
                     var isEngineMomentoExists = fixEngineMomentos.TryGetValue(fixEngine.engineID, out engineMomento);
 
-
                     if (isEngineMomentoExists) {
                         engineMomento.SetState(fixEngine);
                     } else {
                         Logging.LogMessage(LOGTYPE.Error, "Could not get engine Momento object");
                     }
-                       
-
 
                     //if (isConnected)
                     //{
@@ -1303,12 +1302,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     // only sending updates to individual fix engine
 
-                        foreach (var session in fixEngine.fixSessions)
-                        {
-                            if (!isConnected)
-                                session.Status = "UNAVAILABLE";
-                            SendFixSessionUpdates(session, fixEngine.engineID, "update");
-                        }
+                    foreach (var session in fixEngine.fixSessions)
+                    {
+                        if (!isConnected)
+                            session.Status = "UNAVAILABLE";
+                        SendFixSessionUpdates(session, fixEngine.engineID, "update");
+                        SendFixSessionUpdates(session, fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
+                    }
                 }
             }
             catch (Exception e)
@@ -1319,7 +1319,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private static void LogException(Exception e)
         {
-
             Logging.LogMessage(LOGTYPE.Error, "Exception : " + e.Message);
             Logging.LogMessage(LOGTYPE.Error, "StackTrace : " + e.StackTrace);
             if (e.InnerException != null)
