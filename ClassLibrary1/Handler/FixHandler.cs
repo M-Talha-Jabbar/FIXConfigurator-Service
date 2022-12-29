@@ -869,7 +869,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 else
                 {
                     streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
-                    streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
+                streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
                 }
 
                 Thread thread1 = new Thread(
@@ -1107,6 +1107,19 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 fixMessagesContainingConfiguredFixTagValuePair.Add(sessionID, new List<FIXMessage>() { fixMessage });
         }
 
+        public IEnumerable<FIXSessionsConnectivityStatus> GetFixSessionsConnectivityStatus()
+        {
+            var fixSessionsConnectivityStatusList = fixEngines.SelectMany(engine => engine.fixSessions.Select(session => new FIXSessionsConnectivityStatus()
+            {
+                engineID = engine.engineID,
+                engineName = engine.engineName,
+                ConnectionID = session.ConnectionID,
+                Status = session.Status
+            }));
+
+            return fixSessionsConnectivityStatusList;
+        }
+
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)
         {
             return fixEngines[FixEngineID].fixSessions;
@@ -1315,7 +1328,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         if (!isConnected)
                             session.Status = "UNAVAILABLE";
                         SendFixSessionUpdates(session, fixEngine.engineID, "update");
-                        SendFixSessionUpdates(session, fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
+                        //SendFixSessionUpdates(session, fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
                     }
                 }
             }
