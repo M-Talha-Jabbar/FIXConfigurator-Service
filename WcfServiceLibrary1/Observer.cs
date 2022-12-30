@@ -18,6 +18,8 @@ namespace FIXMonitorService
         {
             try
             {
+                var updateItem = ((Object[])value);
+
                 var item = ((Object[])value)[0];
 
                 if (item.GetType() == typeof(string) && item.ToString() == "heartbeat")
@@ -33,7 +35,7 @@ namespace FIXMonitorService
                     FIXMonitorService.GetInstance().SendFixMessageWithConfiguredFixTagValuePairToClient((FIXMessage)fixMessage, engineID, sessionID);
                 }
 
-                else if(item.GetType() == typeof(FIXMessage))
+                else if (item.GetType() == typeof(FIXMessage))
                 {
                     var engineID = ((Object[])value)[1].ToString();
                     var sessionID = ((Object[])value)[2].ToString();
@@ -50,6 +52,10 @@ namespace FIXMonitorService
                 else if (item.GetType() == typeof(AlertFlag))
                 {
                     FIXMonitorService.GetInstance().SendAlertFlag((AlertFlag)item);
+                }
+                else if (updateItem.Length == 2 && (string)updateItem[1] == "fixSessionStatusMessage") {
+
+                    FIXMonitorService.GetInstance().SendFixSessionStatusMessage((string)updateItem[0]);
                 }
 
             }

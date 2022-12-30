@@ -173,6 +173,15 @@ namespace FIXMonitorService
             }
         }
 
+        public void SendFixSessionStatusMessage(string fixSessionStatusMessage)
+        {
+            if (((IChannel)callback).State == CommunicationState.Opened)
+            {
+                callback.SendFixSessionStatusMessage(fixSessionStatusMessage);
+            }
+        }
+
+
         public List<AlertFlag> GetAlertCache()
         {
             return this.DataCache.GetAlertCache();

@@ -40,7 +40,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
         private readonly string fixEngineRedisConfigFilePath = "redisConfigAndDB.txt";
         //Messages Stream Attributes
-        private Dictionary<string, string > streamLastReadTimeStamps;
+        private Dictionary<string, string> streamLastReadTimeStamps;
         private long streamLastPosition = 0;
         //private List<RedisValue> readMessagesIDs;
 
@@ -56,7 +56,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private ConcurrentDictionary<string, FixEngineMomento> fixEngineMomentos;
 
         private EmailNotifier emailNotifier;
-        
+
         private FixEngineSocket fixEngineSocket;
 
         private int fixMessageNotification = 0;
@@ -64,7 +64,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private int fixMessageRead = 0;
 
         private LockObjectsManager locksforConcurrentFixMessageRead;
-        
+
+        private ConcurrentQueue<string> sessionStatuses;
+
         public FixHandler()
         {
             Initializers();
@@ -78,7 +80,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             //------------------------------------------------------------------------------
             /* HACK : FixHub Status */
-           
+
             //------------------------------------------------------------------------------
             LoadFIXEnginesAndSessions();
 
@@ -94,13 +96,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void EnginePersistence()
         {
-                IEnumerable<string> FixEnginesRedisConfig = FetchFixEngineRedisConfig();
+            IEnumerable<string> FixEnginesRedisConfig = FetchFixEngineRedisConfig();
 
-                foreach (var row in FixEnginesRedisConfig)
-                {
-                    var columns = LineSplitter(row);
-                    InsertFixEngineRedisConfigInSessionDb(columns);
-                 }
+            foreach (var row in FixEnginesRedisConfig)
+            {
+                var columns = LineSplitter(row);
+                InsertFixEngineRedisConfigInSessionDb(columns);
+            }
         }
 
         public IEnumerable<string> FetchFixEngineRedisConfig() {
@@ -109,7 +111,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             if (File.Exists(fixEngineRedisConfigFilePath))
             {
-                 data = File.ReadAllLines(fixEngineRedisConfigFilePath).ToList();
+                data = File.ReadAllLines(fixEngineRedisConfigFilePath).ToList();
 
                 return data;
             }
@@ -122,9 +124,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         }
 
         public void InsertFixEngineRedisConfigInSessionDb(string[] columns) {
-            
+
             string fix_engine_redis_ip_port = columns[0];
-            
+
             var db = Int32.Parse(columns[1]);
 
             if (session_dbs.ContainsKey(fix_engine_redis_ip_port))
@@ -132,11 +134,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 if (!session_dbs[fix_engine_redis_ip_port].Contains(db))
 
                     session_dbs[fix_engine_redis_ip_port].Add(db);
-                
+
                 return;
             }
-           
-                session_dbs.Add(fix_engine_redis_ip_port, new List<int>() { db });
+
+            session_dbs.Add(fix_engine_redis_ip_port, new List<int>() { db });
         }
 
         private void Initializers()
@@ -153,6 +155,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEngineSocket = FixEngineSocket.GetSingletonInstance();
             fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
             locksforConcurrentFixMessageRead = new LockObjectsManager();
+            sessionStatuses = new ConcurrentQueue<string>();
 
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
             GenerateDictionary(fixMsgTypes, msgTypes);
@@ -214,7 +217,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void LoadFixTagValueConfigurations()
         {
-            using(var context = new FIXMonitorContext())
+            using (var context = new FIXMonitorContext())
             {
                 var allFixTagValueConfigurations = context.FixTagValues.ToList();
 
@@ -259,11 +262,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEngine = engine;
 
             fixEngine.fixSessions = new FixSessionKeyedCollection();
-            
+
             fixEnginesDB.Add($"{fixEngine.engineID}", db);
             fixEngines.Add(fixEngine);
             streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
-            streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0"); 
+            streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
             return fixEngine;
         }
 
@@ -356,7 +359,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             if (fixEngines.Count > 0)
             {
                 string dbkey = $"{fixEngine.engineID}";
-                if(fixEnginesDB.ContainsKey(dbkey))
+                if (fixEnginesDB.ContainsKey(dbkey))
                     db = fixEnginesDB[dbkey];
                 else
                     return;
@@ -398,7 +401,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
 
                     Console.WriteLine("fix message update " + messages.Length);
-          
+
                     if (readMessagesIDs.Count > 0)
                     {
                         client.StreamAcknowledgeAsync(key, "", readMessagesIDs.ToArray()).Wait();
@@ -502,13 +505,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         {
                             //if (recieve.Verify())
                             //{
-                                recieve.Deserialize(out body);
+                            recieve.Deserialize(out body);
                             //} else
                             //{
                             //    body = Body.Default;
                             //}
 
-                            
+
 
                             FIXMessage fixMessage = body;
                             var _key = body.ConnectionID;
@@ -517,13 +520,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.redisIpAddress && x.port == fixEngine.redisIpPort);
                             //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
 
-                           
+
                             if (IsSendMessage)
                             {
                                 //observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
                                 SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key, true);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
-                                if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message"); 
+                                if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message");
                                 Task t = Task.Run(() =>
                                 {
                                     FixMessageLog.FixMessageLogger(_key, fixEngine, fixMessage);
@@ -564,7 +567,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
 
             return false;
-           
+
         }
 
         public void LoadFIXSessions()
@@ -787,7 +790,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public FIXEngine GetFixEngine(string engineID) {
 
-           return fixEngines.Contains(engineID) ? fixEngines[engineID].GetClone() : null;
+            return fixEngines.Contains(engineID) ? fixEngines[engineID].GetClone() : null;
         }
 
         public FIXEngine ConnectToFixEngine(FIXEngine fixEngine)
@@ -828,7 +831,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 throw new Exception($"DB not found");
             }
             //Save Db to File with respective ip
-            
+
 
             string CacheKeyEvent = "__keyevent@" + db + "__:*";
             var key = $"{fixEngine.engineID}";
@@ -869,7 +872,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 else
                 {
                     streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
-                streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
+                    streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
                 }
 
                 Thread thread1 = new Thread(
@@ -901,7 +904,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private void PersistFixEngineConfig(FIXEngine fixEngine = null, bool getConfigFromSessionDbDict = true) {
 
             if(getConfigFromSessionDbDict)
-                
+
                 // session Db dictionary is updated, so we have to over write the old fix engine redis config and write the updated fix engine redis config 
 
                 File.Delete(fixEngineRedisConfigFilePath);
@@ -954,7 +957,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         }
 
-       
+
 
         public FIXEngine DisconnectToFixEngine(FIXEngine fixEngine)
         {
@@ -1011,7 +1014,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             configModel.Serialize(session);
 
             var sessionHash = new HashEntry[1] { new HashEntry(fixSession.ConnectionID + "-Config", configModel.Buffer.Data) } ; //FIXSession.getHashFromObject(fixSession);
-            
+
             var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
             var client = muxer.GetDatabase(db);
             //client.HashSet(fixSession.ConnectionID + "-Config", sessionHash);
@@ -1060,13 +1063,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             observable.SendFixSessionUpdate(fixSession, engineID, updateType);
         }
 
-        public void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime) 
+        public void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime)
         {
             observable.SendFixMessageUpdate(fixMessage, engineID, sessionID);
             Task.Run(() =>
             {
                 CheckForConfiguredFixTagValuePair(fixMessage, engineID, sessionID, isRealTime);
             });
+        }
+
+        public void SendFixSessionStatusMessage(string fixSessionStatusMessage) { 
+            observable.SendFixSessionStatusMessage(fixSessionStatusMessage, "fixSessionStatusMessage");
         }
 
         public void CheckForConfiguredFixTagValuePair(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime)
@@ -1093,8 +1100,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         StoreFixMessagesContainingConfiguredFixTagValuePair(fixMessage, sessionID);
                         observable.SendFixMessageContainingConfiguredFixTagValuePairUpdate(fixMessage, engineID, sessionID);
                         IsUpdateSentToObservers = true;
-                    }   
-                } 
+                    }
+                }
             }
         }
 
@@ -1153,13 +1160,37 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var result = hash.Result;
                 SessionUpdates(key, result, engine);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 LogException(e);
             }
 
         }
 
+        public string CreateFixSessionUpdateMessage(string fixEngineName, string fixSessionID, string fixSessionStatus) {
+            
+            string sessionStatusMessage = $"[{fixEngineName}] {fixSessionID} is {fixSessionStatus} at {DateTime.Now}";
+            
+            return sessionStatusMessage;
+        }
+
+        public void PushFixSessionStatusMessage(string fixSessionStatusMessage) {
+
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        sessionStatuses.Enqueue(fixSessionStatusMessage);
+                    }
+                    catch (Exception ex)
+                    {
+
+                        Logging.LogMessage(LOGTYPE.Fatal, $"Cant Add fix session status message in queue {ex.Message}");
+                    }
+                });
+        }
+
+       
         // key: redis key of session id 
         public void SessionUpdates(string key, HashEntry[] result, FIXEngine fixEngine)
         {
@@ -1203,6 +1234,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     if (sendEmail)
                     {
                         SendFixSessionUpdates(session, engine.engineID, "update_status_in_fix_sessions_dropdown");
+
+                        string fixSessionStatusMessage = CreateFixSessionUpdateMessage(fixEngine.engineName, session.ConnectionID, session.Status);
+
+                        PushFixSessionStatusMessage(fixSessionStatusMessage);
 
                         using (var context = new FIXMonitorContext())
                         {
@@ -1327,7 +1362,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     {
                         if (!isConnected)
                             session.Status = "UNAVAILABLE";
-                        SendFixSessionUpdates(session, fixEngine.engineID, "update");
+                        SendFixSessionUpdates(session, fixEngine.engineID, "update");     
                         //SendFixSessionUpdates(session, fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
                     }
                 }
