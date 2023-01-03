@@ -242,6 +242,11 @@ namespace FIXMonitorBusinessLogicLayer
         public bool TcpConnection(string ipAddress, int port) {
             return new TcpConnection.TcpConnection(ipAddress, port).TcpConnectionBuilder();
         }
+
+        public IEnumerable<string> GetSessionStatusMessage() { 
+
+            return fixHandler.GetSessionStatusMessage();
+        }
     }
 
 }

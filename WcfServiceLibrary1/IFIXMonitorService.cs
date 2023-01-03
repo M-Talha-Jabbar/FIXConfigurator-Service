@@ -104,6 +104,9 @@ namespace FIXMonitorService
         [OperationContract]
         bool TcpConnection(string ipAddress, int port);
 
+        [OperationContract]
+        IEnumerable<string> GetSessionStatusMessage();
+
         // TODO: Add your service operations here
     }
 

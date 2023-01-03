@@ -1302,6 +1302,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
+        public IEnumerable<string> GetSessionStatusMessage()
+        {
+            return sessionStatuses.ToList();
+        }
+
         private void GenerateDictionary(Dictionary<string, string> dic, string[] lines)
         {
             for (int i = 0; i < lines.Length; i++)

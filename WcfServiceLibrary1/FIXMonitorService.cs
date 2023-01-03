@@ -245,5 +245,9 @@ namespace FIXMonitorService
         {
             return this.DataCache.TcpConnection(ipAddress, port);
         }
+
+        public IEnumerable<string> GetSessionStatusMessage() {
+            return this.DataCache.GetSessionStatusMessage();
+        }
     }
 }
