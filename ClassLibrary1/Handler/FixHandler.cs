@@ -1239,6 +1239,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                         PushFixSessionStatusMessage(fixSessionStatusMessage);
 
+                        SendFixSessionStatusMessage(fixSessionStatusMessage);
                         using (var context = new FIXMonitorContext())
                         {
                             var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
