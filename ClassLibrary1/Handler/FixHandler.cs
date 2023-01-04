@@ -630,7 +630,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     OutSeqNum = fixSession.OutSeqNum,
                     SenderID = fixSession.SenderCompID,
                     TargetID = fixSession.TargetCompID,
-                    Signature = Signature.FIXMONITOR
+                    Signature = Signature.FIXMONITOR,
+                    Status = fixSession.Status.Equals("CONNECTED", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.CONNECTED : fixSession.Status.Equals("DISCONNECTED", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.DISCONNECTED : fixSession.Status.Equals("UNAVAILABLE", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.UNAVAILABLE : proto.MessageStatus.Default,
                 };
 
                 FBE.proto.HeaderModel headerModel = new FBE.proto.HeaderModel();
