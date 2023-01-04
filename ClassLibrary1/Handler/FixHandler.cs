@@ -1330,13 +1330,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         {
                             session.Status = "UNAVAILABLE";
                             SendFixSessionUpdates(session, fixEngine.engineID, "update");
-
-                            if (!statusInFixSessionsDropdownUpdate)
-                            {
-                                SendFixSessionUpdates(session, fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
-                                statusInFixSessionsDropdownUpdate = true;
-                            }
+                            statusInFixSessionsDropdownUpdate = true;
                         }
+                    }
+
+                    if (statusInFixSessionsDropdownUpdate)
+                    {
+                        SendFixSessionUpdates(fixEngine.fixSessions[0], fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
                     }
                 }
             }
