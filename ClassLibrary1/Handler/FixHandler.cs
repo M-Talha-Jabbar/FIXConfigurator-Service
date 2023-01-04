@@ -1321,14 +1321,22 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     //    fixEngines = _state;
                     //}
 
-                    // only sending updates to individual fix engine
+                    bool statusInFixSessionsDropdownUpdate = false;
 
+                    // only sending updates to individual fix engine
                     foreach (var session in fixEngine.fixSessions)
                     {
-                        if (!isConnected)
+                        if (session.Status != "UNAVAILABLE")
+                        {
                             session.Status = "UNAVAILABLE";
-                        SendFixSessionUpdates(session, fixEngine.engineID, "update");
-                        //SendFixSessionUpdates(session, fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
+                            SendFixSessionUpdates(session, fixEngine.engineID, "update");
+
+                            if (!statusInFixSessionsDropdownUpdate)
+                            {
+                                SendFixSessionUpdates(session, fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
+                                statusInFixSessionsDropdownUpdate = true;
+                            }
+                        }
                     }
                 }
             }
