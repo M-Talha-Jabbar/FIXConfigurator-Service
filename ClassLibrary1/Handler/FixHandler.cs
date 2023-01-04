@@ -65,7 +65,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private LockObjectsManager locksforConcurrentFixMessageRead;
 
-        private ConcurrentQueue<string> sessionStatuses;
+        private ConcurrentStack<string> sessionStatuses;
 
         public FixHandler()
         {
@@ -155,7 +155,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEngineSocket = FixEngineSocket.GetSingletonInstance();
             fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
             locksforConcurrentFixMessageRead = new LockObjectsManager();
-            sessionStatuses = new ConcurrentQueue<string>();
+            sessionStatuses = new ConcurrentStack<string>();
 
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
             GenerateDictionary(fixMsgTypes, msgTypes);
@@ -1180,7 +1180,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     try
                     {
-                        sessionStatuses.Enqueue(fixSessionStatusMessage);
+                        sessionStatuses.Push(fixSessionStatusMessage);
                     }
                     catch (Exception ex)
                     {
