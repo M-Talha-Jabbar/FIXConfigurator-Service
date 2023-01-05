@@ -104,6 +104,9 @@ namespace FIXMonitorService
         [OperationContract]
         bool TcpConnection(string ipAddress, int port);
 
+        [OperationContract]
+        IEnumerable<string> GetSessionStatusMessage();
+
         // TODO: Add your service operations here
     }
 
@@ -124,6 +127,9 @@ namespace FIXMonitorService
 
         [OperationContract]
         void SendAlertFlag(AlertFlag flag);
+
+        [OperationContract]
+        void SendFixSessionStatusMessage(string fixSessionStatusMessage);
     }
 
     // Use a data contract as illustrated in the sample below to add composite types to service operations.

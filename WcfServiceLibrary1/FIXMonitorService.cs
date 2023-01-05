@@ -173,6 +173,15 @@ namespace FIXMonitorService
             }
         }
 
+        public void SendFixSessionStatusMessage(string fixSessionStatusMessage)
+        {
+            if (((IChannel)callback).State == CommunicationState.Opened)
+            {
+                callback.SendFixSessionStatusMessage(fixSessionStatusMessage);
+            }
+        }
+
+
         public List<AlertFlag> GetAlertCache()
         {
             return this.DataCache.GetAlertCache();
@@ -235,6 +244,10 @@ namespace FIXMonitorService
         public bool TcpConnection(string ipAddress, int port)
         {
             return this.DataCache.TcpConnection(ipAddress, port);
+        }
+
+        public IEnumerable<string> GetSessionStatusMessage() {
+            return this.DataCache.GetSessionStatusMessage();
         }
     }
 }

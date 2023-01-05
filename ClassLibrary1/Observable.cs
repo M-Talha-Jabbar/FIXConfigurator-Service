@@ -110,6 +110,26 @@ namespace FIXMonitorBusinessLogicLayer
             }
         }
 
+        public void SendFixSessionStatusMessage(string fixSessionStatusMessage, string updateType)
+        {
+            
+            foreach (var item in observers)
+            {
+                //SendFixMessageUpdate:
+                //if (!rwl.IsWriterLockHeld)
+                //{
+                //    item.Value.OnNext(new Object[] { fixSession, engineID, updateType });
+                //}
+                //else
+                //{
+                //    goto SendFixMessageUpdate;
+                //}
+
+                item.Value.OnNext(new Object[] {fixSessionStatusMessage, updateType });
+            }
+        }
+
+
         public void SendFixMessageContainingConfiguredFixTagValuePairUpdate(Object fixMessage, string engineID, string sessionID)
         {
             foreach(var item in observers)
