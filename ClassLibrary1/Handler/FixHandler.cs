@@ -633,7 +633,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     OutSeqNum = fixSession.OutSeqNum,
                     SenderID = fixSession.SenderCompID,
                     TargetID = fixSession.TargetCompID,
-                    Signature = Signature.FIXMONITOR
+                    Signature = Signature.FIXMONITOR,
+                    Status = fixSession.Status.Equals("CONNECTED", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.CONNECTED : fixSession.Status.Equals("DISCONNECTED", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.DISCONNECTED : fixSession.Status.Equals("UNAVAILABLE", StringComparison.OrdinalIgnoreCase) ? proto.MessageStatus.UNAVAILABLE : proto.MessageStatus.Default,
                 };
 
                 FBE.proto.HeaderModel headerModel = new FBE.proto.HeaderModel();
@@ -1362,14 +1363,22 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     //    fixEngines = _state;
                     //}
 
-                    // only sending updates to individual fix engine
+                    bool statusInFixSessionsDropdownUpdate = false;
 
+                    // only sending updates to individual fix engine
                     foreach (var session in fixEngine.fixSessions)
                     {
-                        if (!isConnected)
+                        if (session.Status != "UNAVAILABLE")
+                        {
                             session.Status = "UNAVAILABLE";
-                        SendFixSessionUpdates(session, fixEngine.engineID, "update");     
-                        //SendFixSessionUpdates(session, fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
+                            SendFixSessionUpdates(session, fixEngine.engineID, "update");
+                            statusInFixSessionsDropdownUpdate = true;
+                        }
+                    }
+
+                    if (statusInFixSessionsDropdownUpdate)
+                    {
+                        SendFixSessionUpdates(fixEngine.fixSessions[0], fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
                     }
                 }
             }
