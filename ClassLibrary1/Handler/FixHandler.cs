@@ -123,6 +123,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return line.Split(splitter);
         }
 
+        public string[] LineSplitterWithAString(string line, string[] splitter = null) 
+        {
+            return line.Split(splitter ?? new string[] { "::" }, System.StringSplitOptions.RemoveEmptyEntries); // Default string splitter set to "::"
+        }
+
         public void InsertFixEngineRedisConfigInSessionDb(string[] columns) {
 
             string fix_engine_redis_ip_port = columns[0];
@@ -964,8 +969,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             var key = $"{fixEngine.engineID}";
 
-            string[] separator = { "::" };
-            var columns = key.Split(separator, System.StringSplitOptions.RemoveEmptyEntries);
+            var columns = LineSplitterWithAString(key);
             var nestColumns = LineSplitter(columns.First(), ':');
 
             fixEngine.redisIpPort = nestColumns.Last();
