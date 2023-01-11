@@ -252,7 +252,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             fixEngine.fixSessions = new FixSessionKeyedCollection();
 
-            //fixEnginesDB.Add($"{fixEngine.engineID}", db);
             fixEngines.Add(fixEngine);
             streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
             streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
@@ -609,7 +608,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var engine = fixEngines.FirstOrDefault(x => x.fixSessions.FirstOrDefault(y => y.IPAddress + ":" + y.Port == fixSession.IPAddress + ":" + fixSession.Port && y.ConnectionID == fixSession.ConnectionID) != null);
                 var ip = engine.redisIpAddress + ":" + engine.redisIpPort;
 
-                var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
+                var muxer = RedisConnectorHelper.GetConnection($"{engine.redisIpAddress}:{engine.redisIpPort}");
                 int db = fixEnginesDB[$"{engine.engineID}"];
                 var database = muxer.GetDatabase(db);
                 //If the data is not consistent then we will read the data first and then update the data ... 
@@ -959,7 +958,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 fixEnginesDB.Remove(key);
                 PersistFixEngineConfig(engine, true);
                 string CacheKeyEvent = "__keyevent@" + db + "__:*";
-                var muxer = RedisConnectorHelper.GetConnection(fixEngine.redisIpAddress);
+                var muxer = RedisConnectorHelper.GetConnection($"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort}");
                 muxer.GetSubscriber().Unsubscribe(CacheKeyEvent);
                 muxer.GetDatabase(engine.redisDB).HashDeleteAsync("Engine",engine.engineID).Wait();
 
@@ -993,7 +992,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             var sessionHash = new HashEntry[1] { new HashEntry(fixSession.ConnectionID + "-Config", configModel.Buffer.Data) } ; //FIXSession.getHashFromObject(fixSession);
 
-            var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
+            var muxer = RedisConnectorHelper.GetConnection($"{engine.redisIpAddress}:{engine.redisIpPort}");
             var client = muxer.GetDatabase(db);
             //client.HashSet(fixSession.ConnectionID + "-Config", sessionHash);
             client.HashSet("Sessions-To-Be-Added", sessionHash);
@@ -1131,7 +1130,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 string subkey = "Status";
                 var engine = fixEngines.FirstOrDefault(x => x.fixSessions.SingleOrDefault(y => y.ConnectionID == key) != null);
                 key = key + "-" + subkey;
-                var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
+                var muxer = RedisConnectorHelper.GetConnection($"{engine.redisIpAddress}:{engine.redisIpPort}");
                 int db = fixEnginesDB[$"{engine.engineID}"];
                 var hash = RedisCacheClient.getHashSet(muxer, key, db);
                 hash.Wait();
