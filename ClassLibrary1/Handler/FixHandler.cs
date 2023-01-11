@@ -66,6 +66,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private ConcurrentStack<string> sessionStatuses;
 
+        private LockObjectsManager sessionUpdatesLocks = new LockObjectsManager();
+
         public FixHandler()
         {
             Initializers();
@@ -589,14 +591,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         public bool ConnectFixSessionAsync(FIXSession fixSession)
         {
             var success = PerformGivenActionToRedis(fixSession, proto.Action.CONNECT);
-            GetStatusUpdates(fixSession, success);
             return success;
         }
 
         public bool DisconnectFixSession(FIXSession fixSession)
         {
             var success = PerformGivenActionToRedis(fixSession, proto.Action.DISCONNECT);
-            GetStatusUpdates(fixSession, success);
             return success;
         }
 
@@ -647,7 +647,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             bool isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.SET_SENDER_SEQUENCE);
             isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.SET_TARGET_SEQUENCE);
-            GetStatusUpdates(fixSession, isCompleted);
             return isCompleted;
         }
 
@@ -657,7 +656,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixSession.OutSeqNum = 0;
             bool isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.RESET_SENDER_SEQUENCE);
             isCompleted = PerformGivenActionToRedis(fixSession, proto.Action.RESET_TARGET_SEQUENCE);
-            GetStatusUpdates(fixSession, isCompleted);
             return isCompleted;
         }
 
@@ -671,7 +669,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 thread.Start();
             }
         }
-
         //public List<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID)
         //{
         //    return fixEngines[fixEngineID].fixSessions[fixSessionConnectionID].FixMessages;
@@ -1158,16 +1155,36 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     try
                     {
                         sessionStatuses.Push(fixSessionStatusMessage);
+                        Logging.LogMessage(LOGTYPE.Fatal, $"fix session status message stored  {fixSessionStatusMessage}");
                     }
                     catch (Exception ex)
                     {
 
-                        Logging.LogMessage(LOGTYPE.Fatal, $"Cant Add fix session status message in queue {ex.Message}");
+                        Logging.LogMessage(LOGTYPE.Fatal, $"Cant Add fix session status message {fixSessionStatusMessage} in store {ex.Message}");
                     }
                 });
         }
 
-       
+        public void SendSessionConnectionStatusMessage(string ConnectionID, string sessionConnection, string statusConnection, FIXEngine fixEngine)
+        {
+            if (statusConnection != sessionConnection)
+            {
+                string fixSessionStatusMessage = CreateFixSessionUpdateMessage(fixEngine.engineName, ConnectionID, statusConnection);
+                    
+                    PushFixSessionStatusMessage(fixSessionStatusMessage);
+
+                try
+                {
+                    SendFixSessionStatusMessage(fixSessionStatusMessage);
+                }
+                catch (Exception ex) {
+
+                    Logging.LogMessage(LOGTYPE.Fatal, $"Cant Send fix session status message {fixSessionStatusMessage} to client. Exception : {ex.Message}");
+                }
+
+                   
+            }
+        }
         // key: redis key of session id 
         public void SessionUpdates(string key, HashEntry[] result, FIXEngine fixEngine)
         {
@@ -1175,7 +1192,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             var recieve = new FBE.proto.HeaderModel();
             recieve.Attach(result[0].Value);
             recieve.Deserialize(out status);
-
+            //Logging.LogMessage(LOGTYPE.Debug, status.ToString());
             //Dictionary<string, string> hashmap = new Dictionary<string, string>();
             //foreach (var i in result)
             //{
@@ -1201,22 +1218,28 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var session = GetFixSession(engine.engineID).SingleOrDefault(x => x.ConnectionID == conId);
                 if (session != null)
                 {
-                    var sendEmail = session.Status != status.Status.ToString();
-                    session.InSeqNum = status.InSeqNum;
-                    session.OutSeqNum = status.OutSeqNum;
-                    session.Status = status.Status.ToString();
-                    session.LastUpdated = DateTime.Now;
+                    bool sendEmail;
+                    lock (sessionUpdatesLocks.GetLockObj(session.ConnectionID))
+                    {
+                        var statusConnection = status.Status.ToString();
+                        var sessionConnection = session.Status;
+
+                      
+                        SendSessionConnectionStatusMessage(session.ConnectionID, sessionConnection, statusConnection, fixEngine);
+                       
+
+                        sendEmail = session.Status != status.Status.ToString();
+                        session.InSeqNum = status.InSeqNum;
+                        session.OutSeqNum = status.OutSeqNum;
+                        session.Status = status.Status.ToString();
+                        session.LastUpdated = DateTime.Now;
+                    }
                     SendFixSessionUpdates(session, engine.engineID, "update");
 
                     if (sendEmail)
                     {
                         SendFixSessionUpdates(session, engine.engineID, "update_status_in_fix_sessions_dropdown");
 
-                        string fixSessionStatusMessage = CreateFixSessionUpdateMessage(fixEngine.engineName, session.ConnectionID, session.Status);
-
-                        PushFixSessionStatusMessage(fixSessionStatusMessage);
-
-                        SendFixSessionStatusMessage(fixSessionStatusMessage);
                         using (var context = new FIXMonitorContext())
                         {
                             var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
