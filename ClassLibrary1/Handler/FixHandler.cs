@@ -32,7 +32,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private FixEnginesKeyedCollection fixEngines;
         private Dictionary<string, int> fixEnginesDB;
         private Dictionary<string, Channel> fixEnginesChannels;
-        private Dictionary<string, List<int>> session_dbs;
         public static Dictionary<string, string> fixMsgTypes = new Dictionary<string, string>();
         public static Dictionary<string, string> fixTagValues = new Dictionary<string, string>();
         Observable observable = new Observable();
@@ -100,8 +99,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             foreach (var row in FixEnginesRedisConfig)
             {
-                var columns = LineSplitter(row);
-                InsertFixEngineRedisConfigInSessionDb(columns);
+                var columns = LineSplitterWithAString(row);
+                InsertFixEngineRedisConfigInFixEnginesDB(row, Int32.Parse(columns[1]));
             }
         }
 
@@ -119,26 +118,21 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return data;
         }
 
-        public string[] LineSplitter(string line, char splitter = ',') {
+        public string[] LineSplitter(string line, char splitter = ':') { // Default string splitter set to ":"
             return line.Split(splitter);
         }
 
-        public void InsertFixEngineRedisConfigInSessionDb(string[] columns) {
+        public string[] LineSplitterWithAString(string line, string[] splitter = null) 
+        {
+            return line.Split(splitter ?? new string[] { "::" }, System.StringSplitOptions.RemoveEmptyEntries); // Default string splitter set to "::"
+        }
 
-            string fix_engine_redis_ip_port = columns[0];
+        public void InsertFixEngineRedisConfigInFixEnginesDB(string engineID, int db) {
 
-            var db = Int32.Parse(columns[1]);
-
-            if (session_dbs.ContainsKey(fix_engine_redis_ip_port))
+            if (!fixEnginesDB.ContainsKey(engineID))
             {
-                if (!session_dbs[fix_engine_redis_ip_port].Contains(db))
-
-                    session_dbs[fix_engine_redis_ip_port].Add(db);
-
-                return;
+                fixEnginesDB.Add(engineID, db);
             }
-
-            session_dbs.Add(fix_engine_redis_ip_port, new List<int>() { db });
         }
 
         private void Initializers()
@@ -146,7 +140,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEngines = new FixEnginesKeyedCollection();
             fixEnginesDB = new Dictionary<string, int>();
             fixEnginesChannels = new Dictionary<string, Channel>();
-            session_dbs = new Dictionary<string, List<int>>();
             readMessagesIDs = new ConcurrentStack<RedisValue>();
             statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, string>();
@@ -181,36 +174,32 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         /// </summary>
         public void LoadFIXEnginesAndSessions()
         {
-            foreach (var dictkey in session_dbs.Keys)
+            foreach (var dictkey in fixEnginesDB.Keys.ToArray())
             {
-                var muxer = RedisConnectorHelper.GetConnection(dictkey);
-                int[] dbs = session_dbs[dictkey].ToArray();
+                var redisIPWithPortAndDB = LineSplitterWithAString(dictkey);
+                var muxer = RedisConnectorHelper.GetConnection(redisIPWithPortAndDB[0]);
+                int db = fixEnginesDB[dictkey];
 
-                for (int i = 0; i < dbs.Length; i++)
+                string CacheKeyEvent = "__keyevent@" + db + "__:*";
+                var client = muxer.GetDatabase(db);
+                var engine = client.HashGetAll("Engine");
+                if (engine.Length == 0)
                 {
-                    int db = dbs[i];
-                    string CacheKeyEvent = "__keyevent@" + db + "__:*";
-                    var client = muxer.GetDatabase(db);
-                    var engine = client.HashGetAll("Engine");
-                    if (engine.Length == 0)
-                    {
-                        session_dbs[dictkey].Remove(db);
-                        continue;
-                    }
-
-                    string key = engine[0].Value;
-                    var engine_data = client.HashGetAll(key);
-                    FIXEngine FIXEngine = CreateFixEngine(db, engine_data);
-
-                    // creating sockets for already present engines present in config files and redis both after engine is created in memory
-                    FixEngineSocketHandler(FIXEngine);
-
-                    ReadAllExistingFixMessages(client, FIXEngine);
-
-                    GetSessionsForEngine(muxer, db, client, FIXEngine);
-                    SubscribeAndFaliureCallback(FIXEngine, muxer, CacheKeyEvent);
-
+                    fixEnginesDB.Remove(dictkey);
+                    continue;
                 }
+
+                string key = engine[0].Value;
+                var engine_data = client.HashGetAll(key);
+                FIXEngine FIXEngine = CreateFixEngine(db, engine_data);
+
+                // creating sockets for already present engines present in config files and redis both after engine is created in memory
+                FixEngineSocketHandler(FIXEngine);
+
+                ReadAllExistingFixMessages(client, FIXEngine);
+
+                GetSessionsForEngine(muxer, db, client, FIXEngine);
+                SubscribeAndFaliureCallback(FIXEngine, muxer, CacheKeyEvent);
             }
             //fixEngines.Add(new FIXEngine() { engineID = "ATS_FIX", engineName = "ATS_FIX", ipAddress = "192.168.0.1", port = 4044 });
         }
@@ -263,7 +252,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             fixEngine.fixSessions = new FixSessionKeyedCollection();
 
-            fixEnginesDB.Add($"{fixEngine.engineID}", db);
             fixEngines.Add(fixEngine);
             streamLastReadTimeStamps.Add(fixEngine.engineName, "0");
             streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
@@ -620,7 +608,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var engine = fixEngines.FirstOrDefault(x => x.fixSessions.FirstOrDefault(y => y.IPAddress + ":" + y.Port == fixSession.IPAddress + ":" + fixSession.Port && y.ConnectionID == fixSession.ConnectionID) != null);
                 var ip = engine.redisIpAddress + ":" + engine.redisIpPort;
 
-                var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
+                var muxer = RedisConnectorHelper.GetConnection($"{engine.redisIpAddress}:{engine.redisIpPort}");
                 int db = fixEnginesDB[$"{engine.engineID}"];
                 var database = muxer.GetDatabase(db);
                 //If the data is not consistent then we will read the data first and then update the data ... 
@@ -905,30 +893,20 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private void PersistFixEngineConfig(FIXEngine fixEngine = null, bool getConfigFromSessionDbDict = true) {
 
             if(getConfigFromSessionDbDict)
-
-                // session Db dictionary is updated, so we have to over write the old fix engine redis config and write the updated fix engine redis config 
-
                 File.Delete(fixEngineRedisConfigFilePath);
 
-            StreamWriter sw = new StreamWriter(fixEngineRedisConfigFilePath, true); ;
+            StreamWriter sw = new StreamWriter(fixEngineRedisConfigFilePath, true);
 
-            if (getConfigFromSessionDbDict) {
-
-                foreach (var key in session_dbs.Keys)
+            if (getConfigFromSessionDbDict)
+            {
+                foreach (var key in fixEnginesDB.Keys)
                 {
-                    foreach (var db in session_dbs[key])
-                    {
-                        // dict key is redis_ip:redis_port
-
-                        sw.WriteLine($"{key},{db}");
-                    }
+                    sw.WriteLine(key);
                 }
             }
 
-            if (!getConfigFromSessionDbDict)
-            {
-                sw.WriteLine($"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort},{fixEngine.redisDB}");
-            }
+            else
+                sw.WriteLine(fixEngine.engineID);
 
             sw.Flush();
             sw.Close();
@@ -958,15 +936,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         }
 
-
-
         public FIXEngine DisconnectToFixEngine(FIXEngine fixEngine)
         {
             var key = $"{fixEngine.engineID}";
 
-            string[] separator = { "::" };
-            var columns = key.Split(separator, System.StringSplitOptions.RemoveEmptyEntries);
-            var nestColumns = LineSplitter(columns.First(), ':');
+            var columns = LineSplitterWithAString(key);
+            var nestColumns = LineSplitter(columns.First());
 
             fixEngine.redisIpPort = nestColumns.Last();
             fixEngine.redisDB = Convert.ToInt32(columns.Last());
@@ -981,8 +956,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 var db = fixEnginesDB[key];
                 fixEnginesDB.Remove(key);
+                PersistFixEngineConfig(engine, true);
                 string CacheKeyEvent = "__keyevent@" + db + "__:*";
-                var muxer = RedisConnectorHelper.GetConnection(fixEngine.redisIpAddress);
+                var muxer = RedisConnectorHelper.GetConnection($"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort}");
                 muxer.GetSubscriber().Unsubscribe(CacheKeyEvent);
                 muxer.GetDatabase(engine.redisDB).HashDeleteAsync("Engine",engine.engineID).Wait();
 
@@ -1016,7 +992,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             var sessionHash = new HashEntry[1] { new HashEntry(fixSession.ConnectionID + "-Config", configModel.Buffer.Data) } ; //FIXSession.getHashFromObject(fixSession);
 
-            var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
+            var muxer = RedisConnectorHelper.GetConnection($"{engine.redisIpAddress}:{engine.redisIpPort}");
             var client = muxer.GetDatabase(db);
             //client.HashSet(fixSession.ConnectionID + "-Config", sessionHash);
             client.HashSet("Sessions-To-Be-Added", sessionHash);
@@ -1154,7 +1130,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 string subkey = "Status";
                 var engine = fixEngines.FirstOrDefault(x => x.fixSessions.SingleOrDefault(y => y.ConnectionID == key) != null);
                 key = key + "-" + subkey;
-                var muxer = RedisConnectorHelper.GetConnection(engine.redisIpAddress);
+                var muxer = RedisConnectorHelper.GetConnection($"{engine.redisIpAddress}:{engine.redisIpPort}");
                 int db = fixEnginesDB[$"{engine.engineID}"];
                 var hash = RedisCacheClient.getHashSet(muxer, key, db);
                 hash.Wait();
