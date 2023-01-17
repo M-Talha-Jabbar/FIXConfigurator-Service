@@ -1,4 +1,5 @@
-﻿using FIXMonitorBusinessLogicLayer.DataModels;
+﻿using DevExtreme.AspNet.Data.ResponseModel;
+using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using StackExchange.Redis;
 using System;
@@ -14,7 +15,7 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         bool DisconnectFixSession(FIXSession fixSession);
         bool SetSequenceNumber(FIXSession fixSession);
         bool ResetSequenceNumber(FIXSession fixSession);
-        List<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions);
+        string GetFixMessagesAsync(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions);
         List<FIXMessage> GetFixMessagesHavingAnyConfiguredFixTagValuePair(string sessionID);
 
         //void FiltrationOfFixMessagesWithRespectToCurrentConfiguredTagValuePairs(int id); // 'id' refers to the deleted Tag/Value Pair

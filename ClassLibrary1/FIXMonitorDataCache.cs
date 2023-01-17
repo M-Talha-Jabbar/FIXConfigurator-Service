@@ -21,6 +21,7 @@ using System.Threading.Tasks;
 using RedisCacheService;
 using FIXMonitorBusinessLogicLayer.IComparers;
 using FIXMonitorBusinessLogicLayer.TcpConnection;
+using DevExtreme.AspNet.Data.ResponseModel;
 
 namespace FIXMonitorBusinessLogicLayer
 {
@@ -165,9 +166,9 @@ namespace FIXMonitorBusinessLogicLayer
             return fixHandler.ConnectToFixSession(engineID, fixSession);
         }
 
-        public IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
+        public string GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
         {
-            return fixHandler.GetFixMessages(fixEngineID, fixSessionConnectionID, dataSourceLoadOptions);
+            return fixHandler.GetFixMessagesAsync(fixEngineID, fixSessionConnectionID, dataSourceLoadOptions);
         }
 
         public List<FIXMessage> GetFixMessagesHavingAnyConfiguredFixTagValuePair(string sessionID)

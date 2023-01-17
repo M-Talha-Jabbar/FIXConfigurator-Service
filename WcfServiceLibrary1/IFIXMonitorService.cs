@@ -1,4 +1,5 @@
-﻿using FIXMonitorBusinessLogicLayer.DataModels;
+﻿using DevExtreme.AspNet.Data.ResponseModel;
+using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using System.Collections.Generic;
 using System.IO;
@@ -60,7 +61,7 @@ namespace FIXMonitorService
         bool IsSubscribed(string connectionId);
 
         [OperationContract]
-        IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions);
+        string GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions);
 
         [OperationContract]
         List<FIXMessage> GetFixMessagesHavingAnyConfiguredFixTagValuePair(string sessionID);
