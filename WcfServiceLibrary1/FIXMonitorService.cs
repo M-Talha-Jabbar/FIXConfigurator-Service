@@ -1,4 +1,5 @@
-﻿using FIXMonitorBusinessLogicLayer;
+﻿using DevExtreme.AspNet.Data.ResponseModel;
+using FIXMonitorBusinessLogicLayer;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using System;
@@ -123,7 +124,7 @@ namespace FIXMonitorService
             return orderObservable.IsSubscribed(connectionId);
         }
 
-        public IEnumerable<FIXMessage> GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
+        public string GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
         {
             return this.DataCache.GetFixMessages(fixEngineID, fixSessionConnectionID, dataSourceLoadOptions);
         }
