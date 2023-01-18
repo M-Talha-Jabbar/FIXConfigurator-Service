@@ -307,6 +307,12 @@ namespace proto {
             Value = value.Value;
         }
 
+        public MessageStatus GetMessageStatus(object other)
+        {
+            Console.WriteLine("Status : " + (string)other);
+            return ((MessageStatus)other);
+        }
+
         public int CompareTo(object other)
         {
             return Value.CompareTo(((MessageStatus)other).Value);
