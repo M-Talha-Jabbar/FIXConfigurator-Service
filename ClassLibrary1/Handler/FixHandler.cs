@@ -874,16 +874,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
 
                 Thread thread1 = new Thread(
-                    unused => GetSessionsForEngine(muxer, db, client, fixEngine)
-                    );
+                   unused => {
+                       GetSessionsForEngine(muxer, db, client, fixEngine);
+                       SubscribeAndFaliureCallback(fixEngine, muxer, CacheKeyEvent);
+                   }
+                  );
                 thread1.Start();
                 Thread thread2 = new Thread(
                     unused => ReadAllExistingFixMessages(client, fixEngine)
                     );
                 thread2.Start();
 
-                //GetSessionsForEngine(muxer, db, client, fixEngine);
-                SubscribeAndFaliureCallback(fixEngine, muxer, CacheKeyEvent);
 
             }
             catch (Exception e)
