@@ -632,7 +632,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     SenderID = fixSession.SenderCompID,
                     TargetID = fixSession.TargetCompID,
                     Signature = Signature.FIXMONITOR,
-                    Status = proto.MessageStatus.Default.GetMessageStatus(fixSession.Status)
+                    //Status = proto.MessageStatus.Default.GetMessageStatus(fixSession.Status)
                 };
 
                 FBE.proto.HeaderModel headerModel = new FBE.proto.HeaderModel();
