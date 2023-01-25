@@ -686,25 +686,35 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public string GetFixMessagesAsync(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
         {
-            if (string.IsNullOrEmpty(fixEngineID) || string.IsNullOrEmpty(fixSessionConnectionID))
-                return JsonConvert.SerializeObject(DataSourceLoader.Load(new List<FIXMessage>(), null));
-
-            List<FIXMessage> ordersTemp = fixEngines[fixEngineID].fixSessions[fixSessionConnectionID].FixMessages;
-            if (!string.IsNullOrEmpty(dataSourceLoadOptions))
+            try
             {
-                try
-                {
-                    DataSourceLoadOptions loadOptions = JsonConvert.DeserializeObject<DataSourceLoadOptions>(dataSourceLoadOptions);
-                    return JsonConvert.SerializeObject(DataSourceLoader.Load(ordersTemp, loadOptions));
-                   
-                }
-                catch (Exception e)
-                {
-                    Logging.LogMessage(LOGTYPE.Fatal, e.Message);
-                }
-            }
+                DataSourceLoadOptions loadOptions = JsonConvert.DeserializeObject<DataSourceLoadOptions>(dataSourceLoadOptions);
+                if (string.IsNullOrEmpty(fixEngineID) || string.IsNullOrEmpty(fixSessionConnectionID))
+                    return JsonConvert.SerializeObject(DataSourceLoader.Load(new List<FIXMessage>(), loadOptions));
 
-            return JsonConvert.SerializeObject(DataSourceLoader.Load(ordersTemp, null));
+                List<FIXMessage> ordersTemp = fixEngines[fixEngineID].fixSessions[fixSessionConnectionID].FixMessages;
+                if (!string.IsNullOrEmpty(dataSourceLoadOptions))
+                {
+                    try
+                    {
+                        //DataSourceLoadOptions loadOptions = JsonConvert.DeserializeObject<DataSourceLoadOptions>(dataSourceLoadOptions);
+                        return JsonConvert.SerializeObject(DataSourceLoader.Load(ordersTemp, loadOptions));
+
+                    }
+                    catch (Exception e)
+                    {
+                        Logging.LogMessage(LOGTYPE.Fatal, e.Message + e.StackTrace);
+                    }
+                }
+
+
+                return JsonConvert.SerializeObject(DataSourceLoader.Load(ordersTemp, loadOptions));
+            }
+            catch (Exception ex)
+            {
+                Logging.LogMessage(LOGTYPE.Fatal, ex.Message + ex.StackTrace);
+                throw (ex);
+            }
         }
 
         public List<FIXMessage> GetFixMessagesHavingAnyConfiguredFixTagValuePair(string sessionID)
