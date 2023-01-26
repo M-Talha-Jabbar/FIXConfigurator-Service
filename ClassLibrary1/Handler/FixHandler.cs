@@ -686,9 +686,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public string GetFixMessagesAsync(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
         {
-            if (string.IsNullOrEmpty(fixEngineID) || string.IsNullOrEmpty(fixSessionConnectionID))
-                return JsonConvert.SerializeObject(DataSourceLoader.Load(new List<FIXMessage>(), null));
-
             List<FIXMessage> ordersTemp = fixEngines[fixEngineID].fixSessions[fixSessionConnectionID].FixMessages;
             if (!string.IsNullOrEmpty(dataSourceLoadOptions))
             {
@@ -696,11 +693,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     DataSourceLoadOptions loadOptions = JsonConvert.DeserializeObject<DataSourceLoadOptions>(dataSourceLoadOptions);
                     return JsonConvert.SerializeObject(DataSourceLoader.Load(ordersTemp, loadOptions));
-                   
+
                 }
                 catch (Exception e)
                 {
-                    Logging.LogMessage(LOGTYPE.Fatal, e.Message);
+                    Logging.LogMessage(LOGTYPE.Fatal, e.Message + e.StackTrace);
                 }
             }
 
@@ -1303,9 +1300,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                 // Default Email Setting if an individual session is not configured.
 
-                                sessionInfo = new Sessions() { SessionId = conId };
+                                Console.WriteLine($"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}"); 
 
-                                emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+                                emailNotifier = new EmailNotifier(conId, session.Status, new Sessions() { SessionId = session.ConnectionID }).SendEmail();
                             }
                         }
 

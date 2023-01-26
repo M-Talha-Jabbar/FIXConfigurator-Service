@@ -34,11 +34,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void DispatchEmail(EmailData emailData)
         {
-            Thread thread = new Thread(() =>
-            {
-                GEmailUtil.SendEmail(emailData);
-            });
-            thread.Start();
+            GEmailUtil.SendEmail(emailData);
         }
 
         public void SendEmail(string sessionId, string status, Sessions sessionInfo)
@@ -60,7 +56,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 emailData.Body = string.IsNullOrEmpty(sessionInfo.Body) ? $"Session {sessionId} status changed to {status} -> {Environment} Environment" : Regex.Replace(Regex.Replace(sessionInfo.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{status}", status, RegexOptions.IgnoreCase);
             }
 
-            DispatchEmail(emailData);
+            Task.Run(() => DispatchEmail(emailData));
 
             //emailData.EmailSubject = $"Session {sessionId} status changed";
             //emailData.EmailBody = $"Session {sessionId} status changed to {status} -> {Environment} Environment";
@@ -96,7 +92,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 emailData.Body = string.IsNullOrEmpty(fixTagValues.Body) ? $"Session {sessionId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixTagValues.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixTagValues.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixTagValues.FixValue, RegexOptions.IgnoreCase);
             }
 
-            DispatchEmail(emailData);
+            Task.Run(() => DispatchEmail(emailData));
         }
 
         public SessionEmails GetSessionAlertConfiguration(string SessionId)
