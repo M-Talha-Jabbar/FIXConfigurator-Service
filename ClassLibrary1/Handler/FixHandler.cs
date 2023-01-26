@@ -1300,9 +1300,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                 // Default Email Setting if an individual session is not configured.
 
-                                sessionInfo = new Sessions() { SessionId = conId };
+                                Console.WriteLine($"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}"); 
 
-                                emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+                                emailNotifier = new EmailNotifier(conId, session.Status, new Sessions() { SessionId = session.ConnectionID }).SendEmail();
                             }
                         }
 
