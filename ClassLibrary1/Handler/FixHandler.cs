@@ -143,7 +143,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void Initializers()
         {
-            fixEngines = new FixEnginesKeyedCollection();
+            fixEngines = new FixEnginesKeyedCollection(); 
             fixEnginesDB = new Dictionary<string, int>();
             fixEnginesChannels = new Dictionary<string, Channel>();
             readMessagesIDs = new ConcurrentStack<RedisValue>();
@@ -1239,74 +1239,78 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         var statusConnection = status.Status.ToString();
                         var sessionConnection = session.Status;
 
-
                         SendSessionConnectionStatusMessage(session.ConnectionID, sessionConnection, statusConnection, fixEngine);
-
 
                         sendEmail = session.Status != status.Status.ToString();
                         session.InSeqNum = status.InSeqNum;
                         session.OutSeqNum = status.OutSeqNum;
                         session.Status = status.Status.ToString();
                         session.LastUpdated = DateTime.Now;
-                    }
-                    SendFixSessionUpdates(session, engine.engineID, "update");
 
-                    if (sendEmail)
-                    {
-                        SendFixSessionUpdates(session, engine.engineID, "update_status_in_fix_sessions_dropdown");
+                        SendFixSessionUpdates(session, engine.engineID, "update");
 
-                        using (var context = new FIXMonitorContext())
+                        if (sendEmail)
                         {
-                            var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
+                            SendFixSessionUpdates(session, engine.engineID, "update_status_in_fix_sessions_dropdown");
 
-                            if (sessionInfo != null && sessionInfo.EmailStatus) // If email alert has been enabled for a particular session
+                            using (var context = new FIXMonitorContext())
                             {
-                                if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
-                                    emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+                                var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
 
-                                else if (EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
+                                if (sessionInfo != null && sessionInfo.EmailStatus) // If email alert has been enabled for a particular session
                                 {
-                                    System.Timers.Timer timer;
-                                    EmailNotifier.emailTimer.TryGetValue(sessionInfo.SessionId, out timer);
-                                    timer.Stop();
-                                    timer.Dispose();
+                                    if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
+                                        emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
 
-                                    EmailNotifier.emailTimer.Remove(sessionInfo.SessionId);
-
-                                    if ((bool)sessionInfo.Recurring)
+                                    else if (EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        if (EmailNotifier.recurringEmailsCount[sessionInfo.SessionId] > 0)
-                                            emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+                                        System.Timers.Timer timer;
+                                        EmailNotifier.emailTimer.TryGetValue(sessionInfo.SessionId, out timer);
+                                        timer.Stop();
+                                        timer.Dispose();
 
-                                        EmailNotifier.recurringEmailsCount.Remove(sessionInfo.SessionId);
+                                        EmailNotifier.emailTimer.Remove(sessionInfo.SessionId);
+
+                                        if ((bool)sessionInfo.Recurring)
+                                        {
+                                            if (EmailNotifier.recurringEmailsCount[sessionInfo.SessionId] > 0)
+                                                emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+
+                                            EmailNotifier.recurringEmailsCount.Remove(sessionInfo.SessionId);
+                                        }
+
                                     }
 
+                                    else if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        int intervalInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionInfo.Timeout);
+
+                                        emailNotifier = new EmailNotifier(intervalInMilliseconds, conId, session.Status, sessionInfo);
+                                        EmailNotifier.emailTimer.Add(sessionInfo.SessionId, emailNotifier.getTimerInstance());
+                                    }
+
+                                    //emailHandler.SendEmail(conId, session.Status, sessionInfo);
+
+                                    Console.WriteLine($"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
+                                    Console.WriteLine("Custom Email Settings used");
                                 }
 
-                                else if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
+                                else
                                 {
-                                    int intervalInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionInfo.Timeout);
+                                    //Console.WriteLine($"Email Alert for Session {conId} is disabled");
 
-                                    emailNotifier = new EmailNotifier(intervalInMilliseconds, conId, session.Status, sessionInfo);
-                                    EmailNotifier.emailTimer.Add(sessionInfo.SessionId, emailNotifier.getTimerInstance());
+                                    // Default Email Setting if an individual session is not configured.
+
+                                    Console.WriteLine($"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
+
+                                    emailNotifier = new EmailNotifier(conId, session.Status, new Sessions() { SessionId = session.ConnectionID }).SendEmail();
+
+                                    Console.WriteLine("Default Email Settings used");
                                 }
-
-                                //emailHandler.SendEmail(conId, session.Status, sessionInfo);
                             }
 
-                            else
-                            {
-                                //Console.WriteLine($"Email Alert for Session {conId} is disabled");
-
-                                // Default Email Setting if an individual session is not configured.
-
-                                Console.WriteLine($"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}"); 
-
-                                emailNotifier = new EmailNotifier(conId, session.Status, new Sessions() { SessionId = session.ConnectionID }).SendEmail();
-                            }
+                            Logging.LogMessage(LOGTYPE.Info, $"Fix Session Email sent for SessionID: {session.ConnectionID}");
                         }
-
-                        Logging.LogMessage(LOGTYPE.Info, $"Fix Session Email sent for SessionID: {session.ConnectionID}");
                     }
                 }
                 CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID: { engine.engineID } SessionID: { session.ConnectionID }");
