@@ -2,6 +2,8 @@
 using FIXMonitorBusinessLogicLayer;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
+using FIXMonitorService.PayLoads;
+using FIXMonitorService.QueueManager;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -110,9 +112,24 @@ namespace FIXMonitorService
             return this.DataCache.ConnectToFixSession(engineID, fixSession);
         }
 
+        public void SendQueuedUpdates(/*object sender, EventArgs e*/)
+        {
+            Console.WriteLine("In callback");
+            var Queue = ConcreteQueueCollectionsManager.CreateOrGetConcreteQueueCollection<FixSessionUpdate>();
+            var iterator = Queue.CreateIterator();
+
+            while (((IChannel)callback).State == CommunicationState.Opened && Queue.Count > 0 && !iterator.IsCompleted)
+            {
+                FixSessionUpdate fixSessionUpdateItem = iterator.Next();
+                callback.SendFixSessionToClient(fixSessionUpdateItem.fixSession, fixSessionUpdateItem.engineID, fixSessionUpdateItem.commandType);
+                Console.WriteLine("Sent FixSessionUpdate in Queue");
+            }
+        }
+
         public void Subscribe(string connectionId)
         {
             callback = OperationContext.Current.GetCallbackChannel<IFIXMonitorServiceCallback>();
+            SendQueuedUpdates();
             Observable orderObservable = new Observable();
             OrderObserver observer = new OrderObserver();
             orderObservable.Subscribe(observer, connectionId);
@@ -152,9 +169,42 @@ namespace FIXMonitorService
 
         public void SendFixSessionToClient(FIXSession fixSession, string engineID, string commandType)
         {
-            if (((IChannel)callback).State == CommunicationState.Opened)
+            try
             {
-                callback.SendFixSessionToClient(fixSession, engineID, commandType);
+                var Queue = ConcreteQueueCollectionsManager.CreateOrGetConcreteQueueCollection<FixSessionUpdate>();
+                FixSessionUpdate fixSessionUpdateItem;
+
+                if (((IChannel)callback).State == CommunicationState.Opened && Queue.Count <= 0)
+                {
+                    callback.SendFixSessionToClient(fixSession, engineID, commandType);
+                    Console.WriteLine("Realtime FixSessionUpdate sent to Client");
+                }
+
+                //else if (((IChannel)callback).State == CommunicationState.Opened && Queue.Count > 0)
+                //{
+                //    fixSessionUpdateItem = new FixSessionUpdate(fixSession, engineID, commandType);
+                //    Queue.Enqueue(fixSessionUpdateItem);
+
+                //    var iterator = Queue.CreateIterator();
+
+                //    while (((IChannel)callback).State == CommunicationState.Opened && !iterator.IsCompleted)
+                //    {
+                //        fixSessionUpdateItem = iterator.Next();
+                //        callback.SendFixSessionToClient(fixSessionUpdateItem.fixSession, fixSessionUpdateItem.engineID, fixSessionUpdateItem.commandType);
+                //        Console.WriteLine("Sent FixSessionUpdate in Queue");
+                //    }
+                //}
+
+                else if (((IChannel)callback).State == CommunicationState.Closed || (((IChannel)callback).State == CommunicationState.Opened && Queue.Count > 0))
+                {
+                    fixSessionUpdateItem = new FixSessionUpdate(fixSession, engineID, commandType);
+                    Queue.Enqueue(fixSessionUpdateItem);
+                    Console.WriteLine("Queued FixSessionUpdate");
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine($"In SendFixSessionToClient", ex.ToString(), ex.Message);
             }
         }
 
@@ -181,7 +231,6 @@ namespace FIXMonitorService
                 callback.SendFixSessionStatusMessage(fixSessionStatusMessage);
             }
         }
-
 
         public List<AlertFlag> GetAlertCache()
         {

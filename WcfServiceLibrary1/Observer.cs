@@ -61,7 +61,7 @@ namespace FIXMonitorService
             }
             catch (Exception ex)
             {
-
+                Console.WriteLine(ex.ToString(), ex.Message);
             }
         }
     }
