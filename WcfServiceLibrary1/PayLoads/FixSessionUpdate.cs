@@ -22,7 +22,7 @@ namespace FIXMonitorService.PayLoads
 
         public void SendUpdateToClient(IFIXMonitorServiceCallback callback)
         {
-            callback.SendFixSessionToClient(fixSession, engineID, commandType);
+            callback.SendFixSessionToClient(fixSession.GetClone(), engineID, commandType);
             Console.WriteLine("Sent FixSessionUpdate in Queue");
         }
     }

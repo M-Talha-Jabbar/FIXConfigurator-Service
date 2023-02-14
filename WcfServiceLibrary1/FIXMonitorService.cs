@@ -118,9 +118,9 @@ namespace FIXMonitorService
             callback = OperationContext.Current.GetCallbackChannel<IFIXMonitorServiceCallback>();
 
             Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionUpdate>(callback));
-            //Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixMessageUpdate>(callback));
-            //Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<ConfiguredFixMessage>(callback));
-            //Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionStatusUpdate>(callback));
+            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixMessageUpdate>(callback));
+            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<ConfiguredFixMessage>(callback));
+            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionStatusUpdate>(callback));
 
             Observable orderObservable = new Observable();
             OrderObserver observer = new OrderObserver();
@@ -182,7 +182,7 @@ namespace FIXMonitorService
             {
                 if (((IChannel)callback).State == CommunicationState.Opened && Queue.Count == 0)
                 {
-                    callback.SendFixSessionToClient(fixSession, engineID, commandType);
+                    callback.SendFixSessionToClient(fixSession.GetClone(), engineID, commandType);
                     Console.WriteLine("Realtime FixSessionUpdate sent to Client");
                     return;
                 }
@@ -193,7 +193,6 @@ namespace FIXMonitorService
             }
             catch (Exception ex)
             {
-                Console.WriteLine("abc");
                 Console.WriteLine(ex.ToString(), ex.Message);
             }
         }
