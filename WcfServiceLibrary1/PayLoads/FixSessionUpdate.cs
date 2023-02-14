@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace FIXMonitorService.PayLoads
 {
-    public class FixSessionUpdate
+    public class FixSessionUpdate : IUpdate
     {
         public FIXSession fixSession { get; set; }
         public string engineID { get; set; }
@@ -18,6 +18,12 @@ namespace FIXMonitorService.PayLoads
             this.fixSession = fixSession;
             this.engineID = engineID;
             this.commandType = commandType;
+        }
+
+        public void SendUpdateToClient(IFIXMonitorServiceCallback callback)
+        {
+            callback.SendFixSessionToClient(fixSession, engineID, commandType);
+            Console.WriteLine("Sent FixSessionUpdate in Queue");
         }
     }
 }

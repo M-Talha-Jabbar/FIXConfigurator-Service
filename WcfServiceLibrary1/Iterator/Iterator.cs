@@ -33,7 +33,7 @@ namespace FIXMonitorService.Iterator
 
         public bool IsCompleted
         {
-            get { return collection.Count <= 0; }
+            get { return collection.Count == 0; }
         }
     }
 }
