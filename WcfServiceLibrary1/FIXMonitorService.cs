@@ -179,23 +179,17 @@ namespace FIXMonitorService
         public void SendFixSessionToClient(FIXSession fixSession, string engineID, string commandType)
         {
             var Queue = ConcreteQueueCollectionsManager.CreateOrGetConcreteQueueCollection<FixSessionUpdate>();
-            try
+
+            if (((IChannel)callback).State == CommunicationState.Opened && Queue.Count == 0)
             {
-                if (((IChannel)callback).State == CommunicationState.Opened && Queue.Count == 0)
-                {
-                    callback.SendFixSessionToClient(fixSession.GetClone(), engineID, commandType);
-                    Logging.LogMessage(LOGTYPE.Info, "Realtime FixSessionUpdate sent to Client");
-                    return;
-                }
+                callback.SendFixSessionToClient(fixSession.GetClone(), engineID, commandType);
+                Logging.LogMessage(LOGTYPE.Info, "Realtime FixSessionUpdate sent to Client");
+                return;
+            }
             
-                FixSessionUpdate fixSessionUpdateItem = new FixSessionUpdate(fixSession, engineID, commandType);
-                Queue.Enqueue(fixSessionUpdateItem);
-                Logging.LogMessage(LOGTYPE.Info, "Queued FixSessionUpdate");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.ToString(), ex.Message);
-            }
+            FixSessionUpdate fixSessionUpdateItem = new FixSessionUpdate(fixSession, engineID, commandType);
+            Queue.Enqueue(fixSessionUpdateItem);
+            Logging.LogMessage(LOGTYPE.Info, "Queued FixSessionUpdate");
         }
 
         public void Heartbeat()
