@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CoreLogging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,7 +18,7 @@ namespace FIXMonitorService.PayLoads
         public void SendUpdateToClient(IFIXMonitorServiceCallback callback)
         {
             callback.SendFixSessionStatusMessage(fixSessionStatusMessage);
-            Console.WriteLine("Sent FixSessionStatusUpdate in Queue");
+            Logging.LogMessage(LOGTYPE.Info, "Sent FixSessionStatusUpdate in Queue");
         }
     }
 }

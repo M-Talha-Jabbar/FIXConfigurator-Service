@@ -34,7 +34,6 @@ namespace FIXMonitorService.QueueManager
         public static void SendQueuedUpdates<T>(IFIXMonitorServiceCallback callback)
         {
             var Queue = CreateOrGetConcreteQueueCollection<T>();
-            //Console.WriteLine($"Queue count of {typeof(T).FullName} is : {Queue.Count}");
             var iterator = Queue.CreateIterator();
 
             while (((IChannel)callback).State == CommunicationState.Opened && Queue.Count > 0 && !iterator.IsCompleted)
@@ -42,7 +41,6 @@ namespace FIXMonitorService.QueueManager
                 var item = (IUpdate)iterator.Next();
                 item.SendUpdateToClient(callback);
             }
-            //Console.WriteLine($"Queue count of {typeof(T).FullName} is : {Queue.Count}");
         }
     }
 }

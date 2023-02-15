@@ -1030,13 +1030,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     FIXMessage message = new FIXMessage() { fixMessage = "", keyValuePair = new List<Tuple<string, string, string>>(), messageType = "", sendingTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.zzz") };
                     fixEngines[engineID].fixSessions[j].FixMessages.Add(message);
                     fixEngines[engineID].fixSessions.Add(session);
-                    CoreLogging.Logging.LogMessage($"Fix Message sent for EngineID { engineID } SessionID: { sessionID }");
+                    Logging.LogMessage($"Fix Message sent for EngineID { engineID } SessionID: { sessionID }");
                     SendFixMessageUpdates(message, engineID, sessionID, false);
                     SendFixSessionUpdates(session, engineID, "insert");
                 }
                 catch (Exception e)
                 {
-                    CoreLogging.Logging.LogMessage("Exception in SendSampleFixMessage, message: " + e.Message + ", StackTrace" + e.StackTrace);
+                    Logging.LogMessage("Exception in SendSampleFixMessage, message: " + e.Message + ", StackTrace" + e.StackTrace);
                 }
                 Thread.Sleep(60000);
             }
@@ -1313,7 +1313,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         }
                     }
                 }
-                CoreLogging.Logging.LogMessage($"Fix Session Update sent for EngineID: { engine.engineID } SessionID: { session.ConnectionID }");
+                Logging.LogMessage($"Fix Session Update sent for EngineID: { engine.engineID } SessionID: { session.ConnectionID }");
             }
             catch (Exception e)
             {

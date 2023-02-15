@@ -1,4 +1,5 @@
-﻿using FIXMonitorBusinessLogicLayer.DataModels;
+﻿using CoreLogging;
+using FIXMonitorBusinessLogicLayer.DataModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,7 +24,7 @@ namespace FIXMonitorService.PayLoads
         public void SendUpdateToClient(IFIXMonitorServiceCallback callback)
         {
             callback.SendFixMessageWithConfiguredFixTagValuePairToClient(fixMessage, engineID, sessionID);
-            Console.WriteLine("Sent FixMessageUpdate (i.e. for ConfiguredFixTagValuePair) in Queue");
+            Logging.LogMessage(LOGTYPE.Info, "Sent FixMessageUpdate (i.e. for ConfiguredFixTagValuePair) in Queue");
         }
     }
 }
