@@ -1,12 +1,16 @@
-﻿using DevExtreme.AspNet.Data.ResponseModel;
+﻿using CoreLogging;
+using DevExtreme.AspNet.Data.ResponseModel;
 using FIXMonitorBusinessLogicLayer;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
+using FIXMonitorService.PayLoads;
+using FIXMonitorService.QueueManager;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.ServiceModel;
 using System.ServiceModel.Channels;
+using System.Threading.Tasks;
 
 namespace FIXMonitorService
 {
@@ -113,6 +117,12 @@ namespace FIXMonitorService
         public void Subscribe(string connectionId)
         {
             callback = OperationContext.Current.GetCallbackChannel<IFIXMonitorServiceCallback>();
+
+            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionUpdate>(callback));
+            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixMessageUpdate>(callback));
+            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<ConfiguredFixMessage>(callback));
+            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionStatusUpdate>(callback));
+
             Observable orderObservable = new Observable();
             OrderObserver observer = new OrderObserver();
             orderObservable.Subscribe(observer, connectionId);
@@ -136,26 +146,50 @@ namespace FIXMonitorService
 
         public void SendFixMessagesToClient(FIXMessage fixMessage, string engineID, string sessionID)
         {
-            if (((IChannel)callback).State == CommunicationState.Opened)
+            var Queue = ConcreteQueueCollectionsManager.CreateOrGetConcreteQueueCollection<FixMessageUpdate>();
+
+            if (((IChannel)callback).State == CommunicationState.Opened && Queue.Count == 0)
             {
                 callback.SendFixMessagesToClient(fixMessage, engineID, sessionID);
+                Logging.LogMessage(LOGTYPE.Info, "Realtime FixMessageUpdate sent to Client");
+                return;
             }
+
+            FixMessageUpdate fixMessageUpdateItem = new FixMessageUpdate(fixMessage, engineID, sessionID);
+            Queue.Enqueue(fixMessageUpdateItem);
+            Logging.LogMessage(LOGTYPE.Info, "Queued FixMessageUpdate");
         }
 
         public void SendFixMessageWithConfiguredFixTagValuePairToClient(FIXMessage fixMessage, string engineID, string sessionID)
         {
-            if (((IChannel)callback).State == CommunicationState.Opened)
+            var Queue = ConcreteQueueCollectionsManager.CreateOrGetConcreteQueueCollection<ConfiguredFixMessage>();
+
+            if (((IChannel)callback).State == CommunicationState.Opened && Queue.Count == 0)
             {
                 callback.SendFixMessageWithConfiguredFixTagValuePairToClient(fixMessage, engineID, sessionID);
+                Logging.LogMessage(LOGTYPE.Info, "Realtime FixMessageUpdate (i.e. for ConfiguredFixTagValuePair) sent to Client");
+                return;
             }
+
+            ConfiguredFixMessage configuredFixMessageItem = new ConfiguredFixMessage(fixMessage, engineID, sessionID);
+            Queue.Enqueue(configuredFixMessageItem);
+            Logging.LogMessage(LOGTYPE.Info, "Queued FixMessageUpdate (i.e. for ConfiguredFixTagValuePair)");
         }
 
         public void SendFixSessionToClient(FIXSession fixSession, string engineID, string commandType)
         {
-            if (((IChannel)callback).State == CommunicationState.Opened)
+            var Queue = ConcreteQueueCollectionsManager.CreateOrGetConcreteQueueCollection<FixSessionUpdate>();
+
+            if (((IChannel)callback).State == CommunicationState.Opened && Queue.Count == 0)
             {
-                callback.SendFixSessionToClient(fixSession, engineID, commandType);
+                callback.SendFixSessionToClient(fixSession.GetClone(), engineID, commandType);
+                Logging.LogMessage(LOGTYPE.Info, "Realtime FixSessionUpdate sent to Client");
+                return;
             }
+            
+            FixSessionUpdate fixSessionUpdateItem = new FixSessionUpdate(fixSession, engineID, commandType);
+            Queue.Enqueue(fixSessionUpdateItem);
+            Logging.LogMessage(LOGTYPE.Info, "Queued FixSessionUpdate");
         }
 
         public void Heartbeat()
@@ -176,12 +210,19 @@ namespace FIXMonitorService
 
         public void SendFixSessionStatusMessage(string fixSessionStatusMessage)
         {
-            if (((IChannel)callback).State == CommunicationState.Opened)
+            var Queue = ConcreteQueueCollectionsManager.CreateOrGetConcreteQueueCollection<FixSessionStatusUpdate>();
+
+            if (((IChannel)callback).State == CommunicationState.Opened && Queue.Count == 0)
             {
                 callback.SendFixSessionStatusMessage(fixSessionStatusMessage);
+                Logging.LogMessage(LOGTYPE.Info, "Realtime FixSessionStatusUpdate sent to Client");
+                return;
             }
-        }
 
+            FixSessionStatusUpdate fixSessionStatusUpdateItem = new FixSessionStatusUpdate(fixSessionStatusMessage);
+            Queue.Enqueue(fixSessionStatusUpdateItem);
+            Logging.LogMessage(LOGTYPE.Info, "Queued FixSessionStatusUpdate");
+        }
 
         public List<AlertFlag> GetAlertCache()
         {

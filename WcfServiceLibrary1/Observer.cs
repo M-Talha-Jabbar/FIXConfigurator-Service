@@ -1,4 +1,5 @@
-﻿using FIXMonitorBusinessLogicLayer.DataModels;
+﻿using CoreLogging;
+using FIXMonitorBusinessLogicLayer.DataModels;
 using System;
 using System.Collections.Generic;
 
@@ -61,7 +62,7 @@ namespace FIXMonitorService
             }
             catch (Exception ex)
             {
-
+                Logging.LogMessage(LOGTYPE.Fatal, "Unable to pass on update to FixMonitorService : " + ex.Message + ex.StackTrace);
             }
         }
     }
