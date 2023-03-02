@@ -273,7 +273,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 string conId = item.ToString().Replace("-Config", "");
                 string key = item.ToString().Replace("-Config", "-Status");
-                //FIXEngine.fixSessions.FirstOrDefault(x => x.ConnectionID == conId);
                 var engine = fixEngines[FIXEngine.engineID];
                 FIXSession session = engine.fixSessions.FirstOrDefault(x => x.ConnectionID == conId);
 
@@ -281,7 +280,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     session = createFixSession(client, FIXEngine, item, conId);
                     SendFixSessionUpdates(session, FIXEngine.engineID, "insert");
-                    SendPreviousMessageUpdates(session, FIXEngine.engineID);
+                    SetPreviousMessageUpdates(session, FIXEngine.engineID);
                 }
                 if (client.IsConnected(key))
                 {
@@ -289,7 +288,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     if (state.Length > 0)
                     {
                         SessionUpdates(key, state, FIXEngine);
-                        SendPreviousMessageUpdates(session, FIXEngine.engineID);
                     }
                 }
             }
@@ -326,17 +324,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return session;
         }
 
-        private void SendPreviousMessageUpdates(FIXSession session, string engineID)
+        private void SetPreviousMessageUpdates(FIXSession session, string engineID)
         {
             var _key = session.ConnectionID;
             if (sessionFixMessages.ContainsKey(_key))
             {
                 session.FixMessages = sessionFixMessages[_key];
                 sessionFixMessages.Remove(session.ConnectionID);
-                foreach (var message in session.FixMessages)
-                {
-                    SendFixMessageUpdates(message, engineID, session.ConnectionID, false);
-                }
             }
         }
 
@@ -870,19 +864,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
                 }
 
-                Thread thread1 = new Thread(
-                   unused => {
-                       GetSessionsForEngine(muxer, db, client, fixEngine);
-                       SubscribeAndFaliureCallback(fixEngine, muxer, CacheKeyEvent);
-                   }
-                  );
-                thread1.Start();
-                Thread thread2 = new Thread(
-                    unused => ReadAllExistingFixMessages(client, fixEngine)
-                    );
-                thread2.Start();
-
-
+                SubscribeAndFaliureCallback(fixEngine, muxer, CacheKeyEvent);
+                ReadAllExistingFixMessages(client, fixEngine);
+                GetSessionsForEngine(muxer, db, client, fixEngine);
             }
             catch (Exception e)
             {
