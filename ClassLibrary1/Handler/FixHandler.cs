@@ -25,6 +25,7 @@ using System.Collections.Concurrent;
 using FIXMonitorBusinessLogicLayer.Converter;
 using FIXMonitorBusinessLogicLayer.LocksManager;
 using DevExtreme.AspNet.Data.ResponseModel;
+using FIXMonitorBusinessLogicLayer.Utilities;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -39,15 +40,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private readonly bool sendSampleFixUpdate = Convert.ToBoolean(System.Configuration.ConfigurationManager.AppSettings["sendSampleFixUpdate"].ToString());
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
         private readonly string fixEngineRedisConfigFilePath = "redisConfigAndDB.txt";
+
         //Messages Stream Attributes
         private Dictionary<string, string> streamLastReadTimeStamps;
-        private long streamLastPosition = 0;
-        //private List<RedisValue> readMessagesIDs;
-
-        private ConcurrentStack<RedisValue> readMessagesIDs;
 
         //Status Stream Attributes
-        private long statusStreamLastPosition = 0;
         private List<RedisValue> statusReadMessagesIDs;
 
         private Dictionary<string, List<FIXMessage>> sessionFixMessages;
@@ -59,20 +56,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private FixEngineSocket fixEngineSocket;
 
-        private int fixMessageNotification = 0;
-
-        private int fixMessageRead = 0;
-
-        private LockObjectsManager locksforConcurrentFixMessageRead;
-
         private ConcurrentStack<string> sessionStatuses;
 
+        private LockObjectsManager locksForHandlingStreamRead;
         private LockObjectsManager sessionUpdatesLocks = new LockObjectsManager();
+
+        private const bool existingMessage = false;
+        private const bool realTimeMessage = true;
 
         public FixHandler()
         {
             Initializers();
-            //Persistence Work -- 
             EnginePersistence();
 
             if (sendSampleFixUpdate)
@@ -80,20 +74,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 Task.Run(async () => await SendSampleFixMessages());
             }
 
-            //------------------------------------------------------------------------------
-            /* HACK : FixHub Status */
-
-            //------------------------------------------------------------------------------
             LoadFIXEnginesAndSessions();
 
             //Save The updated configuration to the file 
-
             PersistFixEngineConfig();
 
-            Task.Run(() =>
-            {
-                SetScheduler();
-            });
+            Task.Run(() => { SetScheduler(); });
         }
 
         private void EnginePersistence()
@@ -109,7 +95,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public IEnumerable<string> FetchFixEngineRedisConfig()
         {
-
             IEnumerable<string> data = new List<string>();
 
             if (File.Exists(fixEngineRedisConfigFilePath))
@@ -122,9 +107,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return data;
         }
 
-        public string[] LineSplitter(string line, char splitter = ':')
-        { // Default string splitter set to ":"
-            return line.Split(splitter);
+        public string[] LineSplitter(string line, char splitter = ':') 
+        { 
+            return line.Split(splitter); // Default string splitter set to ":"
         }
 
         public string[] LineSplitterWithAString(string line, string[] splitter = null)
@@ -134,7 +119,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void InsertFixEngineRedisConfigInFixEnginesDB(string engineID, int db)
         {
-
             if (!fixEnginesDB.ContainsKey(engineID))
             {
                 fixEnginesDB.Add(engineID, db);
@@ -146,14 +130,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEngines = new FixEnginesKeyedCollection(); 
             fixEnginesDB = new Dictionary<string, int>();
             fixEnginesChannels = new Dictionary<string, Channel>();
-            readMessagesIDs = new ConcurrentStack<RedisValue>();
             statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, string>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
             fixMessagesContainingConfiguredFixTagValuePair = new Dictionary<string, List<FIXMessage>>();
             fixEngineSocket = FixEngineSocket.GetSingletonInstance();
             fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
-            locksforConcurrentFixMessageRead = new LockObjectsManager();
+            locksForHandlingStreamRead = new LockObjectsManager();
             sessionStatuses = new ConcurrentStack<string>();
 
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
@@ -167,17 +150,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void LoadFIXEngines() { }
 
-
-        /// <summary>
-        /// getting redis configuration: ip, port and db
-        /// creating connection with redis using ip and port
-        /// remove the config from session_dbs when there is no engine is present at given redis db
-        /// creating fix engine by getting engine data
-        /// creating socket connection with engine ip and port
-        /// ReadAllExistingFixMessages
-        /// GetSessionsForEngine
-        /// SubscribeAndFaliureCallback
-        /// </summary>
         public void LoadFIXEnginesAndSessions()
         {
             foreach (var dictkey in fixEnginesDB.Keys.ToArray())
@@ -202,10 +174,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 // creating sockets for already present engines present in config files and redis both after engine is created in memory
                 FixEngineSocketHandler(FIXEngine);
 
-                ReadAllExistingFixMessages(client, FIXEngine);
-
+                ReadMessages(client, FIXEngine, existingMessage);
                 GetSessionsForEngine(muxer, db, client, FIXEngine);
-                SubscribeAndFaliureCallback(FIXEngine, muxer, CacheKeyEvent);
+                SubscribeAndFaliureCallback(FIXEngine, muxer, CacheKeyEvent); // Since its the start of the day, SubscribeAndFaliureCallback() is called after reading existing messages.
             }
             //fixEngines.Add(new FIXEngine() { engineID = "ATS_FIX", engineName = "ATS_FIX", ipAddress = "192.168.0.1", port = 4044 });
         }
@@ -222,7 +193,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void SubscribeFixEngineSocketUpdate(FIXEngine fixEngine)
         {
-
             SocketHandler socketHandler = fixEngineSocket.GetFixEngineSocket(fixEngine);
 
             IObservable<bool> data = socketHandler.GetStatus();
@@ -239,13 +209,34 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             SubscribeFixEngineSocketUpdate(fixEngine);
         }
 
-        private void ReadAllExistingFixMessages(IDatabase client, FIXEngine FIXEngine)
+        private string GetRedisStreamLastEntryId(IDatabase client)
         {
-            var stream = client.StreamReadAsync(redisStreamName, streamLastReadTimeStamps[FIXEngine.engineName]);
-            stream.Wait();
-            var result = stream.Result;
-            UpdateStreamPosition(result, FIXEngine.engineName, readMessagesIDs);
-            ProcessAndSendMessages(result, "", FIXEngine, false);
+            return client.StreamInfo(redisStreamName).LastEntry.Id.ToString();
+        }
+
+        private void ReadMessages(IDatabase client, FIXEngine FIXEngine, bool existingOrRealTime)
+        {
+            Console.WriteLine("On ReadMessages Function call");
+
+            lock (locksForHandlingStreamRead.GetLockObj(FIXEngine.engineName))
+            {
+                if (streamLastReadTimeStamps.ContainsKey(FIXEngine.engineName) && TimeStampUtility.CompareTimeStamps(streamLastReadTimeStamps[FIXEngine.engineName], GetRedisStreamLastEntryId(client)))
+                {
+                    var stream = client.StreamReadAsync(redisStreamName, streamLastReadTimeStamps[FIXEngine.engineName]);
+                    stream.Wait();
+                    var result = stream.Result;
+
+                    ProcessAndSendMessages(result, "", FIXEngine, existingOrRealTime);
+                    UpdateStreamPosition(result, FIXEngine.engineName);
+
+                    // Send Acknowledgement
+                    Task.Run(() =>
+                    {
+                        var streamValuesIds = result.Select(streamValue => streamValue.Id).ToArray();
+                        if (streamValuesIds.Length > 0) client.StreamAcknowledgeAsync(redisStreamName, "", streamValuesIds);
+                    });
+                }
+            }
         }
 
         private FIXEngine CreateFixEngine(int db, HashEntry[] engine_data)
@@ -334,13 +325,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private static readonly ConcurrentDictionary<string, object> s_engineLocks = new ConcurrentDictionary<string, object>();
-
-        public void fixMessageNotificationReader()
-        {
-            fixMessageNotification++;
-        }
-
         public void GetFixMessagesFromRedis(ConnectionMultiplexer muxer, RedisChannel channel, RedisValue message, FIXEngine fixEngine)
         {
             Logging.LogMessage($"received {message} on {channel}");
@@ -361,45 +345,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             try
             {
-                IDatabase client;
-                StreamEntry[] messages;
-                if (key == redisStreamName)
+                IDatabase client = muxer.GetDatabase(db);
+                //StreamEntry[] messages;
+                if (key == redisStreamName && streamLastReadTimeStamps.ContainsKey(fixEngine.engineName) && TimeStampUtility.CompareTimeStamps(streamLastReadTimeStamps[fixEngine.engineName], GetRedisStreamLastEntryId(client)))
                 {
-
-                    fixMessageNotificationReader();
-
-                    //if (fixMessageNotification <= fixMessageRead)
-                    //{
-                    //    return;
-                    //}
-
-                    lock (locksforConcurrentFixMessageRead.GetLockObj(fixEngine.engineName))
-                    {
-
-                        if (fixMessageNotification <= fixMessageRead)
-                        {
-                            return;
-                        }
-
-
-                        GetStreamMessages(muxer, fixEngine.engineName, key, db, out client, out messages);
-
-                        fixMessageRead += messages.Length;
-
-                        ProcessAndSendMessages(messages, key, fixEngine);
-
-                        UpdateStreamPosition(messages[messages.Length - 1], fixEngine.engineName, readMessagesIDs);
-                    }
-
-
-                    Console.WriteLine("fix message update " + messages.Length);
-
-                    if (readMessagesIDs.Count > 0)
-                    {
-                        client.StreamAcknowledgeAsync(key, "", readMessagesIDs.ToArray()).Wait();
-                        readMessagesIDs.Clear();
-
-                    }
+                    ReadMessages(client, fixEngine, realTimeMessage);
                     return;
                 }
 
@@ -427,15 +377,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     return;
                 }
-
-
             }
             catch (Exception e)
             {
                 LogException(e);
             }
-            //}
-            //var val = new RedisCacheClient().getHashSetItem(muxer, new RedisKey("myhash3"), new RedisValue("field6"));
+
             Logging.LogMessage("FINISHED READING...");
         }
 
@@ -470,19 +417,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private void GetStreamMessages(ConnectionMultiplexer muxer, string engineName, string key, int db, out IDatabase client, out StreamEntry[] messages)
-        {
-            client = muxer.GetDatabase(db);
-            var stream = client.StreamReadAsync(key, streamLastReadTimeStamps[engineName]);
-            stream.Wait();
-            messages = stream.Result;
-        }
-
-        private void ProcessAndSendMessages(StreamEntry[] messages, string key, FIXEngine fixEngine, bool IsSendMessage = true)
+        private void ProcessAndSendMessages(StreamEntry[] messages, string key, FIXEngine fixEngine, bool IsSendMessage)
         {
             foreach (var message in messages)
             {
-                //UpdateStreamPosition(message,fixEngine.engineName, readMessagesIDs);
                 for (int i = 0; i < message.Values.Length; i++)
                 {
                     try
@@ -503,19 +441,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             //    body = Body.Default;
                             //}
 
-
-
                             FIXMessage fixMessage = body;
                             var _key = body.ConnectionID;
 
-
-                            //var engine = GetFixEngines().SingleOrDefault(x => x.ipAddress == fixEngine.redisIpAddress && x.port == fixEngine.redisIpPort);
-                            //var session = engine.fixSessions.Single(y => y.ConnectionID == key);
-
-
                             if (IsSendMessage)
                             {
-                                //observable.SendFixMessageUpdate(fixMessage, fixEngine.engineID, _key);
                                 SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key, true);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
                                 if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message");
@@ -540,14 +470,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     {
                         LogException(e);
                     }
-
                 }
             }
         }
 
         public bool StoreRealTimeFixMessage(FIXEngine fixEngine, FIXMessage fixMessage, string _key)
         {
-
             FIXSession fixSession = null;
 
             var engine = fixEngines.FirstOrDefault(x => x.engineName == fixEngine.engineName);
@@ -864,8 +792,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
                 }
 
-                SubscribeAndFaliureCallback(fixEngine, muxer, CacheKeyEvent);
-                ReadAllExistingFixMessages(client, fixEngine);
+                SubscribeAndFaliureCallback(fixEngine, muxer, CacheKeyEvent); // Since its the middle of the day, SubscribeAndFaliureCallback() is called before reading existing messages as to not miss any real-time message while reading the existing one's.
+                ReadMessages(client, fixEngine, existingMessage);
                 GetSessionsForEngine(muxer, db, client, fixEngine);
             }
             catch (Exception e)
@@ -883,7 +811,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         /// <param name="getConfigFromEngineDb"></param>
         private void PersistFixEngineConfig(FIXEngine fixEngine = null, bool getConfigFromSessionDbDict = true)
         {
-
             if (getConfigFromSessionDbDict)
                 File.Delete(fixEngineRedisConfigFilePath);
 
@@ -1319,19 +1246,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private void UpdateStreamPosition(StreamEntry item, string engineName, ConcurrentStack<RedisValue> readIDs)
+        private void UpdateStreamPosition(StreamEntry[] streamValues, string engineName)
         {
-            readIDs.Push(item.Id);
-            streamLastReadTimeStamps[engineName] = item.Id;
-        }
-
-        private void UpdateStreamPosition(StreamEntry[] streamValues, string engineName, ConcurrentStack<RedisValue> readIDs)
-        {
-            foreach (var streamValue in streamValues)
-            {
-                readIDs.Push(streamValue.Id);
-            }
-
             if (streamValues.Length > 0) streamLastReadTimeStamps[engineName] = streamValues[streamValues.Length - 1].Id;
         }
 
