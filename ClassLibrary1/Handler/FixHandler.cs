@@ -273,8 +273,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 if (session == null)
                 {
                     session = createFixSession(client, FIXEngine, item, conId);
-                    //FIXEngine.fixSessions.Add(session);
-                    //SendFixSessionUpdates(session, FIXEngine.engineID, "insert");
                     SetPreviousMessageUpdates(session, FIXEngine.engineID);
                 }
                 if (client.IsConnected(key))
