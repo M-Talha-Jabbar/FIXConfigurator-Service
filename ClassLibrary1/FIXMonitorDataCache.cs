@@ -151,6 +151,11 @@ namespace FIXMonitorBusinessLogicLayer
             return fixHandler.GetFixSessionsConnectivityStatus();
         }
 
+        public void InvokeSessionUpdates(string engineName)
+        {
+            fixHandler.InvokeSessionUpdates(engineName);
+        }
+
         public FIXEngine ConnectToFixEngine(FIXEngine fixEngine)
         {
             return fixHandler.ConnectToFixEngine(fixEngine);

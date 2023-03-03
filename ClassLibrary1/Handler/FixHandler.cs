@@ -1016,6 +1016,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return fixSessionsConnectivityStatusList;
         }
 
+        public void InvokeSessionUpdates(string engineName)
+        {
+            var fixEngine = fixEngines.FirstOrDefault(engine => engine.engineName.Equals(engineName, StringComparison.OrdinalIgnoreCase));
+
+            foreach(var session in fixEngine.fixSessions)
+            {
+                SendFixSessionUpdates(session, fixEngine.engineID, "insert");
+            }
+        }
+
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)
         {
             return fixEngines[FixEngineID].fixSessions;
@@ -1036,7 +1046,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void isConnected(string key, FIXSession fixSession)
         {
-            //return;
             try
             {
                 string subkey = "Status";
