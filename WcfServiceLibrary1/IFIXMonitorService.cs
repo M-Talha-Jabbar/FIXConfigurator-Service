@@ -31,6 +31,9 @@ namespace FIXMonitorService
         IEnumerable<FIXSessionsConnectivityStatus> GetFixSessionsConnectivityStatus();
 
         [OperationContract]
+        void InvokeSessionUpdates(string engineName);
+
+        [OperationContract]
         bool ConnectToFIX(FIXSession fixSession);
 
         [OperationContract]
