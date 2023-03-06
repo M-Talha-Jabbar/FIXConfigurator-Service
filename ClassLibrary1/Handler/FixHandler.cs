@@ -60,7 +60,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private ConcurrentStack<string> sessionStatuses;
 
         private LockObjectsManager locksForHandlingStreamRead;
-        private LockObjectsManager sessionUpdatesLocks = new LockObjectsManager();
+        private LockObjectsManager sessionUpdatesLocks;
 
         private const bool existingMessage = false;
         private const bool realTimeMessage = true;
@@ -139,6 +139,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixEngineSocket = FixEngineSocket.GetSingletonInstance();
             fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
             locksForHandlingStreamRead = new LockObjectsManager();
+            sessionUpdatesLocks = new LockObjectsManager();
             sessionStatuses = new ConcurrentStack<string>();
 
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
@@ -218,28 +219,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void ReadMessages(IDatabase client, FIXEngine FIXEngine, bool existingOrRealTime)
         {
-            Console.WriteLine("On ReadMessages Function call");
-            CoreLogging.Logging.LogMessage($" Lock -> streamLastReadTimeStamps[FIXEngine.engineName] 1: {streamLastReadTimeStamps[FIXEngine.engineName]} {FIXEngine.engineName}");
             lock (locksForHandlingStreamRead.GetLockObj(FIXEngine.engineName))
             {
-                CoreLogging.Logging.LogMessage($" IN lock -> streamLastReadTimeStamps[FIXEngine.engineName] 2: {streamLastReadTimeStamps[FIXEngine.engineName]} {FIXEngine.engineName}");
                 if (streamLastReadTimeStamps.ContainsKey(FIXEngine.engineName) && TimeStampUtility.CompareTimeStamps(streamLastReadTimeStamps[FIXEngine.engineName], GetRedisStreamLastEntryId(client)))
                 {
+                    var result = client.StreamRead(redisStreamName, streamLastReadTimeStamps[FIXEngine.engineName]);
 
-                    CoreLogging.Logging.LogMessage("Under if condition  streamLastReadTimeStamps[FIXEngine.engineName] 3 " + FIXEngine.engineName);
-                    Task<StreamEntry[]> stream = null;
-                    int? countPerStream = null;
-                    if (existingOrRealTime)
-                    {
-                        countPerStream = 10;
-                    }
-                    CoreLogging.Logging.LogMessage($"streamLastReadTimeStamps[FIXEngine.engineName] 4: {streamLastReadTimeStamps[FIXEngine.engineName]} {FIXEngine.engineName}");
-                    stream = client.StreamReadAsync(redisStreamName, streamLastReadTimeStamps[FIXEngine.engineName], countPerStream);
-                        //client.StreamRangeAsync(redisStreamName, minId: streamLastReadTimeStamps[FIXEngine.engineName], count: countPerStream);
-
-                    stream.Wait();
-                    var result = stream.Result;
-                    CoreLogging.Logging.LogMessage($"Reading Time from stream streamLastReadTimeStamps[FIXEngine.engineName] 5: {streamLastReadTimeStamps[FIXEngine.engineName]} {FIXEngine.engineName}");
                     ProcessAndSendMessages(result, "", FIXEngine, existingOrRealTime);
                     UpdateStreamPosition(result, FIXEngine.engineName);
 
@@ -249,12 +234,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         var streamValuesIds = result.Select(streamValue => streamValue.Id).ToArray();
                         if (streamValuesIds.Length > 0) client.StreamAcknowledgeAsync(redisStreamName, "", streamValuesIds);
                     });
-
-                    CoreLogging.Logging.LogMessage($" Release Lock -> streamLastReadTimeStamps[FIXEngine.engineName] 4: {streamLastReadTimeStamps[FIXEngine.engineName]} {result.Length} {FIXEngine.engineName}");
-                }
-                else
-                {
-                    Console.WriteLine("Didnt goes under if condition");
                 }
             }
         }
@@ -369,7 +348,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 IDatabase client = muxer.GetDatabase(db);
                 //StreamEntry[] messages;
-                if (key == redisStreamName /*&& streamLastReadTimeStamps.ContainsKey(fixEngine.engineName) && TimeStampUtility.CompareTimeStamps(streamLastReadTimeStamps[fixEngine.engineName], GetRedisStreamLastEntryId(client))*/)
+                if (key == redisStreamName && streamLastReadTimeStamps.ContainsKey(fixEngine.engineName) && TimeStampUtility.CompareTimeStamps(streamLastReadTimeStamps[fixEngine.engineName], GetRedisStreamLastEntryId(client)))
                 {
                     ReadMessages(client, fixEngine, realTimeMessage);
                     return;
@@ -441,7 +420,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void ProcessAndSendMessages(StreamEntry[] messages, string key, FIXEngine fixEngine, bool existingOrRealTime)
         {
-            CoreLogging.Logging.LogMessage($"ProcessAndSendMessages streamLastReadTimeStamps[FIXEngine.engineName] 4: {streamLastReadTimeStamps[fixEngine.engineName]} {fixEngine.engineName} {messages.Length} {existingOrRealTime}");
             foreach (var message in messages)
             {
                 for (int i = 0; i < message.Values.Length; i++)
@@ -466,13 +444,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             //}
                             
                             FIXMessage fixMessage = body;
-                            CoreLogging.Logging.LogMessage($"After deserialzing");
                             var _key = body.ConnectionID;
 
                             if (existingOrRealTime && hasSessionsBeenCreatedForAEngine[fixEngine.engineName])
                             {
-                                CoreLogging.Logging.LogMessage($"INSIDE IF ProcessAndSendMessages streamLastReadTimeStamps[FIXEngine.engineName] 4: {streamLastReadTimeStamps[fixEngine.engineName]} {fixEngine.engineName} {messages.Length} {existingOrRealTime}");
-                                Task.Run(() => SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key, true));
+                                SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key, true);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
                                 if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message");
                                 Task.Run(() =>
@@ -482,7 +458,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             }
                             else
                             {
-                                CoreLogging.Logging.LogMessage($"INSIDE ELSE ProcessAndSendMessages streamLastReadTimeStamps[FIXEngine.engineName] 4: {streamLastReadTimeStamps[fixEngine.engineName]} {fixEngine.engineName} {messages.Length} {existingOrRealTime}");
                                 if (!sessionFixMessages.ContainsKey(_key)) sessionFixMessages.Add(_key, new List<FIXMessage>());
                                 sessionFixMessages[_key].Add(fixMessage);
                             }
@@ -516,7 +491,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
 
             return false;
-
         }
 
         public void LoadFIXSessions()
@@ -1270,15 +1244,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void UpdateStreamPosition(StreamEntry[] streamValues, string engineName)
         {
-            /*if (streamValues.Length > 0) {
-                var id = streamValues[streamValues.Length - 1].Id.ToString();
-                var split = id.Split('-');
-                id = $"{split[0]}-{Int32.Parse(split[1]) + 1}";
-                streamLastReadTimeStamps[engineName] = id;
-            }*/
-            if(streamValues.Length > 0)
+            if (streamValues.Length > 0)
             {
-                streamLastReadTimeStamps[engineName] = streamValues[streamValues.Length - 1].Id.ToString();
+                streamLastReadTimeStamps[engineName] = streamValues[streamValues.Length - 1].Id;
             }
         }
 
