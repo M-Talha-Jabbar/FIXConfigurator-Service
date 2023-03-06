@@ -387,6 +387,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             Logging.LogMessage("FINISHED READING...");
         }
 
+        /*
         private void UpdateSessionStatuses(StreamEntry[] messages, FIXEngine _engine, string key)
         {
             string engineName = _engine.engineName;
@@ -417,6 +418,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
             }
         }
+        */
 
         private void ProcessAndSendMessages(StreamEntry[] messages, string key, FIXEngine fixEngine, bool existingOrRealTime)
         {
@@ -426,7 +428,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     try
                     {
-                        CoreLogging.Logging.LogMessage($"Before deserialzing");
                         var val = message.Values[i];
                         byte[] buffer = val.Value;
                         proto.Body body = proto.Body.Default;
@@ -1246,15 +1247,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             if (streamValues.Length > 0)
             {
-                streamLastReadTimeStamps[engineName] = streamValues[streamValues.Length - 1].Id;
+                streamLastReadTimeStamps[engineName] = streamValues[streamValues.Length - 1].Id.ToString();
             }
-        }
-
-        private void UpdateStreamPosition(StreamEntry item, string engineName, List<RedisValue> readIDs)
-        {
-            readIDs.Add(item.Id);
-            streamLastReadTimeStamps[engineName] = item.Id;
-        }
+        }  
 
         private void UpdateSessionStatus(bool isConnected, FIXEngine fixEngine)
         {
