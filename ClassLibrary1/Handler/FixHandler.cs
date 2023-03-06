@@ -221,7 +221,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             lock (locksForHandlingStreamRead.GetLockObj(FIXEngine.engineName))
             {
-                if (streamLastReadTimeStamps.ContainsKey(FIXEngine.engineName) && TimeStampUtility.CompareTimeStamps(streamLastReadTimeStamps[FIXEngine.engineName], GetRedisStreamLastEntryId(client)))
+                if (TimeStampUtility.CompareTimeStamps(streamLastReadTimeStamps[FIXEngine.engineName], GetRedisStreamLastEntryId(client)))
                 {
                     var result = client.StreamRead(redisStreamName, streamLastReadTimeStamps[FIXEngine.engineName]);
 
