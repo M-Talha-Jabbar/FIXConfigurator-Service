@@ -348,7 +348,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 IDatabase client = muxer.GetDatabase(db);
                 //StreamEntry[] messages;
-                if (key == redisStreamName && streamLastReadTimeStamps.ContainsKey(fixEngine.engineName) && TimeStampUtility.CompareTimeStamps(streamLastReadTimeStamps[fixEngine.engineName], GetRedisStreamLastEntryId(client)))
+                if (key == redisStreamName)
                 {
                     ReadMessages(client, fixEngine, realTimeMessage);
                     return;
