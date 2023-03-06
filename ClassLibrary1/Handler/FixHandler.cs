@@ -1078,11 +1078,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 try
                 {
                     sessionStatuses.Push(fixSessionStatusMessage);
-                    Logging.LogMessage(LOGTYPE.Fatal, $"fix session status message stored  {fixSessionStatusMessage}");
+                    Logging.LogMessage(LOGTYPE.Info, $"fix session status message stored  {fixSessionStatusMessage}");
                 }
                 catch (Exception ex)
                 {
-
                     Logging.LogMessage(LOGTYPE.Fatal, $"Cant Add fix session status message {fixSessionStatusMessage} in store {ex.Message}");
                 }
             });
