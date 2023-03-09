@@ -15,6 +15,7 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
         public string fixMessage { get; set; }
         public string messageType { get; set; }
         public string sendingTime { get; set; }
+        public string StreamEntryId { get; set; }
         public List<Tuple<string, string, string>> keyValuePair { get; set; }
 
         public static implicit operator FIXMessage(proto.Body body)

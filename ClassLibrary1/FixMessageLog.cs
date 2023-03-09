@@ -26,14 +26,14 @@ namespace FIXMonitorBusinessLogicLayer
         private static readonly ConcurrentDictionary<string, object> s_fileLocks = new ConcurrentDictionary<string, object>();
         private static string FixMessageLogDirectoryPath = ConfigurationManager.AppSettings["FixMessageLogDirectoryPath"];
         public static readonly LockObjectsManager locksforConcurrentFileAccess = new LockObjectsManager();
-
+        public static Dictionary<string, string> logLastTimeStamps = new Dictionary<string, string>(); // FixMessages Logs Key
 
         public static bool IsFileCreated(string sessionId, string engineName)
         {
             return CreatedFiles.ContainsKey($"{engineName}-{sessionId}") ? true : false;
         }
 
-        public static void AddFixMessageLog(string fixMessageLog, string filePath) /// ////
+        public static void AddFixMessageLog(string fixMessageLog, string filePath)
         {
             lock (locksforConcurrentFileAccess.GetLockObj(filePath))
             {
@@ -71,7 +71,7 @@ namespace FIXMonitorBusinessLogicLayer
 
         public static string LogFileNameCreator(string sessionId, string engineName)
         {
-            var logFileName = $"{engineName}-{sessionId}-{DateTime.Now.ToString("yyyyMMdd")}";
+            var logFileName = $"{engineName}-{sessionId}-{DateTime.Now.ToString("dd-MM-yyyy")}";
             return logFileName;
         }
 
@@ -87,9 +87,9 @@ namespace FIXMonitorBusinessLogicLayer
             string createdFilekey = $"{fixEngine.engineName}-{sessionId}";
             bool isFileCreated = IsFileCreated(sessionId, fixEngine.engineName);
 
-            var fixSession = fixEngine.fixSessions[sessionId];
+            var fixsession = fixEngine.fixSessions[sessionId];
 
-            string formattedFixMessageLog = FixMessageLogFormatter(fixMessage, fixSession);
+            string formattedFixMessageLog = FixMessageLogFormatter(fixMessage, fixsession);
 
             if (!isFileCreated)
             {
