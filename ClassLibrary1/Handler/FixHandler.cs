@@ -451,7 +451,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         }
         */
 
-        private void ProcessAndSendMessages(StreamEntry[] messages, string key, FIXEngine fixEngine, bool existingOrRealTime)
+        private void ProcessAndSendMessages(StreamEntry[] messages, string key, FIXEngine fixEngine, bool isRealTime)
         {
             foreach (var message in messages)
             {
@@ -479,7 +479,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             fixMessage.StreamEntryId = message.Id.ToString();
                             var _key = body.ConnectionID;
 
-                            if (existingOrRealTime && hasSessionsBeenCreatedForAEngine[fixEngine.engineName])
+                            if (isRealTime && hasSessionsBeenCreatedForAEngine[fixEngine.engineName])
                             {
                                 SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key, true);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
