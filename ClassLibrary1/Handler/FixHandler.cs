@@ -907,6 +907,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
 
             hasSessionsBeenCreatedForAEngine.Remove(engine.engineName);
+            FixMessageLog.logLastTimeStamps.Remove(engine.engineName);
 
             return fixEngine;
         }
