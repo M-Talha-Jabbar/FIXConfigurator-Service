@@ -41,8 +41,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
         private readonly string fixEngineRedisConfigFilePath = "redisConfigAndDB.txt";
 
-        //Messages Stream Attributes
-        private Dictionary<string, string> streamLastReadTimeStamps;
+        
+        private Dictionary<string, string> streamLastReadTimeStamps; // FixMessages Stream 
 
         //Status Stream Attributes
         private List<RedisValue> statusReadMessagesIDs;
@@ -173,6 +173,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 string key = engine[0].Value;
                 var engine_data = client.HashGetAll(key);
                 FIXEngine FIXEngine = CreateFixEngine(db, engine_data);
+                SetOrGetLastLogTimeStampsKeyForAnEngine(client, FIXEngine.engineName); // Each FixEngine will have a LastLogTimeStamps Key in its redis DB in order to manage FixMessage Logs if service restart after a crashed/stoppage in between a day.
 
                 // creating sockets for already present engines present in config files and redis both after engine is created in memory
                 FixEngineSocketHandler(FIXEngine);
@@ -226,7 +227,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     var result = client.StreamRead(redisStreamName, streamLastReadTimeStamps[FIXEngine.engineName]);
 
                     ProcessAndSendMessages(result, "", FIXEngine, existingOrRealTime);
-                    UpdateStreamPosition(result, FIXEngine.engineName);
+                    UpdateStreamPosition(client, result, FIXEngine.engineName); // Updating Stream Position for a FixEngine both on its Dictionary in Service and on Redis Key.
+                    UpdateLogPosition(client, result); // Update Log Position for a FixEngine only on Redis Key, not on its Dictionary in Service. Its Dictionary will only get updated at the time of FixEngine creations (creation at both start & middle of the day).
 
                     // Send Acknowledgement
                     Task.Run(() =>
@@ -257,6 +259,24 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return fixEngine;
         }
 
+        private string SetOrGetLastLogTimeStampsKeyForAnEngine(IDatabase client, string engineName)
+        {
+            string logTimeStamp = "0-0";
+            var redisValue = client.StringGet($"LastLogTimeStamp-{DateTime.Now.ToString("dd-MM-yyyy")}");
+
+            if (redisValue.IsNullOrEmpty)
+            {
+                client.StringSet($"LastLogTimeStamp-{DateTime.Now.ToString("dd-MM-yyyy")}", logTimeStamp);
+            }
+            else
+            {
+                logTimeStamp = redisValue.ToString();
+            }
+
+            FixMessageLog.logLastTimeStamps.Add(engineName, logTimeStamp);
+            return logTimeStamp;
+        }
+
         private void GetSessionsForEngine(ConnectionMultiplexer muxer, int db, IDatabase client, FIXEngine FIXEngine)
         {
             var keys = muxer.GetServer(muxer.GetEndPoints().First()).Keys(db, "*-Config*");
@@ -270,7 +290,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 if (session == null)
                 {
                     session = createFixSession(client, FIXEngine, item, conId);
-                    SetPreviousMessageUpdates(session, FIXEngine.engineID);
+                    SetPreviousMessageUpdates(session, FIXEngine);
                 }
                 if (client.IsConnected(key))
                 {
@@ -316,13 +336,24 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return session;
         }
 
-        private void SetPreviousMessageUpdates(FIXSession session, string engineID)
+        private void SetPreviousMessageUpdates(FIXSession session, FIXEngine FIXEngine)
         {
             var _key = session.ConnectionID;
+
             if (sessionFixMessages.ContainsKey(_key))
             {
                 session.FixMessages = sessionFixMessages[_key];
-                sessionFixMessages.Remove(session.ConnectionID);
+
+                Task.Run(() => // Logging FixMessages which were held in an temporary list until sessions are being made.
+                {
+                    foreach(var fixMessage in sessionFixMessages[_key]) 
+                    {
+                        if (TimeStampUtility.CompareTimeStamps(FixMessageLog.logLastTimeStamps[FIXEngine.engineName], fixMessage.StreamEntryId))
+                            FixMessageLog.FixMessageLogger(_key, FIXEngine, fixMessage);
+                    }
+
+                    sessionFixMessages.Remove(session.ConnectionID);
+                });
             }
         }
 
@@ -361,12 +392,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     //fixEngine.fixSessions.Add(session);
                 }
 
-                var hash = RedisCacheClient.getHashSet(muxer, key, db);
-                hash.Wait();
-                var result = hash.Result;
-
                 if (key.Contains("Status"))
                 {
+                    var hash = RedisCacheClient.getHashSet(muxer, key, db);
+                    hash.Wait();
+                    var result = hash.Result;
+
                     if (channel.ToString().Contains("del"))
                     {
                         result = new HashEntry[0];
@@ -420,7 +451,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         }
         */
 
-        private void ProcessAndSendMessages(StreamEntry[] messages, string key, FIXEngine fixEngine, bool existingOrRealTime)
+        private void ProcessAndSendMessages(StreamEntry[] messages, string key, FIXEngine fixEngine, bool isRealTime)
         {
             foreach (var message in messages)
             {
@@ -445,17 +476,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             //}
                             
                             FIXMessage fixMessage = body;
+                            fixMessage.StreamEntryId = message.Id.ToString();
                             var _key = body.ConnectionID;
 
-                            if (existingOrRealTime && hasSessionsBeenCreatedForAEngine[fixEngine.engineName])
+                            if (isRealTime && hasSessionsBeenCreatedForAEngine[fixEngine.engineName])
                             {
                                 SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key, true);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
                                 if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message");
-                                Task.Run(() =>
-                                {
-                                    FixMessageLog.FixMessageLogger(_key, fixEngine, fixMessage);
-                                });
+
+                                Task.Run(() => FixMessageLog.FixMessageLogger(_key, fixEngine, fixMessage));
                             }
                             else
                             {
@@ -784,6 +814,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     streamLastReadTimeStamps.Add(fixEngine.engineName + ":Statuses", "0");
                 }
 
+                SetOrGetLastLogTimeStampsKeyForAnEngine(client, fixEngine.engineName);
                 hasSessionsBeenCreatedForAEngine.Add(fixEngine.engineName, false);
 
                 SubscribeAndFaliureCallback(fixEngine, muxer, CacheKeyEvent); // Since its the middle of the day, SubscribeAndFaliureCallback() is called before reading existing messages as to not miss any real-time message while reading the existing one's.
@@ -1242,13 +1273,21 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private void UpdateStreamPosition(StreamEntry[] streamValues, string engineName)
+        private void UpdateStreamPosition(IDatabase client, StreamEntry[] streamValues, string engineName)
         {
             if (streamValues.Length > 0)
             {
                 streamLastReadTimeStamps[engineName] = streamValues[streamValues.Length - 1].Id.ToString();
             }
         }  
+
+        private void UpdateLogPosition(IDatabase client, StreamEntry[] streamValues)
+        {
+            if(streamValues.Length > 0)
+            {
+                client.StringSet($"LastLogTimeStamp-{DateTime.Now.ToString("dd-MM-yyyy")}", streamValues[streamValues.Length - 1].Id.ToString());
+            }
+        }
 
         private void UpdateSessionStatus(bool isConnected, FIXEngine fixEngine)
         {
