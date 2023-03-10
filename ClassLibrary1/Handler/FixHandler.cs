@@ -349,7 +349,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     foreach(var fixMessage in sessionFixMessages[_key]) 
                     {
                         if (TimeStampUtility.CompareTimeStamps(FixMessageLog.logLastTimeStamps[FIXEngine.engineName], fixMessage.StreamEntryId))
+                        {
                             FixMessageLog.FixMessageLogger(_key, FIXEngine, fixMessage);
+                            CheckForConfiguredFixTagValuePair(fixMessage, FIXEngine.engineID, _key, isRealTime: true);
+                        } 
                     }
 
                     sessionFixMessages.Remove(session.ConnectionID);
@@ -481,11 +484,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                             if (isRealTime && hasSessionsBeenCreatedForAEngine[fixEngine.engineName])
                             {
-                                SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key, true);
+                                SendFixMessageUpdates(fixMessage, fixEngine.engineID, _key);
                                 bool isStored = StoreRealTimeFixMessage(fixEngine, fixMessage, _key);
                                 if (!isStored) Logging.LogMessage("Cannot store realtime fixMessage Message");
 
                                 Task.Run(() => FixMessageLog.FixMessageLogger(_key, fixEngine, fixMessage));
+                                Task.Run(() => CheckForConfiguredFixTagValuePair(fixMessage, fixEngine.engineID, _key, isRealTime));
                             }
                             else
                             {
@@ -963,7 +967,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     fixEngines[engineID].fixSessions[j].FixMessages.Add(message);
                     fixEngines[engineID].fixSessions.Add(session);
                     Logging.LogMessage($"Fix Message sent for EngineID { engineID } SessionID: { sessionID }");
-                    SendFixMessageUpdates(message, engineID, sessionID, false);
+                    SendFixMessageUpdates(message, engineID, sessionID);
                     SendFixSessionUpdates(session, engineID, "insert");
                 }
                 catch (Exception e)
@@ -980,13 +984,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             observable.SendFixSessionUpdate(fixSession, engineID, updateType);
         }
 
-        public void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID, bool isRealTime)
+        public void SendFixMessageUpdates(FIXMessage fixMessage, string engineID, string sessionID)
         {
             observable.SendFixMessageUpdate(fixMessage, engineID, sessionID);
-            Task.Run(() =>
-            {
-                CheckForConfiguredFixTagValuePair(fixMessage, engineID, sessionID, isRealTime);
-            });
         }
 
         public void SendFixSessionStatusMessage(string fixSessionStatusMessage)
