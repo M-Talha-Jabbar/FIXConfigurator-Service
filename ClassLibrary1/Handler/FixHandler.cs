@@ -392,12 +392,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     //fixEngine.fixSessions.Add(session);
                 }
 
-                var hash = RedisCacheClient.getHashSet(muxer, key, db);
-                hash.Wait();
-                var result = hash.Result;
-
                 if (key.Contains("Status"))
                 {
+                    var hash = RedisCacheClient.getHashSet(muxer, key, db);
+                    hash.Wait();
+                    var result = hash.Result;
+
                     if (channel.ToString().Contains("del"))
                     {
                         result = new HashEntry[0];
