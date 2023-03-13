@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.IO;
 using System.Threading;
 using FIXMonitorBusinessLogicLayer.LocksManager;
+using CoreLogging;
 
 namespace FIXMonitorBusinessLogicLayer
 {
@@ -26,15 +27,16 @@ namespace FIXMonitorBusinessLogicLayer
             {
                 try
                 {
+                    //Directory.Exists()
                     fs = new FileStream(filePath, FileMode.Open, FileAccess.Read);
-                    Console.WriteLine("file read");
+                    Logging.LogMessage(LOGTYPE.Info, "fix message log file read");
                     return fs;
                 }
 
                 catch (Exception ex)
                     {
 
-                    Console.WriteLine("file reading lock error: ", ex.Message);
+                    Logging.LogMessage(LOGTYPE.Info, "Cannot read fix message log file" + ex.Message);
                     return null;
                 }
             }
