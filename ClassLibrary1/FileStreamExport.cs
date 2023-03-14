@@ -36,7 +36,7 @@ namespace FIXMonitorBusinessLogicLayer
                 catch (Exception ex)
                     {
 
-                    Logging.LogMessage(LOGTYPE.Info, "Cannot read fix message log file" + ex.Message);
+                    Logging.LogMessage(LOGTYPE.Error, "Cannot read fix message log file" + ex.Message);
                     return null;
                 }
             }
