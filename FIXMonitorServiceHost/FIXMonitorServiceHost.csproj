@@ -274,14 +274,14 @@
     </BootstrapperPackage>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\WcfServiceLibrary1\packages\EntityFramework.6.4.0\build\EntityFramework.props')" Text="$([System.String]::Format('$(ErrorText)', '..\WcfServiceLibrary1\packages\EntityFramework.6.4.0\build\EntityFramework.props'))" />
-    <Error Condition="!Exists('..\WcfServiceLibrary1\packages\EntityFramework.6.4.0\build\EntityFramework.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\WcfServiceLibrary1\packages\EntityFramework.6.4.0\build\EntityFramework.targets'))" />
-    <Error Condition="!Exists('..\WcfServiceLibrary1\packages\Microsoft.Data.SqlClient.SNI.1.1.0\build\net46\Microsoft.Data.SqlClient.SNI.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\WcfServiceLibrary1\packages\Microsoft.Data.SqlClient.SNI.1.1.0\build\net46\Microsoft.Data.SqlClient.SNI.targets'))" />
-  </Target>
+  <!-- <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild"> -->
+    <!-- <PropertyGroup> -->
+      <!-- <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText> -->
+    <!-- </PropertyGroup> -->
+    <!-- <Error Condition="!Exists('..\WcfServiceLibrary1\packages\EntityFramework.6.4.0\build\EntityFramework.props')" Text="$([System.String]::Format('$(ErrorText)', '..\WcfServiceLibrary1\packages\EntityFramework.6.4.0\build\EntityFramework.props'))" /> -->
+    <!-- <Error Condition="!Exists('..\WcfServiceLibrary1\packages\EntityFramework.6.4.0\build\EntityFramework.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\WcfServiceLibrary1\packages\EntityFramework.6.4.0\build\EntityFramework.targets'))" /> -->
+    <!-- <Error Condition="!Exists('..\WcfServiceLibrary1\packages\Microsoft.Data.SqlClient.SNI.1.1.0\build\net46\Microsoft.Data.SqlClient.SNI.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\WcfServiceLibrary1\packages\Microsoft.Data.SqlClient.SNI.1.1.0\build\net46\Microsoft.Data.SqlClient.SNI.targets'))" /> -->
+  <!-- </Target> -->
   <Import Project="..\WcfServiceLibrary1\packages\EntityFramework.6.4.0\build\EntityFramework.targets" Condition="Exists('..\WcfServiceLibrary1\packages\EntityFramework.6.4.0\build\EntityFramework.targets')" />
   <Import Project="..\WcfServiceLibrary1\packages\Microsoft.Data.SqlClient.SNI.1.1.0\build\net46\Microsoft.Data.SqlClient.SNI.targets" Condition="Exists('..\WcfServiceLibrary1\packages\Microsoft.Data.SqlClient.SNI.1.1.0\build\net46\Microsoft.Data.SqlClient.SNI.targets')" />
 </Project>
