@@ -35,8 +35,10 @@ namespace FIXMonitorBusinessLogicLayer
 
         public static void AddFixMessageLog(string fixMessageLog, string filePath)
         {
+
             lock (locksforConcurrentFileAccess.GetLockObj(filePath))
             {
+                if (!Directory.Exists(FixMessageLogDirectoryPath)) Directory.CreateDirectory(FixMessageLogDirectoryPath);
                 using (StreamWriter sw = File.AppendText(filePath))
                 {
                     sw.WriteLine(fixMessageLog);
