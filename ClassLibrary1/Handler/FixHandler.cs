@@ -1227,8 +1227,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                                         EmailNotifier.emailTimer.Add(sessionInfo.SessionId, emailNotifier.getTimerInstance());
                                     }
 
-                                    Console.WriteLine($"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
-                                    Console.WriteLine("Custom Email Settings used");
+                                    Logging.LogMessage(LOGTYPE.Info, $"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
+                                    Logging.LogMessage(LOGTYPE.Info, "Custom Email Settings used");
                                 }
 
                                 else
@@ -1237,11 +1237,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                     // Default Email Setting if an individual session is not configured.
 
-                                    Console.WriteLine($"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
+                                    Logging.LogMessage(LOGTYPE.Info, $"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
 
                                     emailNotifier = new EmailNotifier(conId, session.Status, new Sessions() { SessionId = session.ConnectionID }).SendEmail();
 
-                                    Console.WriteLine("Default Email Settings used");
+                                    Logging.LogMessage(LOGTYPE.Info, "Default Email Settings used");
                                 }
                             }
 
