@@ -40,7 +40,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private readonly bool sendSampleFixUpdate = Convert.ToBoolean(System.Configuration.ConfigurationManager.AppSettings["sendSampleFixUpdate"].ToString());
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
         private readonly string fixEngineRedisConfigFilePath = "redisConfigAndDB.txt";
-
         
         private Dictionary<string, string> streamLastReadTimeStamps; // FixMessages Stream 
 
@@ -1228,10 +1227,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                                         EmailNotifier.emailTimer.Add(sessionInfo.SessionId, emailNotifier.getTimerInstance());
                                     }
 
-                                    //emailHandler.SendEmail(conId, session.Status, sessionInfo);
-
-                                    Console.WriteLine($"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
-                                    Console.WriteLine("Custom Email Settings used");
+                                    Logging.LogMessage(LOGTYPE.Info, $"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
+                                    Logging.LogMessage(LOGTYPE.Info, "Custom Email Settings used");
                                 }
 
                                 else
@@ -1240,11 +1237,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                     // Default Email Setting if an individual session is not configured.
 
-                                    Console.WriteLine($"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
+                                    Logging.LogMessage(LOGTYPE.Info, $"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
 
                                     emailNotifier = new EmailNotifier(conId, session.Status, new Sessions() { SessionId = session.ConnectionID }).SendEmail();
 
-                                    Console.WriteLine("Default Email Settings used");
+                                    Logging.LogMessage(LOGTYPE.Info, "Default Email Settings used");
                                 }
                             }
 

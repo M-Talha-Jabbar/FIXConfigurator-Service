@@ -53,7 +53,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 emailData.CommaSeperatedToEmails = sessionInfo.ToEmails;
                 emailData.CommaSeperatedCCEmails = sessionInfo.CcEmails;
                 
-                emailData.Subject = string.IsNullOrEmpty(sessionInfo.Subject) ? $"Session {sessionId} status changed" : Regex.Replace(Regex.Replace(Regex.Replace(sessionInfo.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{status}", status, RegexOptions.IgnoreCase), "{environment}", Environment, RegexOptions.IgnoreCase);
+                emailData.Subject = string.IsNullOrEmpty(sessionInfo.Subject) ? $"Session {sessionId} status changed" : Regex.Replace(Regex.Replace(Regex.Replace(sessionInfo.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{status}", status, RegexOptions.IgnoreCase), "{environment}", Environment, RegexOptions.IgnoreCase);
 
                 emailData.Body = string.IsNullOrEmpty(sessionInfo.Body) ? $"Session {sessionId} status changed to {status} -> {Environment} Environment" :
                     Regex.Replace(Regex.Replace(Regex.Replace(sessionInfo.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{status}", status, RegexOptions.IgnoreCase), "{environment}", Environment, RegexOptions.IgnoreCase);
