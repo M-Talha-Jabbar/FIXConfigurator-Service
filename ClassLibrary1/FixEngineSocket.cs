@@ -22,7 +22,7 @@ namespace FIXMonitorBusinessLogicLayer
         public void AddFixEngineSocket(FIXEngine fixEngine) {
             try
             {
-                FixEngineSockets.TryAdd(fixEngine.engineID, new SocketHandler(fixEngine.FIXEngineIpAddress, fixEngine.FIXEngineIpPort));
+                FixEngineSockets.TryAdd(fixEngine.engineID, new SocketHandler(fixEngine.FIXEngineIpAddress, fixEngine.FIXEngineIpPort, fixEngine.engineName));
             }
             catch (Exception ex) {
                 CoreLogging.Logging.LogMessage(CoreLogging.LOGTYPE.Error, $"cannot instantiate socket engineid: {fixEngine.engineID} fixhubip: {fixEngine.FIXEngineIpAddress} fixhubport: {fixEngine.FIXEngineIpPort} ex {ex.Message}");

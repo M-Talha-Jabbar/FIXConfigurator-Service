@@ -198,6 +198,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             SocketHandler socketHandler = fixEngineSocket.GetFixEngineSocket(fixEngine);
 
+            Logging.LogMessage(LOGTYPE.Info, $"Start Checking Port {fixEngine.FIXEngineIpPort} Status of FixEngine {fixEngine.engineName}");
+            Task.Run(() => socketHandler.CheckPortStatus());
+
             IObservable<bool> data = socketHandler.GetStatus();
             data.Subscribe(updates =>
             {
