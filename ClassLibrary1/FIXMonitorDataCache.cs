@@ -33,6 +33,7 @@ namespace FIXMonitorBusinessLogicLayer
         readonly Observable observable;
         private IFixHandler fixHandler;
         private IEmailHandler emailHandler;
+        private IJenkinsHandler jenkinsHandler;
         
         //Can use inherited class instead of creating object.
 
@@ -72,6 +73,7 @@ namespace FIXMonitorBusinessLogicLayer
             fixConfiguration = new List<FIXConfiguration>();
             fixHandler = new FixHandler();
             emailHandler = new EmailHandler();
+            jenkinsHandler = new JenkinsHandler();
         }
 
         #region DataLoading
@@ -252,6 +254,10 @@ namespace FIXMonitorBusinessLogicLayer
         public IEnumerable<string> GetSessionStatusMessage() { 
 
             return fixHandler.GetSessionStatusMessage();
+        }
+
+        public async Task<string> TriggerJenkins(string branchName, string environment) {
+            return await jenkinsHandler.JenkinsTrigger(branchName, environment);
         }
     }
 

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
 using System.ServiceModel;
+using System.Threading.Tasks;
 
 namespace FIXMonitorService
 {
@@ -110,6 +111,9 @@ namespace FIXMonitorService
 
         [OperationContract]
         IEnumerable<string> GetSessionStatusMessage();
+
+        [OperationContract]
+        Task<string> TriggerJenkins(string branchName, string environment);
 
         // TODO: Add your service operations here
     }
