@@ -199,13 +199,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             SocketHandler socketHandler = fixEngineSocket.GetFixEngineSocket(fixEngine);
 
             Logging.LogMessage(LOGTYPE.Info, $"Start Checking Port {fixEngine.FIXEngineIpPort} Status of FixEngine {fixEngine.engineName}");
-            Task.Run(() => socketHandler.CheckPortStatus());
 
             IObservable<bool> data = socketHandler.GetStatus();
             data.Subscribe(updates =>
             {
-                UpdateSessionStatus(updates, fixEngine); //TODO: Use Engine IP instead of configured ip
+                UpdateSessionStatus(updates, fixEngine); 
             });
+
+            Task.Run(() => socketHandler.CheckPortStatus());
         }
 
         public void FixEngineSocketHandler(FIXEngine fixEngine)
