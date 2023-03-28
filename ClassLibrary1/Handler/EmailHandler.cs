@@ -181,12 +181,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 if (EmailNotifier.emailTimer.ContainsKey(updatedSessionConfiguration.SessionId))
                 {
-                    System.Timers.Timer timer;
-                    EmailNotifier.emailTimer.TryGetValue(updatedSessionConfiguration.SessionId, out timer);
-                    timer.Stop();
-                    timer.Dispose();
-
-                    EmailNotifier.emailTimer.Remove(updatedSessionConfiguration.SessionId);
+                    EmailNotifier.DisposeEmailTimer(updatedSessionConfiguration.SessionId);
 
                     if (updatedSessionConfiguration.EmailStatus)
                     {
@@ -214,14 +209,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             if (!string.IsNullOrEmpty(SessionId))
             {
                 if (EmailNotifier.emailTimer.ContainsKey(SessionId))
-                {
-                    System.Timers.Timer timer;
-                    EmailNotifier.emailTimer.TryGetValue(SessionId, out timer);
-                    timer.Stop();
-                    timer.Dispose();
+                    EmailNotifier.DisposeEmailTimer(SessionId);
 
-                    EmailNotifier.emailTimer.Remove(SessionId);
-                }
+                if (EmailNotifier.recurringEmailsCount.ContainsKey(SessionId))
+                    EmailNotifier.recurringEmailsCount.Remove(SessionId);
 
                 using (var context = new FIXMonitorContext())
                 {

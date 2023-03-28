@@ -890,6 +890,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             var engine = fixEngines.SingleOrDefault(x => x.redisIpAddress == fixEngine.redisIpAddress && x.redisIpPort == fixEngine.redisIpPort && x.redisDB == fixEngine.redisDB);
 
+            // Stop & Dispose Recurring Emails Timer (if exists) of a FixSession in a FixEngine which is been removed
+            engine.fixSessions.ToList().ForEach((session) =>
+            {
+                if (EmailNotifier.emailTimer.ContainsKey(session.ConnectionID))
+                    EmailNotifier.DisposeEmailTimer(session.ConnectionID);
+
+                if (EmailNotifier.recurringEmailsCount.ContainsKey(session.ConnectionID))
+                    EmailNotifier.recurringEmailsCount.Remove(session.ConnectionID);
+            });
+
             if (engine != null)
             {
                 fixEngines.Remove(engine);
@@ -1202,12 +1212,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                     else if (EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        System.Timers.Timer timer;
-                                        EmailNotifier.emailTimer.TryGetValue(sessionInfo.SessionId, out timer);
-                                        timer.Stop();
-                                        timer.Dispose();
-
-                                        EmailNotifier.emailTimer.Remove(sessionInfo.SessionId);
+                                        EmailNotifier.DisposeEmailTimer(sessionInfo.SessionId);
 
                                         if ((bool)sessionInfo.Recurring)
                                         {
@@ -1216,7 +1221,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                             EmailNotifier.recurringEmailsCount.Remove(sessionInfo.SessionId);
                                         }
-
                                     }
 
                                     else if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
