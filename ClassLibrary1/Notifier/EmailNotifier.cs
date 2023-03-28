@@ -100,5 +100,15 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         {
             return timer;
         }
+
+        public static void DisposeEmailTimer(string sessionId)
+        {
+            Timer timer;
+            emailTimer.TryGetValue(sessionId, out timer);
+            timer.Stop();
+            timer.Dispose();
+
+            emailTimer.Remove(sessionId);
+        }
     }
 }
