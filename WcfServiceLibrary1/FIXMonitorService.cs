@@ -296,5 +296,12 @@ namespace FIXMonitorService
         public IEnumerable<string> GetSessionStatusMessage() {
             return this.DataCache.GetSessionStatusMessage();
         }
+
+        public async Task<string> TriggerJenkins(string branchName, string environment) {
+           
+            var res = await this.DataCache.TriggerJenkins(branchName, environment);
+
+            return res;
+        }
     }
 }
