@@ -62,9 +62,9 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
         public bool? QEnabled { get; set; }
 
-        public DateTime SessionStart { get; set; }
+        public string SessionStart { get; set; }
 
-        public DateTime SessionEnd { get; set; }
+        public string SessionEnd { get; set; }
 
         public string TaskReset { get; set; }
 
@@ -132,9 +132,9 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
                 QEnabled = config.QEnabled,
 
-                SessionStart = new DateTime((long)config.SessionStart),
+                SessionStart = config.SessionStart,
 
-                SessionEnd = new DateTime((long)config.SessionEnd),
+                SessionEnd = config.SessionEnd,
 
                 TaskReset = config.TaskReset,
 
@@ -208,9 +208,9 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
 
                 QEnabled = (bool)session,
 
-                SessionStart = (ulong)session.SessionStart.Ticks,
+                SessionStart = session.SessionStart,
 
-                SessionEnd = (ulong)session.SessionEnd.Ticks,
+                SessionEnd = session.SessionEnd,
 
                 TaskReset = session.TaskReset == null ? "" : session.TaskReset,
 
