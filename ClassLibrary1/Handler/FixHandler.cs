@@ -78,8 +78,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             //Save The updated configuration to the file 
             PersistFixEngineConfig();
-
-            Task.Run(() => { SetScheduler(); });
         }
 
         private void EnginePersistence()
@@ -336,6 +334,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             session.FixMessages = new List<FIXMessage>();
             FIXEngine.fixSessions.Add(session);
             session.ConnectionID = conId;
+
+            Task.Run(() => SetScheduler(session));
+
             return session;
         }
 
@@ -712,6 +713,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             Task.WaitAll(tasks.ToArray());
         }
         */
+
+        private void SetScheduler(FIXSession fixSession)
+        {
+
+        }
 
         private void SetScheduler()
         {
