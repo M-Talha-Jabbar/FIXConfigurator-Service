@@ -26,6 +26,7 @@ using FIXMonitorBusinessLogicLayer.Converter;
 using FIXMonitorBusinessLogicLayer.LocksManager;
 using DevExtreme.AspNet.Data.ResponseModel;
 using FIXMonitorBusinessLogicLayer.Utilities;
+using System.Globalization;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -716,25 +717,27 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void SetScheduler(FIXSession fixSession)
         {
+            fixSession.SessionStart = "13:33:00";
+            DateTime sessionStartDateTime = DateTime.ParseExact(fixSession.SessionStart, "HH:mm:ss", CultureInfo.InvariantCulture);
+            DateTime dateTimeNow = DateTime.Now;
 
-        }
-
-        private void SetScheduler()
-        {
-            foreach (var engine in fixEngines)
+            using(var context = new FIXMonitorContext())
             {
-                foreach (var session in engine.fixSessions)
+                var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == fixSession.ConnectionID);
+
+                if(sessionInfo != null && sessionInfo.EmailStatus)
                 {
-                    using (var context = new FIXMonitorContext())
+                    if(sessionInfo.ScheduleTime.TimeOfDay != sessionStartDateTime.TimeOfDay)
                     {
-                        var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == session.ConnectionID);
+                        sessionInfo.ScheduleTime = sessionStartDateTime;
+                        context.Sessions.Update(sessionInfo);
+                        context.SaveChanges();
+                    }
 
-                        if (sessionInfo != null && sessionInfo.EmailStatus && TimeConverter.CompareTimeDifference(sessionInfo.ScheduleTime.TimeOfDay, DateTime.Now.TimeOfDay) > 0)
-                        {
-                            var totalTimeInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionInfo.ScheduleTime.TimeOfDay - DateTime.Now.TimeOfDay) + TimeConverter.GetTimeInMilliseconds(sessionInfo.Timeout);
-
-                            emailNotifier = new EmailNotifier(totalTimeInMilliseconds, session, sessionInfo);
-                        }
+                    if(TimeConverter.CompareTimeDifference(sessionStartDateTime.TimeOfDay, dateTimeNow.TimeOfDay) >= 0)
+                    {
+                        var totalTimeInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionStartDateTime.TimeOfDay - dateTimeNow.TimeOfDay) + TimeConverter.GetTimeInMilliseconds(sessionInfo.Timeout);
+                        emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixSession, sessionInfo);
                     }
                 }
             }
