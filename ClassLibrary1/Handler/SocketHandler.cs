@@ -66,8 +66,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     return true;
                 }
             }
-            catch (SocketException)
+            catch (SocketException ex)
             {
+                Logging.LogMessage(LOGTYPE.Error, "Socket Error Code: " + ex.SocketErrorCode);
+                Logging.LogMessage(LOGTYPE.Error, "Exception: " + ex.Message);
                 return false;
             }
         }
