@@ -12,7 +12,7 @@ namespace FIXMonitorBusinessLogicLayer.Repositories
     public class JenkinsRepositiory
     {
         // jenkins config create
-        public async Task<FixEngineJenkinsConfiguration> createJenkinsConfig(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
+        public async Task<FixEngineJenkinsConfiguration> CreateJenkinsConfigAsync(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
         {
 
             Logging.LogMessage(LOGTYPE.Info, $"Method name: {MethodBase.GetCurrentMethod().Name} in JenkinsRepository started");
@@ -42,7 +42,7 @@ namespace FIXMonitorBusinessLogicLayer.Repositories
 
 
         // jenkins config update
-        public async Task<FixEngineJenkinsConfiguration> updateJenkinsConfig(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
+        public async Task<FixEngineJenkinsConfiguration> UpdateJenkinsConfigAsync(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
         {
 
             Logging.LogMessage(LOGTYPE.Info, $"Method name: {MethodBase.GetCurrentMethod().Name} in JenkinsRepository started");
@@ -71,7 +71,7 @@ namespace FIXMonitorBusinessLogicLayer.Repositories
         }
 
         // jenkins config read
-        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfig(string FixEngineIpAndPort)
+        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfigAsync(string FixEngineIpAndPort)
         {
 
             Logging.LogMessage(LOGTYPE.Info, $"Method name: {MethodBase.GetCurrentMethod().Name} in JenkinsRepository started");
@@ -103,7 +103,7 @@ namespace FIXMonitorBusinessLogicLayer.Repositories
 
         // jenkins config delete
 
-        public async Task<bool> DeleteJenkinsConfig(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
+        public async Task<bool> DeleteJenkinsConfigAsync(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
         {
 
             Logging.LogMessage(LOGTYPE.Info, $"Method name: {MethodBase.GetCurrentMethod().Name} in JenkinsRepository started");
