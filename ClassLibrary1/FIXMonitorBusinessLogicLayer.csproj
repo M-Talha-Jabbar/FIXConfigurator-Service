@@ -281,9 +281,11 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Data\FixEngineConfigFilePath.cs" />
+    <Compile Include="Data\FixEngineJenkinsConfiguration.cs" />
     <Compile Include="Handler\JenkinsHandler.cs" />
     <Compile Include="IHandler\IJenkinsHandler.cs" />
+    <Compile Include="Repositories\JenkinsRepositiory.cs" />
+    <Compile Include="Services\JenkinsService.cs" />
     <Compile Include="Utilities\TimeConverter.cs" />
     <Compile Include="DataModels\FIXSessionsConnectivityStatus.cs" />
     <Compile Include="DataModels\FixTagValueConfiguration.cs" />
