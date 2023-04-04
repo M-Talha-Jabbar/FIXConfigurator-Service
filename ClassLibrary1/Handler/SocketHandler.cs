@@ -75,26 +75,22 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     using(NetworkStream stream = tcpClient.GetStream())
                     {
-                        byte[] testMessage = new byte[] { 0x01, 0x02, 0x03 };
-                        stream.Write(testMessage, 0, testMessage.Length);
-                        byte[] buffer = new byte[256];
-                        int bytesRead = stream.ReadAsync(buffer, 0, buffer.Length).Result;
+                        bool canRead = stream.CanRead;
 
-                        if (bytesRead == 0)
+                        if (!canRead)
                         {
                             Logging.LogMessage(LOGTYPE.Info, $"Connection with FixEngine {fixEngineName} on {hostname}:{port} has been closed");
                             DisposeTcpInstanceNClosingTcpConnection();
-                            return false;
                         }
 
-                        return true;
+                        return canRead;
                     }
                 }
             }
             catch (Exception ex)
             {
-                //Logging.LogMessage(LOGTYPE.Error, "Exception: " + ex.Message);
-                //Logging.LogMessage(LOGTYPE.Error, "StackTrace: " + ex.StackTrace);
+                Logging.LogMessage(LOGTYPE.Error, "Exception: " + ex.Message);
+                Logging.LogMessage(LOGTYPE.Error, "StackTrace: " + ex.StackTrace);
                 DisposeTcpInstanceNClosingTcpConnection();
                 return false;
             }
@@ -112,6 +108,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         public IObservable<bool> GetStatus()
         {
             return subject;
+        }
+
+        ~SocketHandler()
+        {
+            tcpClient.Close();
+            Logging.LogMessage(LOGTYPE.Info, $"Disconnecting socket with FixEngine {fixEngineName} on {hostname}:{port}");
         }
     }
 }

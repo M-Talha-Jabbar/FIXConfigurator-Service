@@ -27,7 +27,12 @@ namespace FIXMonitorBusinessLogicLayer
             catch (Exception ex) {
                 CoreLogging.Logging.LogMessage(CoreLogging.LOGTYPE.Error, $"cannot instantiate socket engineid: {fixEngine.engineID} fixhubip: {fixEngine.FIXEngineIpAddress} fixhubport: {fixEngine.FIXEngineIpPort} ex {ex.Message}");
             }
-            
+        }
+
+        public void RemoveFixEngineSocket(FIXEngine fixEngine)
+        {
+            SocketHandler socketHandler; // When this object of SocketHandler will go out of this function scope, its destructor will be called.
+            FixEngineSockets.TryRemove(fixEngine.engineID, out socketHandler);
         }
 
         public void AddFixEngineSocket(List<FIXEngine> fixEngines) {
