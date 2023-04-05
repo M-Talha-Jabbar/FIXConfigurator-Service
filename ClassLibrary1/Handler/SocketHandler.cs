@@ -22,6 +22,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private bool isRunning = false;
         private static int waitBeforeConnecting = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["waitBeforeConnecting"].ToString());
         private BehaviorSubject<bool> subject;
+        private TcpClient tcpClient;
 
         public SocketHandler(string hostname, int port, string fixEngineName)
         {
@@ -29,23 +30,24 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             this.port = port;
             this.fixEngineName = fixEngineName;
             subject = new BehaviorSubject<bool>(isRunning);
+            tcpClient = new TcpClient();
         }
 
-        public void CheckPortStatus()
+        public async Task CheckPortStatus()
         {
             while (true)
             {
-                bool isPortOpen = IsPortOpen();
+                bool isPortOpen = await IsPortOpen();
                 string portStatus = isPortOpen ? "Open" : "Closed";
                 Logging.LogMessage(LOGTYPE.Info, $"FixEngine {fixEngineName} Port {port} is: {portStatus}");
 
-                if(isPortOpen && !isRunning)
+                if (isPortOpen && !isRunning)
                 {
                     isRunning = true;
                     subject.OnNext(isRunning);
                     Logging.LogMessage(LOGTYPE.Info, $"FixEngine {fixEngineName} on {hostname}:{port} is running");
                 }
-                else if(!isPortOpen)
+                else if (!isPortOpen)
                 {
                     isRunning = false;
                     subject.OnNext(isRunning);
@@ -56,27 +58,64 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private bool IsPortOpen()
+        private async Task<bool> IsPortOpen()
         {
             try
             {
-                using (TcpClient tcpClient = new TcpClient())
+                if (!tcpClient.Connected)
                 {
+                    Logging.LogMessage(LOGTYPE.Info, $"Trying to connect with FixEngine {fixEngineName} on {hostname}:{port}");
                     tcpClient.Connect(hostname, port);
+                    Logging.LogMessage(LOGTYPE.Info, $"Connected with FixEngine {fixEngineName} on {hostname}:{port}");
                     return true;
                 }
+                else
+                {
+                    Logging.LogMessage(LOGTYPE.Info, $"Established Connection with FixEngine {fixEngineName} on {hostname}:{port}");
+
+                    using(NetworkStream stream = tcpClient.GetStream())
+                    {
+                        byte[] buffer = new byte[256];
+                        int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+
+                        if (bytesRead == 0)
+                        {
+                            Logging.LogMessage(LOGTYPE.Info, $"Connection with FixEngine {fixEngineName} on {hostname}:{port} has been closed");
+                            DisposeTcpInstanceNClosingTcpConnection();
+                            return false;
+                        }
+
+                        return true;
+                    }
+                }
             }
-            catch (SocketException ex)
+            catch (Exception ex)
             {
-                Logging.LogMessage(LOGTYPE.Error, "Socket Error Code: " + ex.SocketErrorCode);
                 Logging.LogMessage(LOGTYPE.Error, "Exception: " + ex.Message);
+                Logging.LogMessage(LOGTYPE.Error, "StackTrace: " + ex.StackTrace);
+                DisposeTcpInstanceNClosingTcpConnection();
                 return false;
+            }
+        }
+
+        private void DisposeTcpInstanceNClosingTcpConnection()
+        {
+            if (tcpClient != null)
+            {
+                tcpClient.Close(); // Disposes the TcpClient instance plus closes the TCP connection as well. 
+                tcpClient = new TcpClient();
             }
         }
 
         public IObservable<bool> GetStatus()
         {
             return subject;
+        }
+
+        ~SocketHandler()
+        {
+            tcpClient.Close();
+            Logging.LogMessage(LOGTYPE.Info, $"Disconnecting socket with FixEngine {fixEngineName} on {hostname}:{port}");
         }
     }
 }
