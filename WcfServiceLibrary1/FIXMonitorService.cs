@@ -1,6 +1,7 @@
 ﻿using CoreLogging;
 using DevExtreme.AspNet.Data.ResponseModel;
 using FIXMonitorBusinessLogicLayer;
+using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using FIXMonitorService.PayLoads;
@@ -191,7 +192,7 @@ namespace FIXMonitorService
                 Logging.LogMessage(LOGTYPE.Info, "Realtime FixSessionUpdate sent to Client");
                 return;
             }
-            
+
             FixSessionUpdate fixSessionUpdateItem = new FixSessionUpdate(fixSession, engineID, commandType);
             Queue.Enqueue(fixSessionUpdateItem);
             Logging.LogMessage(LOGTYPE.Info, "Queued FixSessionUpdate");
@@ -278,7 +279,7 @@ namespace FIXMonitorService
             return this.DataCache.GetFixMessageLogFileStream(sessionId, engineName);
         }
 
-        public bool FileExists(string sessionId, string engineName) 
+        public bool FileExists(string sessionId, string engineName)
         {
             return this.DataCache.FileExists(sessionId, engineName);
         }
@@ -293,15 +294,38 @@ namespace FIXMonitorService
             return this.DataCache.TcpConnection(ipAddress, port);
         }
 
-        public IEnumerable<string> GetSessionStatusMessage() {
+        public IEnumerable<string> GetSessionStatusMessage()
+        {
             return this.DataCache.GetSessionStatusMessage();
         }
 
-        public async Task<string> TriggerJenkins(string branchName, string environment) {
-           
-            var res = await this.DataCache.TriggerJenkins(branchName, environment);
+        public async Task<string> TriggerJenkins(string branchName, string environment)
+        {
 
-            return res;
+            return await DataCache.TriggerJenkins(branchName, environment);
+
         }
+
+        public async Task<bool> AddJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
+        {
+            return await DataCache.AddJenkinsConfiguration(fixEngineJenkinsConfiguration);
+            
+        }
+
+        public async Task<bool> UpdateJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
+        {
+            return await DataCache.UpdateJenkinsConfiguration(fixEngineJenkinsConfiguration);
+        }
+
+        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string FixEngineIpAndPort)
+        {
+            return await DataCache.GetJenkinsConfiguration(FixEngineIpAndPort);
+        }
+
+        public async Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort)
+        {
+            return await DataCache.DeleteJenkinsConfiguration(FixEngineIpAndPort);
+        }
+
     }
 }

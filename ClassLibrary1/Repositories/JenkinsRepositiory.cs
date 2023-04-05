@@ -53,7 +53,9 @@ namespace FIXMonitorBusinessLogicLayer.Repositories
 
                 using (FIXMonitorContext fixMonitorContext = new FIXMonitorContext())
                 {
-                    fixMonitorContext.FixEngineJenkinsConfiguration.Update(fixEngineJenkinsConfiguration);
+                    var res = fixMonitorContext.FixEngineJenkinsConfiguration.Update(fixEngineJenkinsConfiguration);
+                    var values = res.CurrentValues;
+
                     await fixMonitorContext.SaveChangesAsync();
                     Logging.LogMessage(LOGTYPE.Info, $"changes saved successfully");
                     return fixEngineJenkinsConfiguration;
@@ -80,7 +82,7 @@ namespace FIXMonitorBusinessLogicLayer.Repositories
 
             try
             {
-                if (!string.IsNullOrEmpty(FixEngineIpAndPort)) return fixEngineJenkinsConfiguration;
+                if (string.IsNullOrEmpty(FixEngineIpAndPort)) return fixEngineJenkinsConfiguration;
 
                 using (FIXMonitorContext fixMonitorContext = new FIXMonitorContext())
                 {
@@ -110,7 +112,7 @@ namespace FIXMonitorBusinessLogicLayer.Repositories
 
             try
             {
-                if (fixEngineJenkinsConfiguration != null) return false;
+                if (fixEngineJenkinsConfiguration == null) return false;
 
                 using (FIXMonitorContext fixMonitorContext = new FIXMonitorContext())
                 {
