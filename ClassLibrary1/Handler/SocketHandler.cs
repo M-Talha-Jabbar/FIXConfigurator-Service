@@ -119,12 +119,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         public void Dispose()
         {
             isEngineExist = false;
-            tcpClient.Close();
-            Logging.LogMessage(LOGTYPE.Info, $"Disconnected socket with FixEngine {fixEngineName} on {hostname}:{port}");
         }
 
         ~SocketHandler()
         {
+            Logging.LogMessage(LOGTYPE.Info, $"Disconnecting socket with FixEngine {fixEngineName} on {hostname}:{port}");
+            tcpClient.Close();
             Logging.LogMessage(LOGTYPE.Info, $"Socket instance of FixEngine {fixEngineName} on {hostname}:{port} removed");
         }
     }
