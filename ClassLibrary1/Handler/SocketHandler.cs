@@ -33,11 +33,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             tcpClient = new TcpClient();
         }
 
-        public void CheckPortStatus()
+        public async Task CheckPortStatus()
         {
             while (true)
             {
-                bool isPortOpen = IsPortOpen();
+                bool isPortOpen = await IsPortOpen();
                 string portStatus = isPortOpen ? "Open" : "Closed";
                 Logging.LogMessage(LOGTYPE.Info, $"FixEngine {fixEngineName} Port {port} is: {portStatus}");
 
@@ -58,7 +58,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private bool IsPortOpen()
+        private async Task<bool> IsPortOpen()
         {
             try
             {
@@ -75,15 +75,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     using(NetworkStream stream = tcpClient.GetStream())
                     {
-                        bool canRead = stream.CanRead;
+                        byte[] buffer = new byte[256];
+                        int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
 
-                        if (!canRead)
+                        if (bytesRead == 0)
                         {
                             Logging.LogMessage(LOGTYPE.Info, $"Connection with FixEngine {fixEngineName} on {hostname}:{port} has been closed");
                             DisposeTcpInstanceNClosingTcpConnection();
+                            return false;
                         }
 
-                        return canRead;
+                        return true;
                     }
                 }
             }
