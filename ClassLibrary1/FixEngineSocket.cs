@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using FIXMonitorBusinessLogicLayer.Handler;
 using FIXMonitorBusinessLogicLayer.DataModels;
+using CoreLogging;
 
 namespace FIXMonitorBusinessLogicLayer
 {
@@ -23,11 +24,18 @@ namespace FIXMonitorBusinessLogicLayer
             try
             {
                 FixEngineSockets.TryAdd(fixEngine.engineID, new SocketHandler(fixEngine.FIXEngineIpAddress, fixEngine.FIXEngineIpPort, fixEngine.engineName));
+                Logging.LogMessage(LOGTYPE.Info, $"Adding socket instance of FixEngine {fixEngine.engineName} on {fixEngine.FIXEngineIpAddress}:{fixEngine.FIXEngineIpPort}");
             }
             catch (Exception ex) {
-                CoreLogging.Logging.LogMessage(CoreLogging.LOGTYPE.Error, $"cannot instantiate socket engineid: {fixEngine.engineID} fixhubip: {fixEngine.FIXEngineIpAddress} fixhubport: {fixEngine.FIXEngineIpPort} ex {ex.Message}");
+                Logging.LogMessage(CoreLogging.LOGTYPE.Error, $"cannot instantiate socket engineid: {fixEngine.engineID} fixhubip: {fixEngine.FIXEngineIpAddress} fixhubport: {fixEngine.FIXEngineIpPort} ex {ex.Message}");
             }
-            
+        }
+
+        public void RemoveFixEngineSocket(FIXEngine fixEngine)
+        {
+            SocketHandler socketHandler; // When this object of SocketHandler will go out of this function scope, its destructor will be called.
+            FixEngineSockets.TryRemove(fixEngine.engineID, out socketHandler);
+            Logging.LogMessage(LOGTYPE.Info, $"Removing socket instance of FixEngine {fixEngine.engineName} on {fixEngine.FIXEngineIpAddress}:{fixEngine.FIXEngineIpPort}");
         }
 
         public void AddFixEngineSocket(List<FIXEngine> fixEngines) {

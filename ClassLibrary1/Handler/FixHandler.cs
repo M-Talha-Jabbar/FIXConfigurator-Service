@@ -904,6 +904,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     EmailNotifier.recurringEmailsCount.Remove(session.ConnectionID);
             });
 
+            fixEngineSocket.RemoveFixEngineSocket(fixEngine);
+
             if (engine != null)
             {
                 fixEngines.Remove(engine);
