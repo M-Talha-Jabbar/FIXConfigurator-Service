@@ -36,6 +36,7 @@ namespace FIXMonitorBusinessLogicLayer
             SocketHandler socketHandler; // When this object of SocketHandler will go out of this function scope, its destructor will be called.
             FixEngineSockets.TryRemove(fixEngine.engineID, out socketHandler);
             Logging.LogMessage(LOGTYPE.Info, $"Removing socket instance of FixEngine {fixEngine.engineName} on {fixEngine.FIXEngineIpAddress}:{fixEngine.FIXEngineIpPort}");
+            socketHandler.Dispose();
         }
 
         public void AddFixEngineSocket(List<FIXEngine> fixEngines) {

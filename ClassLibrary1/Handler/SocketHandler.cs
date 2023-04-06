@@ -13,13 +13,14 @@ using System.Reactive.Subjects;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
-    public class SocketHandler
+    public class SocketHandler : IDisposable
     {
         //static int heartbeat = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["heartbeatIntervalForFixHub"].ToString());
         private int port;
         private string hostname;
         private string fixEngineName;
         private bool isRunning = false;
+        bool isEngineExist = true;
         private static int waitBeforeConnecting = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["waitBeforeConnecting"].ToString());
         private BehaviorSubject<bool> subject;
         private TcpClient tcpClient;
@@ -37,6 +38,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             while (true)
             {
+                if (!isEngineExist)
+                    break;
+
                 bool isPortOpen = await IsPortOpen();
                 string portStatus = isPortOpen ? "Open" : "Closed";
                 Logging.LogMessage(LOGTYPE.Info, $"FixEngine {fixEngineName} Port {port} is: {portStatus}");
@@ -112,10 +116,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return subject;
         }
 
+        public void Dispose()
+        {
+            isEngineExist = false;
+        }
+
         ~SocketHandler()
         {
-            tcpClient.Close();
             Logging.LogMessage(LOGTYPE.Info, $"Disconnecting socket with FixEngine {fixEngineName} on {hostname}:{port}");
+            tcpClient.Close();
+            Logging.LogMessage(LOGTYPE.Info, $"Socket instance of FixEngine {fixEngineName} on {hostname}:{port} removed");
         }
     }
 }
