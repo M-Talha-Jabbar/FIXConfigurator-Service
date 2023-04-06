@@ -26,6 +26,7 @@ using FIXMonitorBusinessLogicLayer.Converter;
 using FIXMonitorBusinessLogicLayer.LocksManager;
 using DevExtreme.AspNet.Data.ResponseModel;
 using FIXMonitorBusinessLogicLayer.Utilities;
+using System.Globalization;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -78,8 +79,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             //Save The updated configuration to the file 
             PersistFixEngineConfig();
-
-            Task.Run(() => { SetScheduler(); });
         }
 
         private void EnginePersistence()
@@ -337,6 +336,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             session.FixMessages = new List<FIXMessage>();
             FIXEngine.fixSessions.Add(session);
             session.ConnectionID = conId;
+
+            Task.Run(() => SetScheduler(session));
+
             return session;
         }
 
@@ -714,25 +716,32 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         }
         */
 
-        private void SetScheduler()
+        private void SetScheduler(FIXSession fixSession)
         {
-            foreach (var engine in fixEngines)
-            {
-                foreach (var session in engine.fixSessions)
-                {
-                    using (var context = new FIXMonitorContext())
-                    {
-                        var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == session.ConnectionID);
+            //fixSession.SessionStart = "13:33:00";
+            //DateTime sessionStartDateTime = DateTime.ParseExact(fixSession.SessionStart, "HH:mm:ss", CultureInfo.InvariantCulture);
+            //DateTime dateTimeNow = DateTime.Now;
 
-                        if (sessionInfo != null && sessionInfo.EmailStatus && TimeConverter.CompareTimeDifference(sessionInfo.ScheduleTime.TimeOfDay, DateTime.Now.TimeOfDay) > 0)
-                        {
-                            var totalTimeInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionInfo.ScheduleTime.TimeOfDay - DateTime.Now.TimeOfDay) + TimeConverter.GetTimeInMilliseconds(sessionInfo.Timeout);
+            //using(var context = new FIXMonitorContext())
+            //{
+            //    var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == fixSession.ConnectionID);
 
-                            emailNotifier = new EmailNotifier(totalTimeInMilliseconds, session, sessionInfo);
-                        }
-                    }
-                }
-            }
+            //    if(sessionInfo != null && sessionInfo.EmailStatus)
+            //    {
+            //        if(sessionInfo.ScheduleTime.TimeOfDay != sessionStartDateTime.TimeOfDay)
+            //        {
+            //            sessionInfo.ScheduleTime = sessionStartDateTime;
+            //            context.Sessions.Update(sessionInfo);
+            //            context.SaveChanges();
+            //        }
+
+            //        if(TimeConverter.CompareTimeDifference(sessionStartDateTime.TimeOfDay, dateTimeNow.TimeOfDay) >= 0)
+            //        {
+            //            var totalTimeInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionStartDateTime.TimeOfDay - dateTimeNow.TimeOfDay) + TimeConverter.GetTimeInMilliseconds(sessionInfo.Timeout);
+            //            emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixSession, sessionInfo);
+            //        }
+            //    }
+            //}
         }
 
         public FixEnginesKeyedCollection GetFixEngines()

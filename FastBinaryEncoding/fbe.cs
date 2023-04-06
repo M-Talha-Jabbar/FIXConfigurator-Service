@@ -15,7 +15,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace FBE {
+namespace FBE
+{
 
     // Fast Binary Encoding UUID generator
     public static class UuidGenerator
@@ -254,53 +255,53 @@ namespace FBE {
 
         public static int ReadInt32(byte[] buffer, long offset)
         {
-            return (buffer[offset + 0] <<  0)|
-                   (buffer[offset + 1] <<  8)|
-                   (buffer[offset + 2] << 16)|
+            return (buffer[offset + 0] << 0) |
+                   (buffer[offset + 1] << 8) |
+                   (buffer[offset + 2] << 16) |
                    (buffer[offset + 3] << 24);
         }
 
         public static uint ReadUInt32(byte[] buffer, long offset)
         {
-            return ((uint)buffer[offset + 0] <<  0)|
-                   ((uint)buffer[offset + 1] <<  8)|
-                   ((uint)buffer[offset + 2] << 16)|
+            return ((uint)buffer[offset + 0] << 0) |
+                   ((uint)buffer[offset + 1] << 8) |
+                   ((uint)buffer[offset + 2] << 16) |
                    ((uint)buffer[offset + 3] << 24);
         }
 
         public static long ReadInt64(byte[] buffer, long offset)
         {
-            return ((long)buffer[offset + 0] <<  0)|
-                   ((long)buffer[offset + 1] <<  8)|
-                   ((long)buffer[offset + 2] << 16)|
-                   ((long)buffer[offset + 3] << 24)|
-                   ((long)buffer[offset + 4] << 32)|
-                   ((long)buffer[offset + 5] << 40)|
-                   ((long)buffer[offset + 6] << 48)|
+            return ((long)buffer[offset + 0] << 0) |
+                   ((long)buffer[offset + 1] << 8) |
+                   ((long)buffer[offset + 2] << 16) |
+                   ((long)buffer[offset + 3] << 24) |
+                   ((long)buffer[offset + 4] << 32) |
+                   ((long)buffer[offset + 5] << 40) |
+                   ((long)buffer[offset + 6] << 48) |
                    ((long)buffer[offset + 7] << 56);
         }
 
         public static ulong ReadUInt64(byte[] buffer, long offset)
         {
-            return ((ulong)buffer[offset + 0] <<  0)|
-                   ((ulong)buffer[offset + 1] <<  8)|
-                   ((ulong)buffer[offset + 2] << 16)|
-                   ((ulong)buffer[offset + 3] << 24)|
-                   ((ulong)buffer[offset + 4] << 32)|
-                   ((ulong)buffer[offset + 5] << 40)|
-                   ((ulong)buffer[offset + 6] << 48)|
+            return ((ulong)buffer[offset + 0] << 0) |
+                   ((ulong)buffer[offset + 1] << 8) |
+                   ((ulong)buffer[offset + 2] << 16) |
+                   ((ulong)buffer[offset + 3] << 24) |
+                   ((ulong)buffer[offset + 4] << 32) |
+                   ((ulong)buffer[offset + 5] << 40) |
+                   ((ulong)buffer[offset + 6] << 48) |
                    ((ulong)buffer[offset + 7] << 56);
         }
 
         public static ulong ReadUInt64Guid(byte[] buffer, long offset)
         {
-            return ((ulong)buffer[offset + 0] << 24)|
-                   ((ulong)buffer[offset + 1] << 16)|
-                   ((ulong)buffer[offset + 2] <<  8)|
-                   ((ulong)buffer[offset + 3] <<  0)|
-                   ((ulong)buffer[offset + 4] << 40)|
-                   ((ulong)buffer[offset + 5] << 32)|
-                   ((ulong)buffer[offset + 6] << 56)|
+            return ((ulong)buffer[offset + 0] << 24) |
+                   ((ulong)buffer[offset + 1] << 16) |
+                   ((ulong)buffer[offset + 2] << 8) |
+                   ((ulong)buffer[offset + 3] << 0) |
+                   ((ulong)buffer[offset + 4] << 40) |
+                   ((ulong)buffer[offset + 5] << 32) |
+                   ((ulong)buffer[offset + 6] << 56) |
                    ((ulong)buffer[offset + 7] << 48);
         }
 
@@ -365,36 +366,36 @@ namespace FBE {
 
         public static void Write(byte[] buffer, long offset, short value)
         {
-            buffer[offset + 0] = (byte)(value >>  0);
-            buffer[offset + 1] = (byte)(value >>  8);
+            buffer[offset + 0] = (byte)(value >> 0);
+            buffer[offset + 1] = (byte)(value >> 8);
         }
 
         public static void Write(byte[] buffer, long offset, ushort value)
         {
-            buffer[offset + 0] = (byte)(value >>  0);
-            buffer[offset + 1] = (byte)(value >>  8);
+            buffer[offset + 0] = (byte)(value >> 0);
+            buffer[offset + 1] = (byte)(value >> 8);
         }
 
         public static void Write(byte[] buffer, long offset, int value)
         {
-            buffer[offset + 0] = (byte)(value >>  0);
-            buffer[offset + 1] = (byte)(value >>  8);
+            buffer[offset + 0] = (byte)(value >> 0);
+            buffer[offset + 1] = (byte)(value >> 8);
             buffer[offset + 2] = (byte)(value >> 16);
             buffer[offset + 3] = (byte)(value >> 24);
         }
 
         public static void Write(byte[] buffer, long offset, uint value)
         {
-            buffer[offset + 0] = (byte)(value >>  0);
-            buffer[offset + 1] = (byte)(value >>  8);
+            buffer[offset + 0] = (byte)(value >> 0);
+            buffer[offset + 1] = (byte)(value >> 8);
             buffer[offset + 2] = (byte)(value >> 16);
             buffer[offset + 3] = (byte)(value >> 24);
         }
 
         public static void Write(byte[] buffer, long offset, long value)
         {
-            buffer[offset + 0] = (byte)(value >>  0);
-            buffer[offset + 1] = (byte)(value >>  8);
+            buffer[offset + 0] = (byte)(value >> 0);
+            buffer[offset + 1] = (byte)(value >> 8);
             buffer[offset + 2] = (byte)(value >> 16);
             buffer[offset + 3] = (byte)(value >> 24);
             buffer[offset + 4] = (byte)(value >> 32);
@@ -405,8 +406,8 @@ namespace FBE {
 
         public static void Write(byte[] buffer, long offset, ulong value)
         {
-            buffer[offset + 0] = (byte)(value >>  0);
-            buffer[offset + 1] = (byte)(value >>  8);
+            buffer[offset + 0] = (byte)(value >> 0);
+            buffer[offset + 1] = (byte)(value >> 8);
             buffer[offset + 2] = (byte)(value >> 16);
             buffer[offset + 3] = (byte)(value >> 24);
             buffer[offset + 4] = (byte)(value >> 32);
@@ -419,8 +420,8 @@ namespace FBE {
         {
             buffer[offset + 0] = (byte)(value >> 24);
             buffer[offset + 1] = (byte)(value >> 16);
-            buffer[offset + 2] = (byte)(value >>  8);
-            buffer[offset + 3] = (byte)(value >>  0);
+            buffer[offset + 2] = (byte)(value >> 8);
+            buffer[offset + 3] = (byte)(value >> 0);
             buffer[offset + 4] = (byte)(value >> 40);
             buffer[offset + 5] = (byte)(value >> 32);
             buffer[offset + 6] = (byte)(value >> 56);
@@ -665,7 +666,7 @@ namespace FBE {
     public abstract class FieldModelValueType<T> : FieldModelBase
         where T : struct
     {
-        protected FieldModelValueType(Buffer buffer, long offset) : base(buffer, offset) {}
+        protected FieldModelValueType(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Clone the field model
         public abstract FieldModelValueType<T> Clone();
@@ -730,7 +731,7 @@ namespace FBE {
     public abstract class FieldModelReferenceType<T> : FieldModelBase
         where T : class
     {
-        protected FieldModelReferenceType(Buffer buffer, long offset) : base(buffer, offset) {}
+        protected FieldModelReferenceType(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Clone the field model
         public abstract FieldModelReferenceType<T> Clone();
@@ -764,7 +765,7 @@ namespace FBE {
     // Fast Binary Encoding bool field model
     public class FieldModelBool : FieldModelValueType<bool>
     {
-        public FieldModelBool(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelBool(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 1;
@@ -799,7 +800,7 @@ namespace FBE {
     // Fast Binary Encoding byte field model
     public class FieldModelByte : FieldModelValueType<byte>
     {
-        public FieldModelByte(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelByte(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 1;
@@ -834,7 +835,7 @@ namespace FBE {
     // Fast Binary Encoding char field model
     public class FieldModelChar : FieldModelValueType<char>
     {
-        public FieldModelChar(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelChar(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 1;
@@ -869,7 +870,7 @@ namespace FBE {
     // Fast Binary Encoding char field model
     public class FieldModelWChar : FieldModelValueType<char>
     {
-        public FieldModelWChar(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelWChar(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 4;
@@ -904,7 +905,7 @@ namespace FBE {
     // Fast Binary Encoding sbyte field model
     public class FieldModelInt8 : FieldModelValueType<sbyte>
     {
-        public FieldModelInt8(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelInt8(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 1;
@@ -939,7 +940,7 @@ namespace FBE {
     // Fast Binary Encoding byte field model
     public class FieldModelUInt8 : FieldModelValueType<byte>
     {
-        public FieldModelUInt8(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelUInt8(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 1;
@@ -974,7 +975,7 @@ namespace FBE {
     // Fast Binary Encoding short field model
     public class FieldModelInt16 : FieldModelValueType<short>
     {
-        public FieldModelInt16(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelInt16(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 2;
@@ -1009,7 +1010,7 @@ namespace FBE {
     // Fast Binary Encoding ushort field model
     public class FieldModelUInt16 : FieldModelValueType<ushort>
     {
-        public FieldModelUInt16(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelUInt16(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 2;
@@ -1044,7 +1045,7 @@ namespace FBE {
     // Fast Binary Encoding int field model
     public class FieldModelInt32 : FieldModelValueType<int>
     {
-        public FieldModelInt32(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelInt32(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 4;
@@ -1079,7 +1080,7 @@ namespace FBE {
     // Fast Binary Encoding uint field model
     public class FieldModelUInt32 : FieldModelValueType<uint>
     {
-        public FieldModelUInt32(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelUInt32(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 4;
@@ -1114,7 +1115,7 @@ namespace FBE {
     // Fast Binary Encoding long field model
     public class FieldModelInt64 : FieldModelValueType<long>
     {
-        public FieldModelInt64(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelInt64(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 8;
@@ -1149,7 +1150,7 @@ namespace FBE {
     // Fast Binary Encoding ulong field model
     public class FieldModelUInt64 : FieldModelValueType<ulong>
     {
-        public FieldModelUInt64(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelUInt64(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 8;
@@ -1184,7 +1185,7 @@ namespace FBE {
     // Fast Binary Encoding float field model
     public class FieldModelFloat : FieldModelValueType<float>
     {
-        public FieldModelFloat(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelFloat(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 4;
@@ -1219,7 +1220,7 @@ namespace FBE {
     // Fast Binary Encoding double field model
     public class FieldModelDouble : FieldModelValueType<double>
     {
-        public FieldModelDouble(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelDouble(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 8;
@@ -1254,7 +1255,7 @@ namespace FBE {
     // Fast Binary Encoding decimal field model
     public class FieldModelDecimal : FieldModelValueType<decimal>
     {
-        public FieldModelDecimal(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelDecimal(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 16;
@@ -1289,7 +1290,7 @@ namespace FBE {
     // Fast Binary Encoding Guid field model
     public class FieldModelUUID : FieldModelValueType<Guid>
     {
-        public FieldModelUUID(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelUUID(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 16;
@@ -1326,7 +1327,7 @@ namespace FBE {
     {
         private const long UnixEpoch = 621355968000000000;
 
-        public FieldModelTimestamp(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelTimestamp(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 8;
@@ -1363,7 +1364,7 @@ namespace FBE {
     // Fast Binary Encoding bytes field model
     public class FieldModelBytes : FieldModelReferenceType<MemoryStream>
     {
-        public FieldModelBytes(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelBytes(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 4;
@@ -1463,7 +1464,7 @@ namespace FBE {
     // Fast Binary Encoding string field model
     public class FieldModelString : FieldModelReferenceType<string>
     {
-        public FieldModelString(Buffer buffer, long offset) : base(buffer, offset) {}
+        public FieldModelString(Buffer buffer, long offset) : base(buffer, offset) { }
 
         // Get the field size
         public override long FBESize => 4;
