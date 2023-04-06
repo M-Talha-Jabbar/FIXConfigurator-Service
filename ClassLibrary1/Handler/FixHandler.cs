@@ -176,8 +176,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 // creating sockets for already present engines present in config files and redis both after engine is created in memory
                 FixEngineSocketHandler(FIXEngine);
-
-                ReadMessages(client, FIXEngine, existingMessage);
+                
+                if(client.KeyExists(redisStreamName))
+                    ReadMessages(client, FIXEngine, existingMessage);
                 GetSessionsForEngine(muxer, db, client, FIXEngine);
                 SubscribeAndFaliureCallback(FIXEngine, muxer, CacheKeyEvent); // Since its the start of the day, SubscribeAndFaliureCallback() is called after reading existing messages.
             }
@@ -825,7 +826,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 hasSessionsBeenCreatedForAEngine.Add(fixEngine.engineName, false);
 
                 SubscribeAndFaliureCallback(fixEngine, muxer, CacheKeyEvent); // Since its the middle of the day, SubscribeAndFaliureCallback() is called before reading existing messages as to not miss any real-time message while reading the existing one's.
-                ReadMessages(client, fixEngine, existingMessage);
+                if (client.KeyExists(redisStreamName))
+                    ReadMessages(client, fixEngine, existingMessage);
                 GetSessionsForEngine(muxer, db, client, fixEngine);
             }
             catch (Exception e)
