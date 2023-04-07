@@ -98,8 +98,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             if (File.Exists(fixEngineRedisConfigFilePath))
             {
-                data = File.ReadAllLines(fixEngineRedisConfigFilePath).ToList();
-
+                data = File.ReadAllLines(fixEngineRedisConfigFilePath).Where(entry => !string.IsNullOrWhiteSpace(entry)).ToList();
+                
                 return data;
             }
 
