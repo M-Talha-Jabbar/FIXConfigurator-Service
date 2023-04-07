@@ -9,5 +9,6 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
     public interface IJenkinsHandler
     {
         Task<string> JenkinsTrigger(string branchName, string environment);
+        Task<IEnumerable<string>> GetJenkinsSlaveNodes();
     }
 }
