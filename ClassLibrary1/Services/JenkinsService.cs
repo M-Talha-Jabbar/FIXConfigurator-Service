@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using FIXMonitorBusinessLogicLayer.Data;
-using FIXMonitorBusinessLogicLayer.Repositories;
 using System.Collections.Concurrent;
 using CoreLogging;
 using System.Reflection;
@@ -15,6 +14,10 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using FIXMonitorBusinessLogicLayer.Handler;
 using FIXMonitorBusinessLogicLayer.IHandler;
+using FIXMonitorBusinessLogicLayer.DataAccess.Repositories;
+using FIXMonitorBusinessLogicLayer.DataAccess.IUnitOfWork;
+using FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork;
+using FIXMonitorBusinessLogicLayer.DataAccess.IRepository;
 
 namespace FIXMonitorBusinessLogicLayer.Services
 {
@@ -22,7 +25,7 @@ namespace FIXMonitorBusinessLogicLayer.Services
     {
         private IJenkinsHandler _JenkinsHandler { get; set; }
         public ConcurrentDictionary<string, FixEngineJenkinsConfiguration> FixEngineJenkinsConfigurations { get; private set; }
-        public JenkinsRepositiory JenkinsRepositiory { get; private set; }
+        public IJenkinsRepository JenkinsRepositiory { get; private set; }
 
         public JenkinsService() {
             FixEngineJenkinsConfigurations = new ConcurrentDictionary<string, FixEngineJenkinsConfiguration>();
@@ -32,80 +35,156 @@ namespace FIXMonitorBusinessLogicLayer.Services
 
         public async Task<bool> AddJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
         {
-            var res = await JenkinsRepositiory.CreateJenkinsConfigAsync(fixEngineJenkinsConfiguration);
 
-            if (res != null) {
-                FixEngineJenkinsConfigurations.TryAdd(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration);
-                return true;
+            using (IUnitOfWork<FIXMonitorContext> JenkinsUnitOfWork = new UnitOfWork<FIXMonitorContext>())
+            {
+                try
+                {
+                    bool storedInMemory = false;
+                    bool storedInDataStore = false;
+
+                    await JenkinsUnitOfWork.CreateTransactionAsync();
+
+                    var res = await JenkinsRepositiory.CreateJenkinsConfigAsync(fixEngineJenkinsConfiguration, JenkinsUnitOfWork.Context);
+
+                    if (res != null)
+                    {
+                        storedInDataStore = true;
+                        bool isRemovedFromCache = true;
+
+                        if (FixEngineJenkinsConfigurations.ContainsKey(fixEngineJenkinsConfiguration.FixEngineIpAndPort))
+                        {
+                            FixEngineJenkinsConfiguration removedFixEngineJenkinsConfiguration;
+                            isRemovedFromCache = FixEngineJenkinsConfigurations.TryRemove(fixEngineJenkinsConfiguration.FixEngineIpAndPort, out removedFixEngineJenkinsConfiguration);
+                        }
+                        storedInMemory = isRemovedFromCache ? 
+                            FixEngineJenkinsConfigurations.TryAdd(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration) : 
+                            false;
+                    }
+                    if(storedInMemory && storedInDataStore) return await JenkinsUnitOfWork.CommitAsync();
+                    await JenkinsUnitOfWork.RollbackAsync();
+                    return false;
+                }
+
+                catch (Exception ex)
+                {
+                    await JenkinsUnitOfWork.RollbackAsync();
+                    return false;
+                } 
             }
-
-            return false;
         }
 
         public async Task<bool> UpdateJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
         {
-            var res = await JenkinsRepositiory.UpdateJenkinsConfigAsync(fixEngineJenkinsConfiguration);
-
-            if (res != null)
+            using (IUnitOfWork<FIXMonitorContext> JenkinsUnitOfWork = new UnitOfWork<FIXMonitorContext>())
             {
-                FixEngineJenkinsConfiguration oldValue;
-                bool isUpdated = false;
-                if (FixEngineJenkinsConfigurations.ContainsKey(fixEngineJenkinsConfiguration.FixEngineIpAndPort)) 
+                try
                 {
-                    FixEngineJenkinsConfigurations.TryGetValue(fixEngineJenkinsConfiguration.FixEngineIpAndPort, out oldValue);
-                    isUpdated = FixEngineJenkinsConfigurations.TryUpdate(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration, oldValue);
-                    return isUpdated;
-                }
-                    
-                isUpdated = FixEngineJenkinsConfigurations.TryAdd(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration);
-                return isUpdated;
-            }
+                    bool updatedInMemory = false;
+                    bool upodatedInDataStore = false;
 
-            return false;
+                    await JenkinsUnitOfWork.CreateTransactionAsync();
+
+                    var res = JenkinsRepositiory.UpdateJenkinsConfigAsync(fixEngineJenkinsConfiguration, JenkinsUnitOfWork.Context);
+
+                    if (res != null)
+                    {
+                        upodatedInDataStore = true;
+                        FixEngineJenkinsConfiguration oldValue;
+                        if (FixEngineJenkinsConfigurations.ContainsKey(fixEngineJenkinsConfiguration.FixEngineIpAndPort))
+                        {
+                            FixEngineJenkinsConfigurations.TryGetValue(fixEngineJenkinsConfiguration.FixEngineIpAndPort, out oldValue);
+                            updatedInMemory = FixEngineJenkinsConfigurations.TryUpdate(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration, oldValue);
+                        }
+                        else 
+                        {
+                            updatedInMemory = FixEngineJenkinsConfigurations.TryAdd(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration);
+                        }
+
+                        if (updatedInMemory && upodatedInDataStore) return await JenkinsUnitOfWork.CommitAsync();
+                    }
+
+                    await JenkinsUnitOfWork.RollbackAsync();
+                    return false;
+                }
+
+                catch (Exception ex)
+                {
+                    await JenkinsUnitOfWork.RollbackAsync();
+                    return false;
+                }
+            }
         }
 
         public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string FixEngineIpAndPort)
         {
-            FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration;
-            var res = FixEngineJenkinsConfigurations.TryGetValue(FixEngineIpAndPort, out fixEngineJenkinsConfiguration);
-            if (res)
+            using (IUnitOfWork<FIXMonitorContext> JenkinsUnitOfWork = new UnitOfWork<FIXMonitorContext>())
             {
-                return fixEngineJenkinsConfiguration;
+                FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration;
+                var res = FixEngineJenkinsConfigurations.TryGetValue(FixEngineIpAndPort, out fixEngineJenkinsConfiguration);
+                if (res)
+                {
+                    return fixEngineJenkinsConfiguration;
+                }
+                
+                fixEngineJenkinsConfiguration = await JenkinsRepositiory.GetJenkinsConfigAsync(FixEngineIpAndPort, JenkinsUnitOfWork.Context);
+                
+                if (fixEngineJenkinsConfiguration != null && 
+                   !FixEngineJenkinsConfigurations.ContainsKey(fixEngineJenkinsConfiguration.FixEngineIpAndPort))
+                {
+                    FixEngineJenkinsConfigurations.TryAdd(FixEngineIpAndPort, fixEngineJenkinsConfiguration);
+                }
+                return fixEngineJenkinsConfiguration; // possibly null
             }
-            fixEngineJenkinsConfiguration = await JenkinsRepositiory.GetJenkinsConfigAsync(FixEngineIpAndPort);
-
-            return fixEngineJenkinsConfiguration; // possibly null
         }
 
         public async Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort)
         {
-            FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration;
-            try
-            {
-                var res = FixEngineJenkinsConfigurations.TryGetValue(FixEngineIpAndPort, out fixEngineJenkinsConfiguration);
-                bool isRemovedFromCache = true;
-                bool isRemovedFromDB = true;
-                if (res)
+                using (IUnitOfWork<FIXMonitorContext> JenkinsUnitOfWork = new UnitOfWork<FIXMonitorContext>())
                 {
-                    isRemovedFromCache = FixEngineJenkinsConfigurations.TryRemove(FixEngineIpAndPort, out fixEngineJenkinsConfiguration);
-                }else if (!res)
-                {
-                    fixEngineJenkinsConfiguration = await JenkinsRepositiory.GetJenkinsConfigAsync(FixEngineIpAndPort);
-                }
+                FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration;
+                    try
+                    {
+                        await JenkinsUnitOfWork.CreateTransactionAsync();
 
-                isRemovedFromDB = await JenkinsRepositiory.DeleteJenkinsConfigAsync(fixEngineJenkinsConfiguration);
-               
-                if (isRemovedFromCache && isRemovedFromDB) return true;
-                
-                return false;
+                        bool isRemovedFromMemory = true;
+                        bool isRemovedFromDB = false;
+
+                        // have to finalize this block of code
+                        var res = FixEngineJenkinsConfigurations.TryGetValue(FixEngineIpAndPort, out fixEngineJenkinsConfiguration);
+                    
+                        if (res)
+                        {
+                            isRemovedFromMemory = FixEngineJenkinsConfigurations.TryRemove(FixEngineIpAndPort, out fixEngineJenkinsConfiguration);
+                        }
+                        else if (!res)
+                        {
+                            fixEngineJenkinsConfiguration = await JenkinsRepositiory.GetJenkinsConfigAsync(FixEngineIpAndPort, JenkinsUnitOfWork.Context);
+                        }
+
+                        if(fixEngineJenkinsConfiguration != null)
+                            isRemovedFromDB = JenkinsRepositiory.DeleteJenkinsConfigAsync(fixEngineJenkinsConfiguration, JenkinsUnitOfWork.Context);
+
+                        if(isRemovedFromMemory && isRemovedFromDB) 
+                            return await JenkinsUnitOfWork.CommitAsync();
+
+                        await JenkinsUnitOfWork.RollbackAsync();
+                        return false;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logging.LogMessage(LOGTYPE.Error, $"cannot delete configuration {ex.StackTrace}");
+                        await JenkinsUnitOfWork.RollbackAsync();
+                        return false;
+                    }
             }
-            catch (Exception ex) {
-
-                Logging.LogMessage(LOGTYPE.Error, $"cannot delete configuration {ex.StackTrace}");
-
-                return false;
-            }
+            
           }
+
+        public async Task<IEnumerable<string>> GetJenkinsAgentsList() 
+        {
+            return await _JenkinsHandler.GetJenkinsSlaveNodes();
+        }
 
         public async Task<string> JenkinsTrigger(string branchName, string environment)
         {
