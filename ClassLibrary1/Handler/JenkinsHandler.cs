@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Net.Http.Headers;
 using FIXMonitorBusinessLogicLayer.IHandler;
 using FIXMonitorBusinessLogicLayer.Services;
+using CoreLogging;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -48,7 +49,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         }
         public async Task<string> JenkinsTrigger(string branchName, string environment)
         {
-            
+          
             try
             {
                 var crumb_token = await jenkinsAuthentication();
@@ -72,9 +73,40 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public async Task<IEnumerable<string>> GetJenkinsSlaveNodes() 
         {
+            var crumb_token = await jenkinsAuthentication();
             var _jenkinsAgentApi = jenkinsAgentApi.Replace("ip-port", jenkinsMasterNodeDomain);
+
+            try
+            {
+                var res = new HttpRequestMessage(HttpMethod.Get, _jenkinsAgentApi);
+                res.Headers.Add(crumb_token[0], crumb_token[1]);
+                var response = await client.SendAsync(res);
+                var agents = await ParseAgentApiResponse(response);
+                return agents;
+            }
+            catch (Exception ex) {
+                Logging.LogMessage(LOGTYPE.Error, $"cant fetch jenkins agent list {ex.Message}");
+                return new List<string>();
+            }
+            
         }
 
+        public async Task<List<string>> ParseAgentApiResponse(HttpResponseMessage response) 
+        {
+            var content = await response.Content.ReadAsStringAsync();
+            var contentarr = content.Split(':');
+            List<string> agents = new List<string>();
+            for (int i = 0; i < contentarr.Count(); i++)
+            {
+                if (contentarr[i].Contains("displayName"))
+                {
+                    agents.Add(contentarr[i + 1].Split(',')[0].Trim('"'));
+                }
+            }
+
+            return agents;
+        } 
+           
 
     }
 }
