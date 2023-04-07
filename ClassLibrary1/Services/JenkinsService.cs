@@ -181,7 +181,7 @@ namespace FIXMonitorBusinessLogicLayer.Services
             
           }
 
-        public async Task<IEnumerable<string>> GetJenkinsAgentsList() 
+        public async Task<IEnumerable<string>> GetJenkinsSlaveNodes() 
         {
             return await _JenkinsHandler.GetJenkinsSlaveNodes();
         }
