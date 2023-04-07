@@ -306,6 +306,11 @@ namespace FIXMonitorService
 
         }
 
+        public async Task<IEnumerable<string>> GetJenkinsSlaveNodes() 
+        {
+            return await DataCache.GetJenkinsSlaveNodes();
+        }
+
         public async Task<bool> AddJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
         {
             return await DataCache.AddJenkinsConfiguration(fixEngineJenkinsConfiguration);
@@ -326,6 +331,5 @@ namespace FIXMonitorService
         {
             return await DataCache.DeleteJenkinsConfiguration(FixEngineIpAndPort);
         }
-
     }
 }

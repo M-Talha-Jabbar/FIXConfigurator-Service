@@ -128,6 +128,9 @@ namespace FIXMonitorService
         [OperationContract]
         Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort);
 
+        [OperationContract]
+        Task<IEnumerable<string>> GetJenkinsSlaveNodes();
+
         // TODO: Add your service operations here
     }
 
