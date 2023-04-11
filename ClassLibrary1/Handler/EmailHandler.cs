@@ -41,7 +41,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             EmailData emailData = new EmailData();
 
-            if (string.IsNullOrEmpty(sessionInfo.ToEmails))
+            if (sessionInfo == null || string.IsNullOrEmpty(sessionInfo.ToEmails))
             {
                 emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
                 emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
@@ -120,7 +120,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             Recurring = sessionInfo.Recurring,
                             Subject = sessionInfo.Subject,
                             Body = sessionInfo.Body,
-                            ScheduleTime = sessionInfo.ScheduleTime
                         };
 
                         return sessionEmails;
@@ -147,7 +146,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     Recurring = sessionEmails.Recurring,
                     Subject = sessionEmails.Subject,
                     Body = sessionEmails.Body,
-                    ScheduleTime = sessionEmails.ScheduleTime
                 };
 
                 using (var context = new FIXMonitorContext())
@@ -176,7 +174,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     Recurring = sessionEmails.Recurring,
                     Subject = sessionEmails.Subject,
                     Body = sessionEmails.Body,
-                    ScheduleTime = sessionEmails.ScheduleTime
                 };
 
                 if (EmailNotifier.emailTimer.ContainsKey(updatedSessionConfiguration.SessionId))
