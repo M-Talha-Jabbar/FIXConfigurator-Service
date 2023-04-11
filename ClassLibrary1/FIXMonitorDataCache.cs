@@ -266,6 +266,10 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return await _jenkinsService.JenkinsTrigger(branchName, environment);
         }
+        public async Task<string> TriggerJenkins(string branchName, string environment, string FixEngineIpAndPort)
+        {
+            return await _jenkinsService.JenkinsTrigger(branchName, environment, FixEngineIpAndPort);
+        }
         public async Task<IEnumerable<string>> GetJenkinsSlaveNodes()
         {
             return await _jenkinsService.GetJenkinsSlaveNodes();

@@ -114,7 +114,7 @@ namespace FIXMonitorService
         IEnumerable<string> GetSessionStatusMessage();
 
         [OperationContract]
-        Task<string> TriggerJenkins(string branchName, string environment);
+        Task<string> TriggerJenkins(string branchName, string environment, string FixEngineIpAndPort);
 
         [OperationContract]
         Task<bool> AddJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration);

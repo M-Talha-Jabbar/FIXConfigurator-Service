@@ -22,14 +22,23 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private string jenkinsMasterNodeDomain = ConfigurationManager.AppSettings["JenkinsMasterNodeDomain"].ToString();
         private string jenkinsAgentApi = ConfigurationManager.AppSettings["JenkinsAgentApi"].ToString();
         private HttpClient client;
-        private string[] crumbToken;
+        public string[] crumb_token { get; private set; }
 
-        public JenkinsHandler() {
+        private JenkinsHandler() {
             client = new HttpClient();
         }
 
+        public static async Task<IJenkinsHandler> GetInstance() 
+        {
+            var jenkinsHandler = new JenkinsHandler();
+            {
+                jenkinsHandler.crumb_token = await jenkinsHandler.jenkinsAuthentication();
+            }
+            return jenkinsHandler;
+        }
 
-        public async Task<string[]> jenkinsAuthentication() 
+
+        private async Task<string[]> jenkinsAuthentication() 
         {
             client.DefaultRequestHeaders.Accept.Clear();
 
@@ -52,9 +61,29 @@ namespace FIXMonitorBusinessLogicLayer.Handler
           
             try
             {
-                var crumb_token = await jenkinsAuthentication();
-                
                 var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkins_job_trigger_url}?Branch={branchName}&Environment={environment}");
+
+                jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
+
+                var triggerStatus = await client.SendAsync(jenkins_job_trigger);
+
+                var status_code = triggerStatus.StatusCode.ToString();
+
+                return status_code;
+
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
+        }
+
+        public async Task<string> JenkinsTrigger(string branchName, string environment, string DeploymentPath, string AgentName)
+        {
+
+            try
+            {
+                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkins_job_trigger_url}?Branch={branchName}&Environment={environment}&DeploymentPath={DeploymentPath}&AgentName={AgentName}");
 
                 jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
 
@@ -73,11 +102,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public async Task<IEnumerable<string>> GetJenkinsSlaveNodes() 
         {
-            var crumb_token = await jenkinsAuthentication();
-            var _jenkinsAgentApi = jenkinsAgentApi.Replace("ip-port", jenkinsMasterNodeDomain);
-
             try
             {
+                var _jenkinsAgentApi = jenkinsAgentApi.Replace("ip-port", jenkinsMasterNodeDomain);
                 var res = new HttpRequestMessage(HttpMethod.Get, _jenkinsAgentApi);
                 res.Headers.Add(crumb_token[0], crumb_token[1]);
                 var response = await client.SendAsync(res);
@@ -91,7 +118,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             
         }
 
-        public async Task<List<string>> ParseAgentApiResponse(HttpResponseMessage response) 
+        private async Task<List<string>> ParseAgentApiResponse(HttpResponseMessage response) 
         {
             var content = await response.Content.ReadAsStringAsync();
             var contentarr = content.Split(':');

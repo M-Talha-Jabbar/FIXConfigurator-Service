@@ -298,12 +298,9 @@ namespace FIXMonitorService
         {
             return this.DataCache.GetSessionStatusMessage();
         }
-
-        public async Task<string> TriggerJenkins(string branchName, string environment)
+        public async Task<string> TriggerJenkins(string branchName, string environment, string FixEngineIpAndPort)
         {
-
-            return await DataCache.TriggerJenkins(branchName, environment);
-
+            return await DataCache.TriggerJenkins(branchName, environment, FixEngineIpAndPort);
         }
 
         public async Task<IEnumerable<string>> GetJenkinsSlaveNodes() 

@@ -14,6 +14,7 @@ namespace FIXMonitorBusinessLogicLayer.Services
         Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string FixEngineIpAndPort);
         Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort);
         Task<string> JenkinsTrigger(string branchName, string environment);
+        Task<string> JenkinsTrigger(string branchName, string environment, string FixEngineIpAndPort);
         Task<IEnumerable<string>> GetJenkinsSlaveNodes();
     }
 }
