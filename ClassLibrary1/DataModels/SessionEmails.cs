@@ -16,6 +16,5 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
         public bool? Recurring { get; set; }
         public string Body { get; set; }
         public string Subject { get; set; }
-        public DateTime ScheduleTime { get; set; }
     }
 }

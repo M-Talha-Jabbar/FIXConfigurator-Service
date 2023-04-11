@@ -719,29 +719,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private void SetScheduler(FIXSession fixSession)
         {
             //fixSession.SessionStart = "13:33:00";
-            //DateTime sessionStartDateTime = DateTime.ParseExact(fixSession.SessionStart, "HH:mm:ss", CultureInfo.InvariantCulture);
-            //DateTime dateTimeNow = DateTime.Now;
+            TimeSpan sessionStartDateTime = DateTime.ParseExact(fixSession.SessionStart, "HH:mm:ss", CultureInfo.InvariantCulture).TimeOfDay;
+            TimeSpan dateTimeNow = DateTime.Now.TimeOfDay;
 
-            //using(var context = new FIXMonitorContext())
-            //{
-            //    var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == fixSession.ConnectionID);
-
-            //    if(sessionInfo != null && sessionInfo.EmailStatus)
-            //    {
-            //        if(sessionInfo.ScheduleTime.TimeOfDay != sessionStartDateTime.TimeOfDay)
-            //        {
-            //            sessionInfo.ScheduleTime = sessionStartDateTime;
-            //            context.Sessions.Update(sessionInfo);
-            //            context.SaveChanges();
-            //        }
-
-            //        if(TimeConverter.CompareTimeDifference(sessionStartDateTime.TimeOfDay, dateTimeNow.TimeOfDay) >= 0)
-            //        {
-            //            var totalTimeInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionStartDateTime.TimeOfDay - dateTimeNow.TimeOfDay) + TimeConverter.GetTimeInMilliseconds(sessionInfo.Timeout);
-            //            emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixSession, sessionInfo);
-            //        }
-            //    }
-            //}
+            if (TimeConverter.CompareTimeDifference(sessionStartDateTime, dateTimeNow) >= 0)
+            {
+                var totalTimeInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionStartDateTime - dateTimeNow);
+                emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixSession, sessionInfo: null);
+            }
         }
 
         public FixEnginesKeyedCollection GetFixEngines()
