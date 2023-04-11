@@ -23,14 +23,12 @@ namespace FIXMonitorBusinessLogicLayer.Services
 {
     public class JenkinsService : IJenkinsService
     {
-        private IJenkinsHandler _JenkinsHandler { get; set; }
         public ConcurrentDictionary<string, FixEngineJenkinsConfiguration> FixEngineJenkinsConfigurations { get; private set; }
         public IJenkinsRepository JenkinsRepositiory { get; private set; }
 
         public JenkinsService() {
             FixEngineJenkinsConfigurations = new ConcurrentDictionary<string, FixEngineJenkinsConfiguration>();
             JenkinsRepositiory = new JenkinsRepositiory();
-            _JenkinsHandler = new JenkinsHandler();
         }
 
         public async Task<bool> AddJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
@@ -61,7 +59,12 @@ namespace FIXMonitorBusinessLogicLayer.Services
                             FixEngineJenkinsConfigurations.TryAdd(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration) : 
                             false;
                     }
-                    if(storedInMemory && storedInDataStore) return await JenkinsUnitOfWork.CommitAsync();
+                    if (storedInMemory && storedInDataStore) 
+                    {
+                        var savechanges = await JenkinsUnitOfWork.SaveAsync();
+                        var commit = await JenkinsUnitOfWork.CommitAsync();
+                        return (savechanges && commit);
+                    } 
                     await JenkinsUnitOfWork.RollbackAsync();
                 }
 
@@ -100,7 +103,12 @@ namespace FIXMonitorBusinessLogicLayer.Services
                             updatedInMemory = FixEngineJenkinsConfigurations.TryAdd(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration);
                         }
 
-                        if (updatedInMemory && upodatedInDataStore) return await JenkinsUnitOfWork.CommitAsync();
+                        if (updatedInMemory && upodatedInDataStore)
+                        {
+                            var savechanges = await JenkinsUnitOfWork.SaveAsync();
+                            var commit = await JenkinsUnitOfWork.CommitAsync();
+                            return (savechanges && commit);
+                        }
                     }
 
                     await JenkinsUnitOfWork.RollbackAsync();
@@ -138,7 +146,7 @@ namespace FIXMonitorBusinessLogicLayer.Services
                 }
                 catch (Exception ex)
                 {
-                    await JenkinsUnitOfWork.RollbackAsync();
+
                 }
 
                 return fixEngineJenkinsConfiguration; // possibly null
@@ -170,10 +178,14 @@ namespace FIXMonitorBusinessLogicLayer.Services
                     if (fixEngineJenkinsConfiguration != null)
                         isRemovedFromDB = JenkinsRepositiory.DeleteJenkinsConfigAsync(fixEngineJenkinsConfiguration, JenkinsUnitOfWork.Context);
 
-                        if(isRemovedFromMemory && isRemovedFromDB) 
-                            return await JenkinsUnitOfWork.CommitAsync();
-                        
-                        await JenkinsUnitOfWork.RollbackAsync();
+                        if(isRemovedFromMemory && isRemovedFromDB)
+                        {
+                            var savechanges = await JenkinsUnitOfWork.SaveAsync();
+                            var commit = await JenkinsUnitOfWork.CommitAsync();
+                            return (savechanges && commit);
+                        }
+
+                    await JenkinsUnitOfWork.RollbackAsync();
                     }
                     catch (Exception ex)
                     {
@@ -187,14 +199,31 @@ namespace FIXMonitorBusinessLogicLayer.Services
 
         public async Task<IEnumerable<string>> GetJenkinsSlaveNodes() 
         {
+            IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
             return await _JenkinsHandler.GetJenkinsSlaveNodes();
         }
 
         public async Task<string> JenkinsTrigger(string branchName, string environment)
         {
-            return await _JenkinsHandler.JenkinsTrigger(branchName, environment);
+            IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
+            return await _JenkinsHandler.JenkinsTrigger(branchName, environment, "D:/jenkins_105/workspace/OMSServers/FixHub-Config-Using-Web/Http-Trigger-For-FixHub-Config-Deployment", "Dev_Local");
         }
 
+        public async Task<string> JenkinsTrigger(string branchName, string environment, string FixEngineIpAndPort)
+        {
+            IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
+            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(FixEngineIpAndPort);
+            var agentname = fixEngineJenkinsConfiguration.JenkinsAgentName;
+            var path = fixEngineJenkinsConfiguration.Path;
 
+            if (!string.IsNullOrEmpty(agentname) && !string.IsNullOrEmpty(path))
+            {
+                return await _JenkinsHandler.JenkinsTrigger(branchName, environment, fixEngineJenkinsConfiguration.Path, fixEngineJenkinsConfiguration.JenkinsAgentName);
+            }
+            else 
+            {// not completed
+                return "Not Created";
+            }
+        }
     }
 }
