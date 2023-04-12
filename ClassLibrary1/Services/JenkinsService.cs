@@ -213,17 +213,19 @@ namespace FIXMonitorBusinessLogicLayer.Services
         {
             IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
             var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(FixEngineIpAndPort);
-            var agentname = fixEngineJenkinsConfiguration.JenkinsAgentName;
-            var path = fixEngineJenkinsConfiguration.Path;
+            
 
-            if (!string.IsNullOrEmpty(agentname) && !string.IsNullOrEmpty(path))
+            if (fixEngineJenkinsConfiguration != null)
             {
-                return await _JenkinsHandler.JenkinsTrigger(branchName, environment, fixEngineJenkinsConfiguration.Path, fixEngineJenkinsConfiguration.JenkinsAgentName);
+                var agentname = fixEngineJenkinsConfiguration.JenkinsAgentName;
+                var path = fixEngineJenkinsConfiguration.Path;
+
+                if (!string.IsNullOrEmpty(agentname) && !string.IsNullOrEmpty(path)) {
+                    return await _JenkinsHandler.JenkinsTrigger(branchName, environment, fixEngineJenkinsConfiguration.Path, fixEngineJenkinsConfiguration.JenkinsAgentName);
+                }
             }
-            else 
-            {// not completed
-                return "Not Created";
-            }
+
+            return "Not Created";
         }
     }
 }
