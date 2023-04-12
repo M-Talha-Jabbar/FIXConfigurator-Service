@@ -52,7 +52,7 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             timer.Elapsed += OnScheduledCheckExecution;
             timer.AutoReset = false;
 
-            this.conId = sessionInfo.SessionId;
+            this.conId = fixSession.ConnectionID;
             this.sessionInfo = sessionInfo;
             this.FIXSession = fixSession;
 

@@ -718,7 +718,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void SetScheduler(FIXSession fixSession)
         {
-            //fixSession.SessionStart = "13:33:00";
             TimeSpan sessionStartDateTime = DateTime.ParseExact(fixSession.SessionStart, "HH:mm:ss", CultureInfo.InvariantCulture).TimeOfDay;
             TimeSpan dateTimeNow = DateTime.Now.TimeOfDay;
 
