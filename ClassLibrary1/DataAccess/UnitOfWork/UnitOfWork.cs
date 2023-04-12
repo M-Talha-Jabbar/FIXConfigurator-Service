@@ -80,8 +80,8 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork
             Logging.LogMessage(LOGTYPE.Info, $"Method SaveAsync in UnitOfWork started...");
             try
             {
-                await Context.SaveChangesAsync();
-                return true;
+                var res = await Context.SaveChangesAsync();
+                return res > 0 ? true : false;
             }
             catch (Exception ex)
             {
