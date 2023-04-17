@@ -249,7 +249,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         CcEmails = config.CcEmails,
                         EmailStatus = config.EmailStatus,
                         Subject = config.Subject,
-                        Body = config.Body
+                        Body = config.Body,
+                        Engine = config.Engine,
+                        SessionId = config.SessionId
                     }).ToList();
 
                     return allFixTagValueConfigurations;
@@ -271,7 +273,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     CcEmails = fixTagValueConfiguration.CcEmails,
                     EmailStatus = fixTagValueConfiguration.EmailStatus,
                     Subject = fixTagValueConfiguration.Subject,
-                    Body = fixTagValueConfiguration.Body
+                    Body = fixTagValueConfiguration.Body,
+                    Engine = fixTagValueConfiguration.Engine,
+                    SessionId = fixTagValueConfiguration.SessionId
                 };
 
                 EmailNotifier.fixTagValueConfigurations.Add(newFixTagValueConfiguration);

@@ -17,5 +17,7 @@ namespace FIXMonitorBusinessLogicLayer.Data
         public bool EmailStatus { get; set; }
         public string Subject { get; set; }
         public string Body { get; set; }
+        public string Engine { get; set; }
+        public string SessionId { get; set; }
     }
 }

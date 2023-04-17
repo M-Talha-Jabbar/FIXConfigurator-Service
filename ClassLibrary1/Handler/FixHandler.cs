@@ -486,7 +486,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             
                             FIXMessage fixMessage = body;
                             fixMessage.StreamEntryId = message.Id.ToString();
-                            var _key = body.ConnectionID;
+                            fixMessage.Engine = fixEngine.engineName;
+                            var _key = fixMessage.SessionId;
 
                             if (isRealTime && hasSessionsBeenCreatedForAEngine[fixEngine.engineName])
                             {
@@ -1014,7 +1015,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 if (!isRealTime && IsUpdateSentToObservers)
                     break;
 
-                var res = EmailNotifier.fixTagValueConfigurations.FirstOrDefault(f => f.FixTag.Equals(desc.Item1) && f.FixValue.Equals(desc.Item3));
+                var res = EmailNotifier.fixTagValueConfigurations.FirstOrDefault(f => f.Engine.Equals(fixMessage.Engine) && f.SessionId.Equals(sessionID) && f.FixTag.Equals(desc.Item1) && f.FixValue.Equals(desc.Item3));
 
                 if (res != null)
                 {
