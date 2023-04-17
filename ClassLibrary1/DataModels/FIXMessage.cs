@@ -16,6 +16,8 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
         public string messageType { get; set; }
         public string sendingTime { get; set; }
         public string StreamEntryId { get; set; }
+        public string Engine { get; set; }
+        public string SessionId { get; set; }
         public List<Tuple<string, string, string>> keyValuePair { get; set; }
 
         public static implicit operator FIXMessage(proto.Body body)
@@ -25,6 +27,7 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
                 fixMessage = body.FIXMessage,
                 messageType = body.MessageType,
                 sendingTime = body.SendingTime,
+                SessionId = body.ConnectionID,
                 keyValuePair = ParseAndStoreFixMessage(body.FIXMessage)
             };
         }
