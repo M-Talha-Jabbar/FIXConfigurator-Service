@@ -83,6 +83,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             try
             {
+                DeploymentPath = System.Web.HttpUtility.UrlEncode(DeploymentPath);
+              
                 var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkins_job_trigger_url}?Branch={branchName}&Environment={environment}&DeploymentPath={DeploymentPath}&AgentName={AgentName}");
 
                 jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
