@@ -1,4 +1,5 @@
 ﻿using DevExtreme.AspNet.Data.ResponseModel;
+using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using System.Collections.Generic;
@@ -113,7 +114,22 @@ namespace FIXMonitorService
         IEnumerable<string> GetSessionStatusMessage();
 
         [OperationContract]
-        Task<string> TriggerJenkins(string branchName, string environment);
+        Task<string> TriggerJenkins(string branchName, string environment, string FixEngineIpAndPort);
+
+        [OperationContract]
+        Task<bool> AddJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration);
+        
+        [OperationContract]
+        Task<bool> UpdateJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration);
+
+        [OperationContract]
+        Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string FixEngineIpAndPort);
+
+        [OperationContract]
+        Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort);
+
+        [OperationContract]
+        Task<IEnumerable<string>> GetJenkinsSlaveNodes();
 
         // TODO: Add your service operations here
     }
@@ -138,6 +154,7 @@ namespace FIXMonitorService
 
         [OperationContract]
         void SendFixSessionStatusMessage(string fixSessionStatusMessage);
+        
     }
 
     // Use a data contract as illustrated in the sample below to add composite types to service operations.

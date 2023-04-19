@@ -6,8 +6,9 @@ using System.Threading.Tasks;
 
 namespace FIXMonitorBusinessLogicLayer.IHandler
 {
-    interface IJenkinsHandler
+    public interface IJenkinsHandler
     {
-        Task<string> JenkinsTrigger(string branchName, string environment);
+        Task<string> JenkinsTrigger(string branchName, string environment, string DeploymentPath, string AgentName);
+        Task<IEnumerable<string>> GetJenkinsSlaveNodes();
     }
 }

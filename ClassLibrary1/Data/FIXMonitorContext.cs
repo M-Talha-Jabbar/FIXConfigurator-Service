@@ -26,6 +26,7 @@ namespace FIXMonitorBusinessLogicLayer.Data
         public virtual DbSet<AspNetUserRoles> AspNetUserRoles { get; set; }
         public virtual DbSet<AspNetUserTokens> AspNetUserTokens { get; set; }
         public virtual DbSet<AspNetUsers> AspNetUsers { get; set; }
+        public virtual DbSet<FixEngineJenkinsConfiguration> FixEngineJenkinsConfiguration { get; set; }
         public virtual DbSet<FixTagValues> FixTagValues { get; set; }
         public virtual DbSet<Sessions> Sessions { get; set; }
 
@@ -131,6 +132,13 @@ namespace FIXMonitorBusinessLogicLayer.Data
                 entity.Property(e => e.NormalizedUserName).HasMaxLength(256);
 
                 entity.Property(e => e.UserName).HasMaxLength(256);
+            });
+
+            modelBuilder.Entity<FixEngineJenkinsConfiguration>(entity =>
+            {
+                entity.HasKey(e => e.FixEngineIpAndPort);
+
+                entity.Property(e => e.Path).IsRequired();
             });
 
             modelBuilder.Entity<Sessions>(entity =>
