@@ -2,6 +2,7 @@
 using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
+using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization;
@@ -154,7 +155,10 @@ namespace FIXMonitorService
 
         [OperationContract]
         void SendFixSessionStatusMessage(string fixSessionStatusMessage);
-        
+
+        [OperationContract]
+        void SendJenkinsJobUpdate(JenkinsJobStatus jenkinsJobStatus);
+
     }
 
     // Use a data contract as illustrated in the sample below to add composite types to service operations.

@@ -363,6 +363,10 @@
     <Compile Include="DataAccess\IRepository\IJenkinsRepository.cs" />
     <Compile Include="DataAccess\IUnitOfWork\IUnitOfWork.cs" />
     <Compile Include="DataAccess\Repositories\JenkinsRepositiory.cs" />
+    <Compile Include="PollingWorkers\PollingWorker.cs" />
+    <Compile Include="ResponseDataModels\JenkinsAgentInfo.cs" />
+    <Compile Include="ResponseDataModels\JenkinsAgentResponse.cs" />
+    <Compile Include="ResponseDataModels\JenkinsJobStatus.cs" />
     <Compile Include="Services\IJenkinsService.cs" />
     <Compile Include="Services\JenkinsService.cs" />
     <Compile Include="Utilities\TimeConverter.cs" />

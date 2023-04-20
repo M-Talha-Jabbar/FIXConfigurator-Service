@@ -4,6 +4,7 @@ using FIXMonitorBusinessLogicLayer;
 using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
+using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 using FIXMonitorService.PayLoads;
 using FIXMonitorService.QueueManager;
 using System;
@@ -228,6 +229,16 @@ namespace FIXMonitorService
             FixSessionStatusUpdate fixSessionStatusUpdateItem = new FixSessionStatusUpdate(fixSessionStatusMessage);
             Queue.Enqueue(fixSessionStatusUpdateItem);
             Logging.LogMessage(LOGTYPE.Info, "Queued FixSessionStatusUpdate");
+        }
+
+        public void SendJenkinsJobUpdate(JenkinsJobStatus jenkinsJobStatus) 
+        {
+            if (((IChannel)callback).State == CommunicationState.Opened)
+            {
+                callback.SendJenkinsJobUpdate(jenkinsJobStatus);
+                Logging.LogMessage(LOGTYPE.Info, "Jenkins Job Status sent to client");
+                return;
+            }
         }
 
         public List<AlertFlag> GetAlertCache()
