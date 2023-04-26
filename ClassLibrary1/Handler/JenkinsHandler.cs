@@ -14,23 +14,14 @@ using Newtonsoft.Json;
 using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 using FIXMonitorBusinessLogicLayer.PollingWorkers;
 using System.Threading;
+using FIXMonitorBusinessLogicLayer.ConfigSections;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
     public class JenkinsHandler : IJenkinsHandler
     {
         private readonly string httpRequest = "http://";
-        private string jenkins_username = ConfigurationManager.AppSettings["JenkinsUsername"].ToString();
-        private string jenkins_password = ConfigurationManager.AppSettings["JenkinsPassword"].ToString();
-        private string jenkins_crumb_url = ConfigurationManager.AppSettings["JenkinsCrumbUrl"].ToString();
-        private string jenkins_job_trigger_url = ConfigurationManager.AppSettings["JenkinsJobTriggerUrl"].ToString();
-        private string jenkinsMasterNodeDomain = ConfigurationManager.AppSettings["JenkinsMasterNodeDomain"].ToString();
-        private string jenkinsAgentApi = ConfigurationManager.AppSettings["JenkinsAgentApi"].ToString();
-        private string JenkinsAgentInfoApi = ConfigurationManager.AppSettings["JenkinsAgentInfoApi"].ToString();
-        private string JenkinsLastJobAbortApi = ConfigurationManager.AppSettings["JenkinsLastJobAbortApi"].ToString();
-        private string JenkinsLatestJobInfoApi = ConfigurationManager.AppSettings["JenkinsLatestJobInfo"].ToString();
-        private int JenkinsJobStatusTimeoutSeconds = int.Parse(ConfigurationManager.AppSettings["JenkinsJobStatusTimeoutSeconds"].ToString());
-        private int JenkinsJobStatusIntervalSeconds = int.Parse(ConfigurationManager.AppSettings["JenkinsJobStatusIntervalSeconds"].ToString());
+        JenkinsConfigSection jenkinsConfigSection;
         private HttpClient client;
         private string[] crumb_token;
         private PollingWorker pw;
@@ -39,6 +30,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private JenkinsHandler()
         {
             client = new HttpClient();
+            jenkinsConfigSection = ConfigurationManager.GetSection("JenkinsConfigSection") as JenkinsConfigSection;
         }
 
         public static async Task<IJenkinsHandler> GetInstance()
@@ -57,9 +49,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", Convert.ToBase64String(System.Text.ASCIIEncoding.ASCII.GetBytes(
 
-            $"{jenkins_username}:{jenkins_password}")));
+            $"{jenkinsConfigSection.JenkinsUsername}:{jenkinsConfigSection.JenkinsPassword}")));
 
-            var requestMessage = new HttpRequestMessage(HttpMethod.Get, jenkins_crumb_url);
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, jenkinsConfigSection.JenkinsCrumbUrl);
 
             var task = await client.SendAsync(requestMessage);
 
@@ -74,7 +66,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             try
             {
-                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkins_job_trigger_url}?Branch={branchName}&Environment={environment}");
+                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobTriggerUrl}?Branch={branchName}&Environment={environment}");
 
                 jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
 
@@ -102,7 +94,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 DeploymentPath = System.Web.HttpUtility.UrlEncode(DeploymentPath);
 
-                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkins_job_trigger_url}?Branch={branchName}&Environment={environment}&DeploymentPath={DeploymentPath}&AgentName={AgentName}");
+                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobTriggerUrl}?Branch={branchName}&Environment={environment}&DeploymentPath={DeploymentPath}&AgentName={AgentName}");
 
                 jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
 
@@ -112,7 +104,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 var status_code = triggerStatus.StatusCode.ToString();
 
-                pw = new PollingWorker(SendJenkinsJobStatusToClient, AfterPolling, JenkinsJobStatusTimeoutSeconds, JenkinsJobStatusIntervalSeconds);
+                pw = new PollingWorker(SendJenkinsJobStatusToClient, AfterPolling, jenkinsConfigSection.JenkinsJobStatusTimeoutSeconds, jenkinsConfigSection.JenkinsJobStatusIntervalSeconds);
                 pw.Poll();
 
                 return status_code;
@@ -128,8 +120,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             try
             {
-                var _jenkinsAgentApi = httpRequest + jenkinsMasterNodeDomain + jenkinsAgentApi;
-                var res = new HttpRequestMessage(HttpMethod.Get, _jenkinsAgentApi);
+                var JenkinsAgentApi = httpRequest + jenkinsConfigSection.JenkinsMasterNodeDomain + jenkinsConfigSection.JenkinsAgentApi;
+                var res = new HttpRequestMessage(HttpMethod.Get, JenkinsAgentApi);
                 res.Headers.Add(crumb_token[0], crumb_token[1]);
                 var response = await client.SendAsync(res);
                 var content = await response.Content.ReadAsStringAsync();
@@ -154,7 +146,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             try
             {
-                var api = httpRequest + jenkinsMasterNodeDomain + JenkinsAgentInfoApi.Replace("agentName", jenkinsAgentName);
+                var api = httpRequest + jenkinsConfigSection.JenkinsMasterNodeDomain + jenkinsConfigSection.JenkinsAgentInfoApi.Replace("agentName", jenkinsAgentName);
                 var res = new HttpRequestMessage(HttpMethod.Get, api);
                 res.Headers.Add(crumb_token[0], crumb_token[1]);
                 var response = await client.SendAsync(res);
@@ -175,7 +167,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             Logging.LogMessage(LOGTYPE.Info, $"Method {methodName} in JenkinsHandler has started");
             try
             {
-                var api = httpRequest + jenkinsMasterNodeDomain + JenkinsLastJobAbortApi;
+                var api = httpRequest + jenkinsConfigSection.JenkinsMasterNodeDomain + jenkinsConfigSection.JenkinsLastJobAbortApi;
                 var res = new HttpRequestMessage(HttpMethod.Post, api);
                 res.Headers.Add(crumb_token[0], crumb_token[1]);
                 var response = client.SendAsync(res).Result;
@@ -199,7 +191,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             Logging.LogMessage(LOGTYPE.Info, $"Method {methodName} in JenkinsHandler has started");
             try
             {
-                var api = httpRequest + jenkinsMasterNodeDomain + JenkinsLatestJobInfoApi;
+                var api = httpRequest + jenkinsConfigSection.JenkinsMasterNodeDomain + jenkinsConfigSection.JenkinsLatestJobInfo;
                 var res = new HttpRequestMessage(HttpMethod.Get, api);
                 res.Headers.Add(crumb_token[0], crumb_token[1]);
                 var response = client.SendAsync(res).Result;
@@ -224,7 +216,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             Logging.LogMessage(LOGTYPE.Info, $"Method {methodName} in JenkinsHandler has started");
             try
             {
-                var api = httpRequest + jenkinsMasterNodeDomain + JenkinsLatestJobInfoApi;
+                var api = httpRequest + jenkinsConfigSection.JenkinsMasterNodeDomain + jenkinsConfigSection.JenkinsLatestJobInfo;
                 var res = new HttpRequestMessage(HttpMethod.Get, api);
                 res.Headers.Add(crumb_token[0], crumb_token[1]);
                 var response = client.SendAsync(res).Result;
