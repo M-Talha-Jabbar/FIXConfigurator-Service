@@ -13,5 +13,6 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         Task<IEnumerable<string>> GetJenkinsSlaveNodes();
         bool AbortJenkinsLastJob();
         JenkinsJobStatus JenkinsLatestJobStatus();
+        Task<JenkinsJobStatus> JenkinsLatestJobStatusAsync();
     }
 }

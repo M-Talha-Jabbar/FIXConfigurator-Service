@@ -120,7 +120,7 @@ namespace FIXMonitorService
         {
             return this.DataCache.ConnectToFixSession(engineID, fixSession);
         }
-
+       
         public void Subscribe(string connectionId)
         {
             callback = OperationContext.Current.GetCallbackChannel<IFIXMonitorServiceCallback>();
@@ -129,6 +129,7 @@ namespace FIXMonitorService
             Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixMessageUpdate>(callback));
             Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<ConfiguredFixMessage>(callback));
             Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionStatusUpdate>(callback));
+            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<JenkinsJobUpdate>(callback));
 
             Observable orderObservable = new Observable();
             OrderObserver observer = new OrderObserver();
@@ -233,14 +234,20 @@ namespace FIXMonitorService
 
         public void SendJenkinsJobUpdate(JenkinsJobStatus jenkinsJobStatus) 
         {
+            var Queue = ConcreteQueueCollectionsManager.CreateOrGetConcreteQueueCollection<JenkinsJobUpdate>();
+
             if (((IChannel)callback).State == CommunicationState.Opened)
             {
                 callback.SendJenkinsJobUpdate(jenkinsJobStatus);
                 Logging.LogMessage(LOGTYPE.Info, "Jenkins Job Status sent to client");
                 return;
             }
-        }
 
+            JenkinsJobUpdate jenkinsJobUpdate = new JenkinsJobUpdate(jenkinsJobStatus);
+            Queue.Enqueue(jenkinsJobUpdate);
+            Logging.LogMessage(LOGTYPE.Info, "Queued JenkinsJobUpdate");
+        }
+     
         public List<AlertFlag> GetAlertCache()
         {
             return this.DataCache.GetAlertCache();
@@ -338,6 +345,10 @@ namespace FIXMonitorService
         public async Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort)
         {
             return await DataCache.DeleteJenkinsConfiguration(FixEngineIpAndPort);
+        }
+        public async Task<JenkinsJobStatus> GetJenkinsLatestJobStatus()
+        {
+            return await this.DataCache.GetJenkinsLatestJobStatus();
         }
     }
 }

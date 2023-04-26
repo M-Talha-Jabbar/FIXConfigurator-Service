@@ -1,4 +1,5 @@
 ﻿using FIXMonitorBusinessLogicLayer.Data;
+using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,5 +17,6 @@ namespace FIXMonitorBusinessLogicLayer.Services
         Task<string> JenkinsTrigger(string branchName, string environment);
         Task<string> JenkinsTrigger(string branchName, string environment, string FixEngineIpAndPort);
         Task<IEnumerable<string>> GetJenkinsSlaveNodes();
+        Task<JenkinsJobStatus> GetJenkinsLatestJobStatus();
     }
 }

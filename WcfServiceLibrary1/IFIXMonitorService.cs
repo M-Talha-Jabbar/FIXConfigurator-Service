@@ -132,6 +132,9 @@ namespace FIXMonitorService
         [OperationContract]
         Task<IEnumerable<string>> GetJenkinsSlaveNodes();
 
+        [OperationContract]
+        Task<JenkinsJobStatus> GetJenkinsLatestJobStatus();
+
         // TODO: Add your service operations here
     }
 

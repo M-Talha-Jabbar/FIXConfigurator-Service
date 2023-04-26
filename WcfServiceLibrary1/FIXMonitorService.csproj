@@ -120,6 +120,7 @@
     <Compile Include="Iterator\Iterator.cs" />
     <Compile Include="Observer.cs" />
     <Compile Include="PayLoads\IUpdate.cs" />
+    <Compile Include="PayLoads\JenkinsJobUpdate.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FIXMonitorService.cs" />
     <Compile Include="QueueManager\ConcreteQueueCollectionsManager.cs" />

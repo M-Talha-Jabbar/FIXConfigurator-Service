@@ -13,6 +13,7 @@ using CoreLogging;
 using Newtonsoft.Json;
 using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 using FIXMonitorBusinessLogicLayer.PollingWorkers;
+using System.Threading;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -28,9 +29,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private string JenkinsAgentInfoApi = ConfigurationManager.AppSettings["JenkinsAgentInfoApi"].ToString();
         private string JenkinsLastJobAbortApi = ConfigurationManager.AppSettings["JenkinsLastJobAbortApi"].ToString();
         private string JenkinsLatestJobInfoApi = ConfigurationManager.AppSettings["JenkinsLatestJobInfo"].ToString();
+        private int JenkinsJobStatusTimeoutSeconds = int.Parse(ConfigurationManager.AppSettings["JenkinsJobStatusTimeoutSeconds"].ToString());
+        private int JenkinsJobStatusIntervalSeconds = int.Parse(ConfigurationManager.AppSettings["JenkinsJobStatusIntervalSeconds"].ToString());
         private HttpClient client;
         private string[] crumb_token;
         private PollingWorker pw;
+        private JenkinsJobStatus lastBuild;
 
         private JenkinsHandler()
         {
@@ -102,11 +106,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
 
+                lastBuild = JenkinsLatestJobStatus();
+
                 var triggerStatus = await client.SendAsync(jenkins_job_trigger);
 
                 var status_code = triggerStatus.StatusCode.ToString();
 
-                pw = new PollingWorker(SendJenkinsJobStatusToClient, AfterPolling, 120, 5);
+                pw = new PollingWorker(SendJenkinsJobStatusToClient, AfterPolling, JenkinsJobStatusTimeoutSeconds, JenkinsJobStatusIntervalSeconds);
                 pw.Poll();
 
                 return status_code;
@@ -212,11 +218,42 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
+        public async Task<JenkinsJobStatus>  JenkinsLatestJobStatusAsync()
+        {
+            var methodName = "JenkinsLatestJobStatus";
+            Logging.LogMessage(LOGTYPE.Info, $"Method {methodName} in JenkinsHandler has started");
+            try
+            {
+                var api = httpRequest + jenkinsMasterNodeDomain + JenkinsLatestJobInfoApi;
+                var res = new HttpRequestMessage(HttpMethod.Get, api);
+                res.Headers.Add(crumb_token[0], crumb_token[1]);
+                var response = client.SendAsync(res).Result;
+                var content = await response.Content.ReadAsStringAsync();
+                var jenkinsJobStatus = JsonConvert.DeserializeObject<JenkinsJobStatus>(content);
+                return jenkinsJobStatus;
+            }
+            catch (Exception ex)
+            {
+                Logging.LogMessage(LOGTYPE.Info, $"Method {methodName}: request failed {ex.Message}");
+                return null;
+            }
+            finally
+            {
+                Logging.LogMessage(LOGTYPE.Info, $"Method {methodName} in JenkinsHandler has completed");
+            }
+        }
+
         public void SendJenkinsJobStatusToClient() 
         {
             var res = JenkinsLatestJobStatus();
 
+            Logging.LogMessage(LOGTYPE.Info, $"{res.id} {lastBuild.id}");
+
+            if (res.id == lastBuild.id) return; 
+
             Observable observable = new Observable();
+
+            Logging.LogMessage(LOGTYPE.Info, $"{res.inProgress} {res.result}");
 
             observable.SendJenkinsJobStatus(res);
 
@@ -224,7 +261,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 pw.Stop();
             }
-            
+             
         }
 
         public void AfterPolling() 

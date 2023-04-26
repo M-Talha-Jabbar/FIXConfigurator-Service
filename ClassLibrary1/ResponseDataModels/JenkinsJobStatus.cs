@@ -14,5 +14,7 @@ namespace FIXMonitorBusinessLogicLayer.ResponseDataModels
         public bool inProgress;
         [DataMember]
         public string result;
+        [DataMember]
+        public int id;
     }
 }

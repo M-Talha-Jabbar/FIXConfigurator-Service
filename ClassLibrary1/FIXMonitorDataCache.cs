@@ -24,6 +24,7 @@ using FIXMonitorBusinessLogicLayer.TcpConnection;
 using FIXMonitorBusinessLogicLayer.Services;
 using DevExtreme.AspNet.Data.ResponseModel;
 using FIXMonitorBusinessLogicLayer.Data;
+using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 
 namespace FIXMonitorBusinessLogicLayer
 {
@@ -290,6 +291,11 @@ namespace FIXMonitorBusinessLogicLayer
         public async Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort)
         {
             return await _jenkinsService.DeleteJenkinsConfiguration(FixEngineIpAndPort);
+        }
+
+        public async Task<JenkinsJobStatus> GetJenkinsLatestJobStatus()
+        {
+            return await _jenkinsService.GetJenkinsLatestJobStatus();
         }
     }
 }

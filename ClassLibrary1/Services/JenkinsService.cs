@@ -18,6 +18,7 @@ using FIXMonitorBusinessLogicLayer.DataAccess.Repositories;
 using FIXMonitorBusinessLogicLayer.DataAccess.IUnitOfWork;
 using FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork;
 using FIXMonitorBusinessLogicLayer.DataAccess.IRepository;
+using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 
 namespace FIXMonitorBusinessLogicLayer.Services
 {
@@ -187,6 +188,12 @@ namespace FIXMonitorBusinessLogicLayer.Services
             }
 
             return "Not Created";
+        }
+
+        public async Task<JenkinsJobStatus> GetJenkinsLatestJobStatus() 
+        {
+            IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
+            return await _JenkinsHandler.JenkinsLatestJobStatusAsync();
         }
     }
 }
