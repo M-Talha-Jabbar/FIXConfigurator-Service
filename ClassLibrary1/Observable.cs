@@ -1,4 +1,5 @@
 ﻿using FIXMonitorBusinessLogicLayer.DataModels;
+using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -159,6 +160,14 @@ namespace FIXMonitorBusinessLogicLayer
             foreach (var item in observers)
             {
                 item.Value.OnNext(new Object[] { flag });
+            }
+        }
+
+        public void SendJenkinsJobStatus(JenkinsJobStatus jenkinsJobStatus) 
+        {
+            foreach (var item in observers)
+            {
+                item.Value.OnNext(new Object[] { jenkinsJobStatus });
             }
         }
     }

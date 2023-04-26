@@ -1,5 +1,6 @@
 ﻿using CoreLogging;
 using FIXMonitorBusinessLogicLayer.DataModels;
+using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 using System;
 using System.Collections.Generic;
 
@@ -27,7 +28,10 @@ namespace FIXMonitorService
                 {
                     FIXMonitorService.GetInstance().Heartbeat();
                 }
-
+                else if (item.GetType() == typeof(JenkinsJobStatus))
+                {
+                    FIXMonitorService.GetInstance().SendJenkinsJobUpdate((JenkinsJobStatus)item);
+                }
                 else if (((Object[])value)[1].GetType() == typeof(FIXMessage) && item.ToString() == "fixMessageWithConfiguredFixTagValuePair")
                 {
                     var fixMessage = ((Object[])value)[1];
@@ -54,10 +58,11 @@ namespace FIXMonitorService
                 {
                     FIXMonitorService.GetInstance().SendAlertFlag((AlertFlag)item);
                 }
-                else if (updateItem.Length == 2 && (string)updateItem[1] == "fixSessionStatusMessage") {
-
+                else if (updateItem.Length == 2 && (string)updateItem[1] == "fixSessionStatusMessage")
+                {
                     FIXMonitorService.GetInstance().SendFixSessionStatusMessage((string)updateItem[0]);
                 }
+                
 
             }
             catch (Exception ex)

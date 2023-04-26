@@ -21,7 +21,10 @@ using System.Threading.Tasks;
 using RedisCacheService;
 using FIXMonitorBusinessLogicLayer.IComparers;
 using FIXMonitorBusinessLogicLayer.TcpConnection;
+using FIXMonitorBusinessLogicLayer.Services;
 using DevExtreme.AspNet.Data.ResponseModel;
+using FIXMonitorBusinessLogicLayer.Data;
+using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 
 namespace FIXMonitorBusinessLogicLayer
 {
@@ -33,8 +36,9 @@ namespace FIXMonitorBusinessLogicLayer
         readonly Observable observable;
         private IFixHandler fixHandler;
         private IEmailHandler emailHandler;
-        private IJenkinsHandler jenkinsHandler;
-        
+        private IJenkinsService _jenkinsService;
+
+
         //Can use inherited class instead of creating object.
 
         private readonly bool IsRunWithSampleData = Convert.ToBoolean(ConfigurationManager.AppSettings["isRunWithSampleData"].ToString());
@@ -73,7 +77,7 @@ namespace FIXMonitorBusinessLogicLayer
             fixConfiguration = new List<FIXConfiguration>();
             fixHandler = new FixHandler();
             emailHandler = new EmailHandler();
-            jenkinsHandler = new JenkinsHandler();
+            _jenkinsService = new JenkinsService();
         }
 
         #region DataLoading
@@ -192,7 +196,7 @@ namespace FIXMonitorBusinessLogicLayer
         }
         public bool RemoveAlertCache(string orderId)
         {
-           return true;
+            return true;
         }
 
         #endregion
@@ -243,22 +247,55 @@ namespace FIXMonitorBusinessLogicLayer
             return FileStreamExport.fsExport(filepath, FixMessageLog.locksforConcurrentFileAccess.GetLockObj(filepath));
         }
 
-        public FIXEngine GetFixEngine(string engineID) { 
+        public FIXEngine GetFixEngine(string engineID)
+        {
             return fixHandler.GetFixEngine(engineID);
         }
 
-        public bool TcpConnection(string ipAddress, int port) {
+        public bool TcpConnection(string ipAddress, int port)
+        {
             return new TcpConnection.TcpConnection(ipAddress, port).TcpConnectionBuilder();
         }
 
-        public IEnumerable<string> GetSessionStatusMessage() { 
+        public IEnumerable<string> GetSessionStatusMessage()
+        {
 
             return fixHandler.GetSessionStatusMessage();
         }
 
-        public async Task<string> TriggerJenkins(string branchName, string environment) {
-            return await jenkinsHandler.JenkinsTrigger(branchName, environment);
+        public async Task<string> TriggerJenkins(string branchName, string environment)
+        {
+            return await _jenkinsService.JenkinsTrigger(branchName, environment);
+        }
+        public async Task<string> TriggerJenkins(string branchName, string environment, string FixEngineIpAndPort)
+        {
+            return await _jenkinsService.JenkinsTrigger(branchName, environment, FixEngineIpAndPort);
+        }
+        public async Task<IEnumerable<string>> GetJenkinsSlaveNodes()
+        {
+            return await _jenkinsService.GetJenkinsSlaveNodes();
+        }
+
+        public async Task<bool> AddJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
+        {
+            return await _jenkinsService.AddJenkinsConfiguration(fixEngineJenkinsConfiguration);
+        }
+        public async Task<bool> UpdateJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
+        {
+            return await _jenkinsService.UpdateJenkinsConfiguration(fixEngineJenkinsConfiguration);
+        }
+        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string FixEngineIpAndPort)
+        {
+            return await _jenkinsService.GetJenkinsConfiguration(FixEngineIpAndPort);
+        }
+        public async Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort)
+        {
+            return await _jenkinsService.DeleteJenkinsConfiguration(FixEngineIpAndPort);
+        }
+
+        public async Task<JenkinsJobStatus> GetJenkinsLatestJobStatus()
+        {
+            return await _jenkinsService.GetJenkinsLatestJobStatus();
         }
     }
-
 }

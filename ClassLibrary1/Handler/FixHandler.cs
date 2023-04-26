@@ -763,6 +763,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
+                CoreLogging.Logging.LogMessage(CoreLogging.LOGTYPE.Error, $"Redis Get Connection: {e.Message}");
                 fixEngines.Remove(fixEngine);
                 throw e;
             }
@@ -826,6 +827,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
+                CoreLogging.Logging.LogMessage(CoreLogging.LOGTYPE.Error, $"Redis after connection : {e.Message}");
                 LogException(e);
             }
 
