@@ -12,7 +12,6 @@ namespace FIXMonitorBusinessLogicLayer
     {
         readonly static ConcurrentDictionary<string, IObserver<Object>> observers = new ConcurrentDictionary<string, IObserver<object>>();
         private string _connectionId;
-        static ReaderWriterLock rwl = new ReaderWriterLock();
         public IDisposable Subscribe(IObserver<Object> observer)
         {
             return new Unsubscriber(observers, _connectionId);
@@ -20,7 +19,6 @@ namespace FIXMonitorBusinessLogicLayer
 
         public IDisposable Subscribe(IObserver<Object> observer, string connectionId)
         {
-            //rwl.AcquireWriterLock(1000000);
             if (observers.ContainsKey(connectionId))
             {
                 //observers.Remove(connectionId);
@@ -30,7 +28,6 @@ namespace FIXMonitorBusinessLogicLayer
             //observers.Add(connectionId, observer);
             observers.TryAdd(connectionId, observer);
             _connectionId = connectionId;
-            //rwl.ReleaseWriterLock();
             return Subscribe(observer);
         }
 
@@ -43,52 +40,10 @@ namespace FIXMonitorBusinessLogicLayer
             return false;
         }
 
-        //public void UpdateOrders(Object orderDetails, string operation)
-        //{
-        //    foreach (var item in observers)
-        //    {
-        //        item.Value.OnNext(new Object[] { orderDetails, operation });
-        //    }
-        //}
-
-        //public void UpdateExecutions(Object executionReport, string operation)
-        //{
-        //    foreach (var item in observers)
-        //    {
-        //        item.Value.OnNext(new Object[] { executionReport, operation });
-        //    }
-        //}
-
-        //public void UpdateBook(Object bookUpdates, string bookType)
-        //{
-        //    foreach (var item in observers)
-        //    {
-        //        item.Value.OnNext(new Object[] { bookUpdates, bookType });
-        //    }
-        //}
-
-        //public void ClearBook(string bookType)
-        //{
-        //    foreach (var item in observers)
-        //    {
-        //        item.Value.OnNext(new Object[] { "clearbook", bookType });
-        //    }
-        //}
-
         public void SendFixMessageUpdate(Object fixMessage, string engineID, string sessionID)
         {
             foreach (var item in observers)
             {
-                //SendFixMessageUpdate:
-                //if (!rwl.IsWriterLockHeld)
-                //{
-                //    item.Value.OnNext(new Object[] { fixMessage, engineID, sessionID });
-                //}
-                //else
-                //{
-                //    goto SendFixMessageUpdate;
-                //}
-
                 item.Value.OnNext(new Object[] { fixMessage, engineID, sessionID });
             }
         }
@@ -97,35 +52,14 @@ namespace FIXMonitorBusinessLogicLayer
         {
             foreach (var item in observers)
             {
-                //SendFixMessageUpdate:
-                //if (!rwl.IsWriterLockHeld)
-                //{
-                //    item.Value.OnNext(new Object[] { fixSession, engineID, updateType });
-                //}
-                //else
-                //{
-                //    goto SendFixMessageUpdate;
-                //}
-
                 item.Value.OnNext(new Object[] { fixSession, engineID, updateType });
             }
         }
 
         public void SendFixSessionStatusMessage(string fixSessionStatusMessage, string updateType)
         {
-            
             foreach (var item in observers)
             {
-                //SendFixMessageUpdate:
-                //if (!rwl.IsWriterLockHeld)
-                //{
-                //    item.Value.OnNext(new Object[] { fixSession, engineID, updateType });
-                //}
-                //else
-                //{
-                //    goto SendFixMessageUpdate;
-                //}
-
                 item.Value.OnNext(new Object[] {fixSessionStatusMessage, updateType });
             }
         }
@@ -141,18 +75,10 @@ namespace FIXMonitorBusinessLogicLayer
 
         public void Heartbeat()
         {
-            //Heartbeat:
-            //if (!rwl.IsWriterLockHeld)
-            //{
             foreach (var item in observers)
             {
                 item.Value.OnNext(new Object[] { "heartbeat", "" });
             }
-            //}
-            //else
-            //{
-            //    goto Heartbeat;
-            //}
         }
 
         public void SendAlertFlag(AlertFlag flag)
