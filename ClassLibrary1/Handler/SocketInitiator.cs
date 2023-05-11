@@ -58,7 +58,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     Logging.LogMessage(LOGTYPE.Info, $"FixEngine {fixEngineName} on {hostname}:{port} is NOT running");
                 }
 
-                Thread.Sleep(waitBeforeConnecting);
+                await Task.Delay(waitBeforeConnecting);
             }
         }
 

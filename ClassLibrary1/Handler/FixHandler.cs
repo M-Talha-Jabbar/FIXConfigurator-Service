@@ -34,7 +34,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
     {
         private FixEnginesKeyedCollection fixEngines;
         private Dictionary<string, int> fixEnginesDB;
-        private Dictionary<string, Channel> fixEnginesChannels;
 
         public static Dictionary<string, string> fixMsgTypes = new Dictionary<string, string>();
         public static Dictionary<string, string> fixTagValues = new Dictionary<string, string>();
@@ -43,9 +42,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private readonly bool sendSampleFixUpdate = Convert.ToBoolean(System.Configuration.ConfigurationManager.AppSettings["sendSampleFixUpdate"].ToString());
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
         private readonly string fixEngineRedisConfigFilePath = "redisConfigAndDB.txt";
-        private Dictionary<string, string> streamLastReadTimeStamps; // FixMessages Stream 
-        //Status Stream Attributes
-        private List<RedisValue> statusReadMessagesIDs;
+        private Dictionary<string, string> streamLastReadTimeStamps; // FixMessages Stream
 
         private Dictionary<string, List<FIXMessage>> sessionFixMessages;
         private Dictionary<string, List<FIXMessage>> fixMessagesContainingConfiguredFixTagValuePair;
@@ -55,7 +52,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private ConcurrentDictionary<string, FixEngineMomento> fixEngineMomentos;
         private EmailNotifier emailNotifier;
         private FixEngineSocket fixEngineSocket;
-        private SocketListener fixEngineSocketListener;
 
         private LockObjectsManager locksForHandlingStreamRead;
         private LockObjectsManager sessionUpdatesLocks;
@@ -65,7 +61,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public FixHandler()
         {
-            Task.Run(() => );
+            Task.Run(() => SocketListener.ListenClients());
 
             Initializers();
             EnginePersistence();
@@ -128,8 +124,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             fixEngines = new FixEnginesKeyedCollection(); 
             fixEnginesDB = new Dictionary<string, int>();
-            fixEnginesChannels = new Dictionary<string, Channel>();
-            statusReadMessagesIDs = new List<RedisValue>();
             streamLastReadTimeStamps = new Dictionary<string, string>();
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
             fixMessagesContainingConfiguredFixTagValuePair = new Dictionary<string, List<FIXMessage>>();
