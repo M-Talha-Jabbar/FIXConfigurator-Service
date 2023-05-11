@@ -38,13 +38,9 @@ namespace FIXMonitorBusinessLogicLayer
         private IEmailHandler emailHandler;
         private IJenkinsService _jenkinsService;
 
-
-        //Can use inherited class instead of creating object.
-
         private readonly bool IsRunWithSampleData = Convert.ToBoolean(ConfigurationManager.AppSettings["isRunWithSampleData"].ToString());
         private readonly int WaitBeforeConnecting = Convert.ToInt32(ConfigurationManager.AppSettings["waitBeforeConnecting"].ToString());
         private readonly int HeartbeatIntervalForWeb = Convert.ToInt32(ConfigurationManager.AppSettings["heartbeatIntervalForWeb"].ToString());
-        private readonly int timeoutInterval = 5000;
 
         public FIXMonitorDataCache()
         {
@@ -52,16 +48,15 @@ namespace FIXMonitorBusinessLogicLayer
             observable = new Observable();
             InitAllCacheObjects();
             LoadStartUpData();
-            Thread HeatbeatSendingThread = new Thread(new ThreadStart(HeatbeatToWeb));
-            HeatbeatSendingThread.Start();
+            Task.Run(() => HeartbeatToWeb());
         }
 
-        public void HeatbeatToWeb()
+        public async Task HeartbeatToWeb()
         {
             while (true)
             {
-                Task.Run(() => observable.Heartbeat());
-                Thread.Sleep(HeartbeatIntervalForWeb);
+                observable.Heartbeat();
+                await Task.Delay(HeartbeatIntervalForWeb);
             }
         }
 
