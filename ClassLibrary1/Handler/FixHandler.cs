@@ -35,29 +35,27 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private FixEnginesKeyedCollection fixEngines;
         private Dictionary<string, int> fixEnginesDB;
         private Dictionary<string, Channel> fixEnginesChannels;
+
         public static Dictionary<string, string> fixMsgTypes = new Dictionary<string, string>();
         public static Dictionary<string, string> fixTagValues = new Dictionary<string, string>();
+
         Observable observable = new Observable();
         private readonly bool sendSampleFixUpdate = Convert.ToBoolean(System.Configuration.ConfigurationManager.AppSettings["sendSampleFixUpdate"].ToString());
         private readonly string redisStreamName = System.Configuration.ConfigurationManager.AppSettings["redisStreamName"].ToString();
         private readonly string fixEngineRedisConfigFilePath = "redisConfigAndDB.txt";
-        
         private Dictionary<string, string> streamLastReadTimeStamps; // FixMessages Stream 
-
         //Status Stream Attributes
         private List<RedisValue> statusReadMessagesIDs;
 
         private Dictionary<string, List<FIXMessage>> sessionFixMessages;
         private Dictionary<string, List<FIXMessage>> fixMessagesContainingConfiguredFixTagValuePair;
         private Dictionary<string, bool> hasSessionsBeenCreatedForAEngine; // Created for a purpose if update comes first before reading existing messages as since we are calling SubscribeAndFaliureCallback() before ReadMessages() while creating a FixEngine at the middle of the day.
+        private ConcurrentStack<string> sessionStatuses;
 
         private ConcurrentDictionary<string, FixEngineMomento> fixEngineMomentos;
-
         private EmailNotifier emailNotifier;
-
         private FixEngineSocket fixEngineSocket;
-
-        private ConcurrentStack<string> sessionStatuses;
+        private SocketListener fixEngineSocketListener;
 
         private LockObjectsManager locksForHandlingStreamRead;
         private LockObjectsManager sessionUpdatesLocks;
@@ -67,6 +65,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public FixHandler()
         {
+            Task.Run(() => );
+
             Initializers();
             EnginePersistence();
 
@@ -196,7 +196,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void SubscribeFixEngineSocketUpdate(FIXEngine fixEngine)
         {
-            SocketHandler socketHandler = fixEngineSocket.GetFixEngineSocket(fixEngine);
+            SocketInitiator socketHandler = fixEngineSocket.GetFixEngineSocket(fixEngine);
 
             Logging.LogMessage(LOGTYPE.Info, $"Start Checking Port {fixEngine.FIXEngineIpPort} Status of FixEngine {fixEngine.engineName}");
 

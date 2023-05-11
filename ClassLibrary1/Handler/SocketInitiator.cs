@@ -13,7 +13,7 @@ using System.Reactive.Subjects;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
-    public class SocketHandler : IDisposable
+    public class SocketInitiator : IDisposable
     {
         //static int heartbeat = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["heartbeatIntervalForFixHub"].ToString());
         private int port;
@@ -25,7 +25,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private BehaviorSubject<bool> subject;
         private TcpClient tcpClient;
 
-        public SocketHandler(string hostname, int port, string fixEngineName)
+        public SocketInitiator(string hostname, int port, string fixEngineName)
         {
             this.hostname = hostname;
             this.port = port;
@@ -121,7 +121,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             isEngineExist = false;
         }
 
-        ~SocketHandler()
+        ~SocketInitiator()
         {
             Logging.LogMessage(LOGTYPE.Info, $"Disconnecting socket with FixEngine {fixEngineName} on {hostname}:{port}");
             tcpClient.Close();
