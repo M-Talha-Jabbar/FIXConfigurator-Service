@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Reactive.Subjects;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,9 +14,19 @@ namespace FIXMonitorBusinessLogicLayer.Handler
     public class SocketListener
     {
         private static int socketListeningPort = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["socketListeningPort"].ToString());
-        private static ConcurrentDictionary<string, TcpClient> establishedFixEngineSockets = new ConcurrentDictionary<string, TcpClient>();
+        public static ConcurrentDictionary<string, SocketListener> fixEngineSocketConnections = new ConcurrentDictionary<string, SocketListener>();
+        private string fixEngineId;
+        private TcpClient tcpClient;
+        private BehaviorSubject<bool> subject;
+        private bool isConnected;
 
-        public static async Task ListenClients() // Listening FixEngine Clients
+        public SocketListener()
+        {
+            this.isConnected = false;
+            this.subject = new BehaviorSubject<bool>(isConnected);
+        }
+
+        public static async Task ListenClientsAsync() // Listening FixEngine Clients
         {
             TcpListener listener = new TcpListener(IPAddress.Any, socketListeningPort);
             listener.Start();
@@ -25,55 +36,75 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 TcpClient tcpClient = await listener.AcceptTcpClientAsync();
                 Logging.LogMessage(LOGTYPE.Info, $"New FixEngine connected");
-
-                HandleClient(tcpClient);
+                
+                HandleClientAsync(tcpClient);
             }
         }
 
-        private static async Task HandleClient(TcpClient tcpClient) 
+        private static async Task HandleClientAsync(TcpClient tcpClient) 
         {
-            NetworkStream stream = tcpClient.GetStream();
-            string fixEngineId = null;
+            SocketListener socketListener = null;
+            bool isEngineIdReceived = false;
 
             try
             {
+                NetworkStream stream = tcpClient.GetStream();
+
                 while (true)
                 {
                     byte[] buffer = new byte[256];
                     int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
-                    fixEngineId = System.Text.Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                    // what if any other type of data comes apart from fixengineId
+                    if (!isEngineIdReceived)
+                    {
+                        string fixEngineId = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                    establishedFixEngineSockets.TryAdd(fixEngineId, tcpClient);
+                        // proto modal of fixengine
 
-                    //if (bytesRead == 0)
-                    //{
-                    //    DisposeTcpInstanceNClosingTcpConnection(tcpClient);
-                    //    break;
-                    //}
+                        bool isInstanceCreated = fixEngineSocketConnections.TryGetValue(fixEngineId, out SocketListener value);
+                        if (isInstanceCreated) // If Engine has already been created in FixConfigurator
+                            socketListener = value;
+                        else // If Engine has not yet created in FixConfigurator
+                            socketListener = new SocketListener();
+
+                        socketListener.fixEngineId = fixEngineId;
+                        socketListener.tcpClient = tcpClient;
+                        socketListener.isConnected = true;
+                        socketListener.subject.OnNext(socketListener.isConnected);
+                        fixEngineSocketConnections.TryAdd(fixEngineId, socketListener);
+
+                        isEngineIdReceived = true;
+                    }
                 }
             }
             catch(Exception ex)
             {
                 Logging.LogMessage(LOGTYPE.Error, "Exception: " + ex.Message);
                 Logging.LogMessage(LOGTYPE.Error, "StackTrace: " + ex.StackTrace);
-                DisposeTcpInstanceNClosingTcpConnection(fixEngineId);
+
+                if(socketListener != null)
+                {
+                    socketListener.isConnected = false;
+                    socketListener.subject.OnNext(socketListener.isConnected);
+                    fixEngineSocketConnections.TryRemove(socketListener.fixEngineId, out SocketListener socketListenerInstance);
+                }
+
+                DisposeTcpInstanceNClosingTcpConnection(tcpClient);
             }
         }
 
-        private static void DisposeTcpInstanceNClosingTcpConnection(string fixEngineId)
+        private static void DisposeTcpInstanceNClosingTcpConnection(TcpClient tcpClient)
         {
-            if(fixEngineId != null)
+            if (tcpClient != null)
             {
-                establishedFixEngineSockets.TryRemove(fixEngineId, out TcpClient tcpClient);
-
-                if (tcpClient != null)
-                {
-                    tcpClient.Close();
-                    Logging.LogMessage(LOGTYPE.Info, $"Connection with New FixEngine has been closed");
-                }
+                tcpClient.Close();
+                Logging.LogMessage(LOGTYPE.Info, $"Connection with New FixEngine has been closed");
             }
+        }
+
+        public IObservable<bool> GetStatus()
+        {
+            return subject;
         }
     }
 }

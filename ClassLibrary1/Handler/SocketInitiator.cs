@@ -30,18 +30,18 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             this.hostname = hostname;
             this.port = port;
             this.fixEngineName = fixEngineName;
-            subject = new BehaviorSubject<bool>(isRunning);
-            tcpClient = new TcpClient();
+            this.subject = new BehaviorSubject<bool>(isRunning);
+            this.tcpClient = new TcpClient();
         }
 
-        public async Task CheckPortStatus()
+        public async Task CheckPortStatusAsync()
         {
             while (true)
             {
                 if (!isEngineExist)
                     break;
 
-                bool isPortOpen = await IsPortOpen();
+                bool isPortOpen = await IsPortOpenAsync();
                 string portStatus = isPortOpen ? "Open" : "Closed";
                 Logging.LogMessage(LOGTYPE.Info, $"FixEngine {fixEngineName} Port {port} is: {portStatus}");
 
@@ -62,7 +62,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private async Task<bool> IsPortOpen()
+        private async Task<bool> IsPortOpenAsync()
         {
             try
             {

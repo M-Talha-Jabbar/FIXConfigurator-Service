@@ -8,14 +8,11 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-//using FIXMonitorServer;
 using RedisCacheService;
 using StackExchange.Redis;
 using CoreLogging;
 using proto;
-using System.Reactive.Subjects;
 using FIXMonitorBusinessLogicLayer.Momentos;
-using FBE.proto;
 using DevExtreme.AspNet.Mvc;
 using Newtonsoft.Json;
 using DevExtreme.AspNet.Data;
@@ -24,7 +21,6 @@ using FIXMonitorBusinessLogicLayer.Notifier;
 using System.Collections.Concurrent;
 using FIXMonitorBusinessLogicLayer.Converter;
 using FIXMonitorBusinessLogicLayer.LocksManager;
-using DevExtreme.AspNet.Data.ResponseModel;
 using FIXMonitorBusinessLogicLayer.Utilities;
 using System.Globalization;
 
@@ -51,7 +47,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private ConcurrentDictionary<string, FixEngineMomento> fixEngineMomentos;
         private EmailNotifier emailNotifier;
-        private FixEngineSocket fixEngineSocket;
 
         private LockObjectsManager locksForHandlingStreamRead;
         private LockObjectsManager sessionUpdatesLocks;
@@ -61,7 +56,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public FixHandler()
         {
-            Task.Run(() => SocketListener.ListenClients());
+            Task.Run(() => SocketListener.ListenClientsAsync());
 
             Initializers();
             EnginePersistence();
@@ -128,7 +123,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
             fixMessagesContainingConfiguredFixTagValuePair = new Dictionary<string, List<FIXMessage>>();
             hasSessionsBeenCreatedForAEngine = new Dictionary<string, bool>();
-            fixEngineSocket = FixEngineSocket.GetSingletonInstance();
             fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
             locksForHandlingStreamRead = new LockObjectsManager();
             sessionUpdatesLocks = new LockObjectsManager();
@@ -166,14 +160,13 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var engine_data = client.HashGetAll(key);
                 FIXEngine FIXEngine = CreateFixEngine(db, engine_data);
                 SetOrGetLastLogTimeStampsKeyForAnEngine(client, FIXEngine.engineName); // Each FixEngine will have a LastLogTimeStamps Key in its redis DB in order to manage FixMessage Logs if service restart after a crashed/stoppage in between a day.
-
-                // creating sockets for already present engines present in config files and redis both after engine is created in memory
-                FixEngineSocketHandler(FIXEngine);
                 
                 if(client.KeyExists(redisStreamName))
                     ReadMessages(client, FIXEngine, existingMessage);
                 GetSessionsForEngine(muxer, db, client, FIXEngine);
                 SubscribeAndFaliureCallback(FIXEngine, muxer, CacheKeyEvent); // Since its the start of the day, SubscribeAndFaliureCallback() is called after reading existing messages.
+
+                FixEngineSocketHandler(FIXEngine);
             }
             //fixEngines.Add(new FIXEngine() { engineID = "ATS_FIX", engineName = "ATS_FIX", ipAddress = "192.168.0.1", port = 4044 });
         }
@@ -190,23 +183,23 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public void SubscribeFixEngineSocketUpdate(FIXEngine fixEngine)
         {
-            SocketInitiator socketHandler = fixEngineSocket.GetFixEngineSocket(fixEngine);
+            SocketListener.fixEngineSocketConnections.TryGetValue(fixEngine.engineID, out SocketListener socketListener);
 
-            Logging.LogMessage(LOGTYPE.Info, $"Start Checking Port {fixEngine.FIXEngineIpPort} Status of FixEngine {fixEngine.engineName}");
+            Logging.LogMessage(LOGTYPE.Info, $"Start Checking Connection Status of FixEngine {fixEngine.engineName} with EngineID {fixEngine.engineID}");
 
-            IObservable<bool> data = socketHandler.GetStatus();
-            data.Subscribe(updates =>
+            IObservable<bool> data = socketListener.GetStatus();
+            data.Subscribe(updates => // initial status update will be fired automatically
             {
-                UpdateSessionStatus(updates, fixEngine); 
+                UpdateSessionStatus(updates, fixEngine);
             });
-
-            Task.Run(() => socketHandler.CheckPortStatus());
         }
 
         public void FixEngineSocketHandler(FIXEngine fixEngine)
         {
-            // creating socket handler object 
-            fixEngineSocket.AddFixEngineSocket(fixEngine);
+            bool isInstanceCreated = SocketListener.fixEngineSocketConnections.TryGetValue(fixEngine.engineID, out SocketListener value);
+            if (!isInstanceCreated) // If FixEngine has not yet connected to FixConfigurator
+                SocketListener.fixEngineSocketConnections.TryAdd(fixEngine.engineID, new SocketListener());
+
             SubscribeFixEngineSocketUpdate(fixEngine);
         }
 
@@ -628,17 +621,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return isCompleted;
         }
 
-        private void GetStatusUpdates(FIXSession fixSession, bool success)
-        {
-            if (success)
-            {
-                Thread thread = new Thread(
-                    unused => isConnected(fixSession.ConnectionID, fixSession)
-                    );
-                thread.Start();
-            }
-        }
-
         public string GetFixMessagesAsync(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
         {
             List<FIXMessage> ordersTemp = fixEngines[fixEngineID].fixSessions[fixSessionConnectionID].FixMessages;
@@ -749,11 +731,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             try
             {
                 muxer = RedisConnectorHelper.GetConnection($"{fixEngine.redisIpAddress}:{fixEngine.redisIpPort}");
-
-                // It will create socket connection when new engine is added from client side
-
-                // creating socket right after it creates redis connection
-                FixEngineSocketHandler(fixEngine);
             }
             catch (Exception e)
             {
@@ -782,7 +759,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 fixEngines.Remove(fixEngine);
             }
 
-            //var engineHash = FIXEngine.getHashFromObject(fixEngine);
             try
             {
                 proto.Engine engine = fixEngine;
@@ -818,6 +794,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 if (client.KeyExists(redisStreamName))
                     ReadMessages(client, fixEngine, existingMessage);
                 GetSessionsForEngine(muxer, db, client, fixEngine);
+
+                FixEngineSocketHandler(fixEngine);
             }
             catch (Exception e)
             {
@@ -856,13 +834,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             muxer.ConnectionFailed += (sender, args) =>
             {
                 Logging.LogMessage("Lost Connection with REDIS");
-                //muxer.GetSubscriber().UnsubscribeAsync(CacheKeyEvent).Wait();
-                //Logging.LogMessage("{0} Un Subscribed");
             };
             muxer.ConnectionRestored += (sender, args) =>
             {
                 Logging.LogMessage("Connection Restored with REDIS");
-                //SubscribeToKeyEvent(fixEngine, muxer, CacheKeyEvent);
                 Logging.LogMessage("{0} Subscribed");
             };
         }
@@ -896,7 +871,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     EmailNotifier.recurringEmailsCount.Remove(session.ConnectionID);
             });
 
-            fixEngineSocket.RemoveFixEngineSocket(fixEngine);
+            // We will not remove FixEngine socket connection with FixConfgurator on deletion of Engine in FixConfigurator.
 
             if (engine != null)
             {
