@@ -26,22 +26,22 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             this.subject = new BehaviorSubject<bool>(isConnected);
         }
 
-        public static async Task ListenClientsAsync() // Listening FixEngine Clients
+        public static async Task ListenClientsAsync(bool listening) // Listening FixEngine Clients
         {
             TcpListener listener = new TcpListener(IPAddress.Any, socketListeningPort);
             listener.Start();
             Logging.LogMessage(LOGTYPE.Info, $"Start Listening to FixEngine Clients");
 
-            while (true)
+            while (listening)
             {
                 TcpClient tcpClient = await listener.AcceptTcpClientAsync();
                 Logging.LogMessage(LOGTYPE.Info, $"New FixEngine connected");
                 
-                HandleClientAsync(tcpClient);
+                HandleClientAsync(tcpClient); // If you don’t want your method execution to wait for the asynchronous method to complete its execution, then, in that case, you need to use the return type of the asynchronous method to void.
             }
         }
 
-        private static async Task HandleClientAsync(TcpClient tcpClient) 
+        private static async void HandleClientAsync(TcpClient tcpClient) 
         {
             SocketListener socketListener = null;
             bool isEngineIdReceived = false;
@@ -71,8 +71,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         socketListener.tcpClient = tcpClient;
                         socketListener.isConnected = true;
                         socketListener.subject.OnNext(socketListener.isConnected);
-                        fixEngineSocketConnections.TryAdd(fixEngineId, socketListener);
 
+                        fixEngineSocketConnections.TryAdd(fixEngineId, socketListener);
                         isEngineIdReceived = true;
                     }
                 }
@@ -86,7 +86,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     socketListener.isConnected = false;
                     socketListener.subject.OnNext(socketListener.isConnected);
-                    fixEngineSocketConnections.TryRemove(socketListener.fixEngineId, out SocketListener socketListenerInstance);
+                    fixEngineSocketConnections.TryRemove(socketListener.fixEngineId, out SocketListener value);
                 }
 
                 DisposeTcpInstanceNClosingTcpConnection(tcpClient);

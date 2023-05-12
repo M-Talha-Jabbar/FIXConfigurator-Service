@@ -54,9 +54,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private const bool existingMessage = false;
         private const bool realTimeMessage = true;
 
+        private bool listening = true;
+
         public FixHandler()
         {
-            Task.Run(() => SocketListener.ListenClientsAsync());
+            Task.Run(() => SocketListener.ListenClientsAsync(listening));
 
             Initializers();
             EnginePersistence();
