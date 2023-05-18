@@ -59,8 +59,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     {
                         string fixEngineId = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
-                        // proto modal of fixengine
-
                         bool isInstanceCreated = fixEngineSocketConnections.TryGetValue(fixEngineId, out SocketListener value);
                         if (isInstanceCreated) // If Engine has already been created in FixConfigurator
                             socketListener = value;
