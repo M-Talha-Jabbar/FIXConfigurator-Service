@@ -114,7 +114,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        public async Task<string> StartFixEngine(string FixEngineIpAndPort)
+        public async Task<string> StartFixEngine(string engineID)
         {
             try
             {
@@ -126,7 +126,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        public async Task<string> StopFixEngine(string FixEngineIpAndPort)
+        public async Task<string> StopFixEngine(string engineID)
         {
             try
             {

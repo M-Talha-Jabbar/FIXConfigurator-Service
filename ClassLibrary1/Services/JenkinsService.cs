@@ -184,10 +184,10 @@ namespace FIXMonitorBusinessLogicLayer.Services
             return "Not Created";
         }
 
-        public async Task<string> StartFixEngine(string FixEngineIpAndPort)
+        public async Task<string> StartFixEngine(string engineID)
         {
             IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
-            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(FixEngineIpAndPort);
+            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(engineID);
 
             if(fixEngineJenkinsConfiguration != null)
             {
@@ -197,10 +197,10 @@ namespace FIXMonitorBusinessLogicLayer.Services
             return "Not Created";
         }
 
-        public async Task<string> StopFixEngine(string FixEngineIpAndPort)
+        public async Task<string> StopFixEngine(string engineID)
         {
             IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
-            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(FixEngineIpAndPort);
+            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(engineID);
 
             if (fixEngineJenkinsConfiguration != null)
             {

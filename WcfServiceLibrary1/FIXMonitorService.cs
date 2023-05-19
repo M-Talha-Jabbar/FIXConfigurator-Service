@@ -321,14 +321,14 @@ namespace FIXMonitorService
             return await DataCache.TriggerJenkins(branchName, environment, FixEngineIpAndPort);
         }
 
-        public async Task<string> StartFixEngine(string FixEngineIpAndPort)
+        public async Task<string> StartFixEngine(string engineID)
         {
-            return await DataCache.StartFixEngine(FixEngineIpAndPort);
+            return await DataCache.StartFixEngine(engineID);
         }
 
-        public async Task<string> StopFixEngine(string FixEngineIpAndPort)
+        public async Task<string> StopFixEngine(string engineID)
         {
-            return await DataCache.StopFixEngine(FixEngineIpAndPort);
+            return await DataCache.StopFixEngine(engineID);
         }
 
         public async Task<IEnumerable<string>> GetJenkinsSlaveNodes() 

@@ -118,10 +118,10 @@ namespace FIXMonitorService
         Task<string> TriggerJenkins(string branchName, string environment, string FixEngineIpAndPort);
 
         [OperationContract]
-        Task<string> StartFixEngine(string FixEngineIpAndPort);
+        Task<string> StartFixEngine(string engineID);
 
         [OperationContract]
-        Task<string> StopFixEngine(string FixEngineIpAndPort);
+        Task<string> StopFixEngine(string engineID);
 
         [OperationContract]
         Task<bool> AddJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration);
