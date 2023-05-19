@@ -63,7 +63,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         }
         public async Task<string> JenkinsTrigger(string branchName, string environment)
         {
-
             try
             {
                 var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobTriggerUrl}?Branch={branchName}&Environment={environment}");
@@ -85,7 +84,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public async Task<string> JenkinsTrigger(string branchName, string environment, string DeploymentPath, string AgentName)
         {
-
             try
             {
                 var isJenkinsAgentOnlineRes = await isJenkinsAgentOnline(AgentName);
@@ -109,6 +107,30 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 return status_code;
 
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
+        }
+
+        public async Task<string> StartFixEngine(string FixEngineIpAndPort)
+        {
+            try
+            {
+                return "";
+            }
+            catch(Exception e)
+            {
+                return e.Message;
+            }
+        }
+
+        public async Task<string> StopFixEngine(string FixEngineIpAndPort)
+        {
+            try
+            {
+                return "";
             }
             catch (Exception e)
             {

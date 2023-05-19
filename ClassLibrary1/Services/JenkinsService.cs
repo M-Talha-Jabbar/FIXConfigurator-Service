@@ -6,12 +6,6 @@ using System.Threading.Tasks;
 using FIXMonitorBusinessLogicLayer.Data;
 using System.Collections.Concurrent;
 using CoreLogging;
-using System.Reflection;
-using Microsoft.AspNetCore.Mvc;
-using DevExtreme.AspNet.Data;
-using System.Configuration;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using FIXMonitorBusinessLogicLayer.Handler;
 using FIXMonitorBusinessLogicLayer.IHandler;
 using FIXMonitorBusinessLogicLayer.DataAccess.Repositories;
@@ -185,6 +179,32 @@ namespace FIXMonitorBusinessLogicLayer.Services
                 if (!string.IsNullOrEmpty(agentname) && !string.IsNullOrEmpty(path)) {
                     return await _JenkinsHandler.JenkinsTrigger(branchName, environment, fixEngineJenkinsConfiguration.Path, fixEngineJenkinsConfiguration.JenkinsAgentName);
                 }
+            }
+
+            return "Not Created";
+        }
+
+        public async Task<string> StartFixEngine(string FixEngineIpAndPort)
+        {
+            IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
+            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(FixEngineIpAndPort);
+
+            if(fixEngineJenkinsConfiguration != null)
+            {
+
+            }
+
+            return "Not Created";
+        }
+
+        public async Task<string> StopFixEngine(string FixEngineIpAndPort)
+        {
+            IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
+            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(FixEngineIpAndPort);
+
+            if (fixEngineJenkinsConfiguration != null)
+            {
+
             }
 
             return "Not Created";

@@ -97,9 +97,9 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
 
             try
             {
-                    var res = fixMonitorContext.FixEngineJenkinsConfiguration.Remove(fixEngineJenkinsConfiguration);
-                    Logging.LogMessage(LOGTYPE.Info, $"removed jenkins configuration succcessfully");
-                    return true;
+                var res = fixMonitorContext.FixEngineJenkinsConfiguration.Remove(fixEngineJenkinsConfiguration);
+                Logging.LogMessage(LOGTYPE.Info, $"removed jenkins configuration succcessfully");
+                return true;
                 
             }
             catch (Exception ex)
