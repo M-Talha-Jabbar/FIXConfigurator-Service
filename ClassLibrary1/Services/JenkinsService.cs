@@ -184,27 +184,27 @@ namespace FIXMonitorBusinessLogicLayer.Services
             return "Not Created";
         }
 
-        public async Task<string> StartFixEngine(string engineID)
+        public async Task<string> StartFixEngine(string FixEngineIpAndPort)
         {
             IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
-            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(engineID);
+            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(FixEngineIpAndPort);
 
             if(fixEngineJenkinsConfiguration != null)
             {
-
+                return "Created";
             }
 
             return "Not Created";
         }
 
-        public async Task<string> StopFixEngine(string engineID)
+        public async Task<string> StopFixEngine(string FixEngineIpAndPort)
         {
             IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
-            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(engineID);
+            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(FixEngineIpAndPort);
 
             if (fixEngineJenkinsConfiguration != null)
             {
-
+                return "Created";
             }
 
             return "Not Created";

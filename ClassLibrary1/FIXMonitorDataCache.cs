@@ -268,9 +268,9 @@ namespace FIXMonitorBusinessLogicLayer
             return await _jenkinsService.JenkinsTrigger(branchName, environment, FixEngineIpAndPort);
         }
 
-        public async Task<string> StartFixEngine(string engineID)
+        public async Task<string> StartFixEngine(string FixEngineIpAndPort)
         {
-            return await _jenkinsService.StartFixEngine(engineID);
+            return await _jenkinsService.StartFixEngine(FixEngineIpAndPort);
         }
 
         public async Task<string> StopFixEngine(string FixEngineIpAndPort)

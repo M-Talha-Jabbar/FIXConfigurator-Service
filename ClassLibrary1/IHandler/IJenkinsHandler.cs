@@ -10,8 +10,8 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
     public interface IJenkinsHandler
     {
         Task<string> JenkinsTrigger(string branchName, string environment, string DeploymentPath, string AgentName);
-        Task<string> StartFixEngine(string engineID);
-        Task<string> StopFixEngine(string engineID);
+        Task<string> StartFixEngine(string FixEngineIpAndPort);
+        Task<string> StopFixEngine(string FixEngineIpAndPort);
         Task<IEnumerable<string>> GetJenkinsSlaveNodes();
         bool AbortJenkinsLastJob();
         JenkinsJobStatus JenkinsLatestJobStatus();
