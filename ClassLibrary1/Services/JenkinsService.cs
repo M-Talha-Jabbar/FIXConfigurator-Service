@@ -173,11 +173,11 @@ namespace FIXMonitorBusinessLogicLayer.Services
 
             if (fixEngineJenkinsConfiguration != null)
             {
-                var agentname = fixEngineJenkinsConfiguration.JenkinsAgentName;
+                var agentName = fixEngineJenkinsConfiguration.JenkinsAgentName;
                 var path = fixEngineJenkinsConfiguration.Path;
 
-                if (!string.IsNullOrEmpty(agentname) && !string.IsNullOrEmpty(path)) {
-                    return await _JenkinsHandler.JenkinsTrigger(branchName, environment, fixEngineJenkinsConfiguration.Path, fixEngineJenkinsConfiguration.JenkinsAgentName);
+                if (!string.IsNullOrEmpty(agentName) && !string.IsNullOrEmpty(path)) {
+                    return await _JenkinsHandler.JenkinsTrigger(branchName, environment, path, agentName);
                 }
             }
 
@@ -191,10 +191,16 @@ namespace FIXMonitorBusinessLogicLayer.Services
 
             if(fixEngineJenkinsConfiguration != null)
             {
-                return "Created";
+                var agentName = fixEngineJenkinsConfiguration.JenkinsAgentName;
+                var path = fixEngineJenkinsConfiguration.Path;
+
+                if (!string.IsNullOrEmpty(agentName) && !string.IsNullOrEmpty(path))
+                {
+                    return await _JenkinsHandler.StartFixEngine(path, agentName);
+                }
             }
 
-            return "Not Created";
+            return "Please fill required field in Jenkins Configuration";
         }
 
         public async Task<string> StopFixEngine(string FixEngineIpAndPort)
@@ -204,10 +210,16 @@ namespace FIXMonitorBusinessLogicLayer.Services
 
             if (fixEngineJenkinsConfiguration != null)
             {
-                return "Created";
+                var agentName = fixEngineJenkinsConfiguration.JenkinsAgentName;
+                var path = fixEngineJenkinsConfiguration.Path;
+
+                if (!string.IsNullOrEmpty(agentName) && !string.IsNullOrEmpty(path))
+                {
+                    return await _JenkinsHandler.StopFixEngine(path, agentName);
+                }
             }
 
-            return "Not Created";
+            return "Please fill required field in Jenkins Configuration";
         }
 
         public async Task<JenkinsJobStatus> GetJenkinsLatestJobStatus() 

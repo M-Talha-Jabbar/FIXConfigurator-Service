@@ -38,6 +38,20 @@ namespace FIXMonitorBusinessLogicLayer.ConfigSections
             set { this["JenkinsJobTriggerUrl"] = value; }
         }
 
+        [ConfigurationProperty("JenkinsJobStartFixEngineUrl", IsRequired = true)]
+        public string JenkinsJobStartFixEngineUrl
+        {
+            get { return (string)this["JenkinsJobStartFixEngineUrl"]; }
+            set { this["JenkinsJobStartFixEngineUrl"] = value; }
+        }
+
+        [ConfigurationProperty("JenkinsJobStopFixEngineUrl", IsRequired = true)]
+        public string JenkinsJobStopFixEngineUrl
+        {
+            get { return (string)this["JenkinsJobStopFixEngineUrl"]; }
+            set { this["JenkinsJobStopFixEngineUrl"] = value; }
+        }
+
         [ConfigurationProperty("JenkinsMasterNodeDomain", IsRequired = true)]
         public string JenkinsMasterNodeDomain
         {
