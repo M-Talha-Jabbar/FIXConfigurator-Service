@@ -1272,29 +1272,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 if (!isConnected)
                 {
-                    // creating multiple engineMomento object
-
-                    if (!fixEngineMomentos.ContainsKey(fixEngine.engineID)) fixEngineMomentos.TryAdd(fixEngine.engineID, new FixEngineMomento());
-
-                    FixEngineMomento engineMomento;
-                    var isEngineMomentoExists = fixEngineMomentos.TryGetValue(fixEngine.engineID, out engineMomento);
-
-                    if (isEngineMomentoExists)
-                    {
-                        engineMomento.SetState(fixEngine);
-                    }
-                    else
-                    {
-                        Logging.LogMessage(LOGTYPE.Error, "Could not get engine Momento object");
-                    }
-
-                    //if (isConnected)
-                    //{
-                    //    var _state = engineMomento.GetState();
-                    //    if (_state == null) return;
-                    //    fixEngines = _state;
-                    //}
-
                     bool statusInFixSessionsDropdownUpdate = false;
 
                     // only sending updates to individual fix engine
