@@ -12,7 +12,6 @@ using RedisCacheService;
 using StackExchange.Redis;
 using CoreLogging;
 using proto;
-using FIXMonitorBusinessLogicLayer.Momentos;
 using DevExtreme.AspNet.Mvc;
 using Newtonsoft.Json;
 using DevExtreme.AspNet.Data;
@@ -45,7 +44,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private Dictionary<string, bool> hasSessionsBeenCreatedForAEngine; // Created for a purpose if update comes first before reading existing messages as since we are calling SubscribeAndFaliureCallback() before ReadMessages() while creating a FixEngine at the middle of the day.
         private ConcurrentStack<string> sessionStatuses;
 
-        private ConcurrentDictionary<string, FixEngineMomento> fixEngineMomentos;
         private EmailNotifier emailNotifier;
 
         private LockObjectsManager locksForHandlingStreamRead;
@@ -125,7 +123,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             sessionFixMessages = new Dictionary<string, List<FIXMessage>>();
             fixMessagesContainingConfiguredFixTagValuePair = new Dictionary<string, List<FIXMessage>>();
             hasSessionsBeenCreatedForAEngine = new Dictionary<string, bool>();
-            fixEngineMomentos = new ConcurrentDictionary<string, FixEngineMomento>();
             locksForHandlingStreamRead = new LockObjectsManager();
             sessionUpdatesLocks = new LockObjectsManager();
             sessionStatuses = new ConcurrentStack<string>();
