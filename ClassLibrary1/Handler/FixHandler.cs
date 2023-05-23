@@ -197,7 +197,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             bool isInstanceCreated = SocketListener.fixEngineSocketConnections.TryGetValue(fixEngine.engineID, out SocketListener value);
             if (!isInstanceCreated) // If FixEngine has not yet connected to FixConfigurator
-                SocketListener.fixEngineSocketConnections.TryAdd(fixEngine.engineID, new SocketListener());
+                SocketListener.fixEngineSocketConnections.TryAdd(fixEngine.engineID, new SocketListener(isConnected: false));
 
             SubscribeFixEngineSocketUpdate(fixEngine);
         }
@@ -1127,21 +1127,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             var recieve = new FBE.proto.HeaderModel();
             recieve.Attach(result[0].Value);
             recieve.Deserialize(out status);
-            //Logging.LogMessage(LOGTYPE.Debug, status.ToString());
-            //Dictionary<string, string> hashmap = new Dictionary<string, string>();
-            //foreach (var i in result)
-            //{
-            //    hashmap.Add(i.Name, i.Value);
-            //}
-            //if (hashmap.Keys.Count == 0)
-            //{
-            //    hashmap.Add("InSeq", "0");
-            //    hashmap.Add("OutSeq", "0");
-            //    hashmap.Add("Status", "unavailable");
-            //}
-            //var inSeq = hashmap["InSeq"].Split('\0');
-            //var outSeq = hashmap["OutSeq"].Split('\0');
-            //var status = hashmap["Status"].Split('\0');
 
             string conId = key.Replace("-Status", "");
             try
@@ -1167,10 +1152,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         session.Status = status.Status.ToString();
                         session.LastUpdated = DateTime.Now;
 
-                        SendFixSessionUpdates(session, engine.engineID, "update");
-
                         if (sendEmail)
                         {
+                            SendFixSessionUpdates(session, engine.engineID, "update");
                             SendFixSessionUpdates(session, engine.engineID, "update_status_in_fix_sessions_dropdown");
 
                             using (var context = new FIXMonitorContext())
@@ -1225,7 +1209,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         }
                     }
                 }
-                Logging.LogMessage($"Fix Session Update sent for EngineID: { engine.engineID } SessionID: { session.ConnectionID }");
             }
             catch (Exception e)
             {

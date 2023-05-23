@@ -16,12 +16,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         public static ConcurrentDictionary<string, SocketListener> fixEngineSocketConnections = new ConcurrentDictionary<string, SocketListener>();
         private string fixEngineId;
         private TcpClient tcpClient;
-        private BehaviorSubject<bool> subject;
+        private BehaviorSubject<bool> subject = null;
         private bool isConnected;
 
-        public SocketListener()
+        public SocketListener(bool isConnected)
         {
-            this.isConnected = false;
+            this.isConnected = isConnected;
             this.subject = new BehaviorSubject<bool>(isConnected);
         }
 
@@ -60,14 +60,18 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                         bool isInstanceCreated = fixEngineSocketConnections.TryGetValue(fixEngineId, out SocketListener value);
                         if (isInstanceCreated) // If Engine has already been created in FixConfigurator
+                        {
                             socketListener = value;
+                            socketListener.fixEngineId = fixEngineId;
+                            socketListener.tcpClient = tcpClient;
+                            // On FixEngine Connection, status update will go through Redis Key-Subscription Design
+                        } 
                         else // If Engine has not yet created in FixConfigurator
-                            socketListener = new SocketListener();
-
-                        socketListener.fixEngineId = fixEngineId;
-                        socketListener.tcpClient = tcpClient;
-                        socketListener.isConnected = true;
-                        socketListener.subject.OnNext(socketListener.isConnected);
+                        {
+                            socketListener = new SocketListener(isConnected: true);
+                            socketListener.fixEngineId = fixEngineId;
+                            socketListener.tcpClient = tcpClient;
+                        }
 
                         fixEngineSocketConnections.TryAdd(fixEngineId, socketListener);
                         isEngineIdReceived = true;
