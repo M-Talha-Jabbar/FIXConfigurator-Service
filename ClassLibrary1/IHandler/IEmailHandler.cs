@@ -12,7 +12,7 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
     public interface IEmailHandler
     {
         void DispatchEmail(EmailData emailData);
-        void SendEmail(string sessionId, string status, Sessions sessionInfo);
+        void SendEmail(string sessionId, string status, FixSessions sessionInfo);
         void SendEmail(string sessionId, FixTagValues fixTagValues);
         SessionEmails GetSessionAlertConfiguration(string SessionId);
         bool AddSessionAlertConfiguration(SessionEmails sessionEmails);

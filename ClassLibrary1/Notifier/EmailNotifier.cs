@@ -15,7 +15,7 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         private static EmailHandler emailHandler = new EmailHandler();
         private string conId;
         private string status;
-        private Sessions sessionInfo;
+        private FixSessions sessionInfo;
         private FIXSession FIXSession;
         private FixTagValues fixTagValues; 
 
@@ -23,14 +23,14 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         public static Dictionary<string, int> recurringEmailsCount = new Dictionary<string, int>();
         public static List<FixTagValues> fixTagValueConfigurations = new List<FixTagValues>();
 
-        public EmailNotifier(string conId, string status, Sessions sessionInfo) // Email Alert without Timer
+        public EmailNotifier(string conId, string status, FixSessions sessionInfo) // Email Alert without Timer
         {
             this.conId = conId;
             this.status = status;
             this.sessionInfo = sessionInfo;
         }
 
-        public EmailNotifier(int interval, string conId, string status, Sessions sessionInfo) // Email Alert with Time defined (can be both Recurring & Non-Recurring)
+        public EmailNotifier(int interval, string conId, string status, FixSessions sessionInfo) // Email Alert with Time defined (can be both Recurring & Non-Recurring)
         {
             timer = new Timer(interval);
             timer.Elapsed += OnEventExecution;
@@ -46,7 +46,7 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             timer.Start();
         }
 
-        public EmailNotifier(int interval, FIXSession fixSession, Sessions sessionInfo) // Scheduled Check
+        public EmailNotifier(int interval, FIXSession fixSession, FixSessions sessionInfo) // Scheduled Check
         {
             timer = new Timer(interval);
             timer.Elapsed += OnScheduledCheckExecution;

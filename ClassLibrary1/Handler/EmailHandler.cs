@@ -37,7 +37,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             GEmailUtil.SendEmail(emailData);
         }
 
-        public void SendEmail(string sessionId, string status, Sessions sessionInfo)
+        public void SendEmail(string sessionId, string status, FixSessions sessionInfo)
         {
             EmailData emailData = new EmailData();
 
@@ -106,7 +106,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 using (var context = new FIXMonitorContext())
                 {
-                    var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == SessionId);
+                    var sessionInfo = context.FixSessions.FirstOrDefault(s => s.SessionId == SessionId);
 
                     if (sessionInfo != null)
                     {
@@ -136,7 +136,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             if (sessionEmails != null)
             {
-                var sessionConfiguration = new Sessions()
+                var sessionConfiguration = new FixSessions()
                 {
                     SessionId = sessionEmails.SessionId,
                     ToEmails = sessionEmails.ToEmails,
@@ -150,7 +150,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 using (var context = new FIXMonitorContext())
                 {
-                    context.Sessions.Add(sessionConfiguration);
+                    context.FixSessions.Add(sessionConfiguration);
                     context.SaveChanges();
                 }
 
@@ -164,7 +164,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             if (sessionEmails != null)
             {
-                var updatedSessionConfiguration = new Sessions()
+                var updatedSessionConfiguration = new FixSessions()
                 {
                     SessionId = sessionEmails.SessionId,
                     ToEmails = sessionEmails.ToEmails,
@@ -191,7 +191,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 using (var context = new FIXMonitorContext())
                 {
-                    context.Sessions.Update(updatedSessionConfiguration);
+                    context.FixSessions.Update(updatedSessionConfiguration);
                     context.SaveChanges();
                 }
 
@@ -213,11 +213,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 using (var context = new FIXMonitorContext())
                 {
-                    var session = context.Sessions.FirstOrDefault(s => s.SessionId == SessionId);
+                    var session = context.FixSessions.FirstOrDefault(s => s.SessionId == SessionId);
 
                     if (session != null)
                     {
-                        context.Sessions.Remove(session);
+                        context.FixSessions.Remove(session);
                         context.SaveChanges();
 
                         return true;

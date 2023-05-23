@@ -27,8 +27,8 @@ namespace FIXMonitorBusinessLogicLayer.Data
         public virtual DbSet<AspNetUserTokens> AspNetUserTokens { get; set; }
         public virtual DbSet<AspNetUsers> AspNetUsers { get; set; }
         public virtual DbSet<FixEngineJenkinsConfiguration> FixEngineJenkinsConfiguration { get; set; }
+        public virtual DbSet<FixSessions> FixSessions { get; set; }
         public virtual DbSet<FixTagValues> FixTagValues { get; set; }
-        public virtual DbSet<Sessions> Sessions { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -136,18 +136,37 @@ namespace FIXMonitorBusinessLogicLayer.Data
 
             modelBuilder.Entity<FixEngineJenkinsConfiguration>(entity =>
             {
-                entity.HasKey(e => e.FixEngineIpAndPort);
+                entity.HasKey(e => e.EngineId);
+
+                entity.Property(e => e.EngineId).HasDefaultValueSql("(N'')");
+
+                entity.Property(e => e.JenkinsAgentName).IsRequired();
 
                 entity.Property(e => e.Path).IsRequired();
             });
 
-            modelBuilder.Entity<Sessions>(entity =>
+            modelBuilder.Entity<FixSessions>(entity =>
             {
                 entity.HasKey(e => e.SessionId);
 
                 entity.Property(e => e.Recurring)
                     .IsRequired()
                     .HasDefaultValueSql("(CONVERT([bit],(0)))");
+
+                entity.Property(e => e.ToEmails).IsRequired();
+            });
+
+            modelBuilder.Entity<FixTagValues>(entity =>
+            {
+                entity.Property(e => e.Engine).IsRequired();
+
+                entity.Property(e => e.FixTag).IsRequired();
+
+                entity.Property(e => e.FixValue).IsRequired();
+
+                entity.Property(e => e.SessionId).IsRequired();
+
+                entity.Property(e => e.ToEmails).IsRequired();
             });
 
             OnModelCreatingPartial(modelBuilder);

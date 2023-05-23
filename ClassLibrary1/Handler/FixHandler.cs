@@ -1159,7 +1159,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                             using (var context = new FIXMonitorContext())
                             {
-                                var sessionInfo = context.Sessions.FirstOrDefault(s => s.SessionId == conId);
+                                var sessionInfo = context.FixSessions.FirstOrDefault(s => s.SessionId == conId);
 
                                 if (sessionInfo != null && sessionInfo.EmailStatus) // If email alert has been enabled for a particular session
                                 {
@@ -1199,7 +1199,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                     Logging.LogMessage(LOGTYPE.Info, $"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
 
-                                    emailNotifier = new EmailNotifier(conId, session.Status, new Sessions() { SessionId = session.ConnectionID }).SendEmail();
+                                    emailNotifier = new EmailNotifier(conId, session.Status, new FixSessions() { SessionId = session.ConnectionID }).SendEmail();
 
                                     Logging.LogMessage(LOGTYPE.Info, "Default Email Settings used");
                                 }
