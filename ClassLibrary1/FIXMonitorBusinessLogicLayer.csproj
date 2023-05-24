@@ -360,6 +360,7 @@
     <Compile Include="DataAccess\UnitOfWork\UnitOfWork.cs" />
     <Compile Include="Data\FixEngineJenkinsConfiguration.cs" />
     <Compile Include="Handler\JenkinsHandler.cs" />
+    <Compile Include="Handler\SocketListener.cs" />
     <Compile Include="IHandler\IJenkinsHandler.cs" />
     <Compile Include="DataAccess\IRepository\IJenkinsRepository.cs" />
     <Compile Include="DataAccess\IUnitOfWork\IUnitOfWork.cs" />
@@ -383,7 +384,7 @@
     <Compile Include="Data\AspNetUserTokens.cs" />
     <Compile Include="Data\FIXMonitorContext.cs" />
     <Compile Include="Data\FixTagValues.cs" />
-    <Compile Include="Data\Sessions.cs" />
+    <Compile Include="Data\FixSessions.cs" />
     <Compile Include="FixEngineSocket.cs" />
     <!-- <Compile Include="FixMessageDirectory.cs" /> -->
     <Compile Include="FileStreamExport.cs" />
@@ -398,7 +399,7 @@
     <Compile Include="DataModels\FIXSession.cs" />
     <Compile Include="Handler\EmailHandler.cs" />
     <Compile Include="Handler\FixHandler.cs" />
-    <Compile Include="Handler\SocketHandler.cs" />
+    <Compile Include="Handler\SocketInitiator.cs" />
     <Compile Include="ICloneable\ICloneable.cs" />
     <Compile Include="IComparers\FixMessageSorter.cs" />
     <Compile Include="IHandler\IEmailHandler.cs" />
@@ -406,7 +407,6 @@
     <Compile Include="KeyedCollections\FixEnginesKeyedCollection.cs" />
     <Compile Include="KeyedCollections\FixSessionKeyedCollection.cs" />
     <Compile Include="LocksManager\LockObjectsManager.cs" />
-    <Compile Include="Momentos\FixEngineMomento.cs" />
     <Compile Include="Notifier\EmailNotifier.cs" />
     <Compile Include="Observable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -9,8 +9,8 @@ namespace FIXMonitorBusinessLogicLayer.Data
 {
     public partial class FixEngineJenkinsConfiguration
     {
-        public string FixEngineIpAndPort { get; set; }
         public string Path { get; set; }
         public string JenkinsAgentName { get; set; }
+        public string EngineId { get; set; }
     }
 }

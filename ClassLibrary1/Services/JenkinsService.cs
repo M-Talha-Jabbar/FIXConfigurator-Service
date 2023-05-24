@@ -6,12 +6,6 @@ using System.Threading.Tasks;
 using FIXMonitorBusinessLogicLayer.Data;
 using System.Collections.Concurrent;
 using CoreLogging;
-using System.Reflection;
-using Microsoft.AspNetCore.Mvc;
-using DevExtreme.AspNet.Data;
-using System.Configuration;
-using System.Net.Http;
-using System.Net.Http.Headers;
 using FIXMonitorBusinessLogicLayer.Handler;
 using FIXMonitorBusinessLogicLayer.IHandler;
 using FIXMonitorBusinessLogicLayer.DataAccess.Repositories;
@@ -44,7 +38,7 @@ namespace FIXMonitorBusinessLogicLayer.Services
                     var res = await JenkinsRepositiory.CreateJenkinsConfigAsync(fixEngineJenkinsConfiguration, JenkinsUnitOfWork.Context);
                      savechanges = await JenkinsUnitOfWork.SaveAsync();
                     if(savechanges)
-                        FixEngineJenkinsConfigurations.TryAdd(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration);
+                        FixEngineJenkinsConfigurations.TryAdd(fixEngineJenkinsConfiguration.EngineId, fixEngineJenkinsConfiguration);
                    
                     return savechanges;
                 }
@@ -72,14 +66,14 @@ namespace FIXMonitorBusinessLogicLayer.Services
                     if (savechanges)
                     {
                         FixEngineJenkinsConfiguration oldValue;
-                        if (FixEngineJenkinsConfigurations.ContainsKey(fixEngineJenkinsConfiguration.FixEngineIpAndPort))
+                        if (FixEngineJenkinsConfigurations.ContainsKey(fixEngineJenkinsConfiguration.EngineId))
                         {
-                            FixEngineJenkinsConfigurations.TryGetValue(fixEngineJenkinsConfiguration.FixEngineIpAndPort, out oldValue);
-                            FixEngineJenkinsConfigurations.TryUpdate(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration, oldValue);
+                            FixEngineJenkinsConfigurations.TryGetValue(fixEngineJenkinsConfiguration.EngineId, out oldValue);
+                            FixEngineJenkinsConfigurations.TryUpdate(fixEngineJenkinsConfiguration.EngineId, fixEngineJenkinsConfiguration, oldValue);
                         }
                         else 
                         {
-                            FixEngineJenkinsConfigurations.TryAdd(fixEngineJenkinsConfiguration.FixEngineIpAndPort, fixEngineJenkinsConfiguration);
+                            FixEngineJenkinsConfigurations.TryAdd(fixEngineJenkinsConfiguration.EngineId, fixEngineJenkinsConfiguration);
                         }
                            
                          return savechanges;
@@ -93,9 +87,9 @@ namespace FIXMonitorBusinessLogicLayer.Services
             }
         }
 
-        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string FixEngineIpAndPort)
+        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string engineID)
         {
-            if (FixEngineIpAndPort == null) return null;
+            if (engineID == null) return null;
 
             using (IUnitOfWork<FIXMonitorContext> JenkinsUnitOfWork = new UnitOfWork<FIXMonitorContext>())
             {
@@ -103,18 +97,18 @@ namespace FIXMonitorBusinessLogicLayer.Services
 
                 try
                 {
-                    var res = FixEngineJenkinsConfigurations.TryGetValue(FixEngineIpAndPort, out fixEngineJenkinsConfiguration);
+                    var res = FixEngineJenkinsConfigurations.TryGetValue(engineID, out fixEngineJenkinsConfiguration);
                     if (res)
                     {
                         return fixEngineJenkinsConfiguration;
                     }
 
-                    fixEngineJenkinsConfiguration = await JenkinsRepositiory.GetJenkinsConfigAsync(FixEngineIpAndPort, JenkinsUnitOfWork.Context);
+                    fixEngineJenkinsConfiguration = await JenkinsRepositiory.GetJenkinsConfigAsync(engineID, JenkinsUnitOfWork.Context);
 
                     if (fixEngineJenkinsConfiguration != null &&
-                       !FixEngineJenkinsConfigurations.ContainsKey(fixEngineJenkinsConfiguration.FixEngineIpAndPort))
+                       !FixEngineJenkinsConfigurations.ContainsKey(fixEngineJenkinsConfiguration.EngineId))
                     {
-                        FixEngineJenkinsConfigurations.TryAdd(FixEngineIpAndPort, fixEngineJenkinsConfiguration);
+                        FixEngineJenkinsConfigurations.TryAdd(engineID, fixEngineJenkinsConfiguration);
                     }
                 }
                 catch (Exception ex)
@@ -126,9 +120,9 @@ namespace FIXMonitorBusinessLogicLayer.Services
             }
         }
 
-        public async Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort)
+        public async Task<bool> DeleteJenkinsConfiguration(string engineID)
         {
-            if (FixEngineIpAndPort == null) return false;
+            if (engineID == null) return false;
 
             using (IUnitOfWork<FIXMonitorContext> JenkinsUnitOfWork = new UnitOfWork<FIXMonitorContext>())
                 {
@@ -137,12 +131,12 @@ namespace FIXMonitorBusinessLogicLayer.Services
                 FixEngineJenkinsConfiguration removedFixEngineJenkinsConfiguration;
                 try
                     {
-                    fixEngineJenkinsConfiguration = await JenkinsRepositiory.GetJenkinsConfigAsync(FixEngineIpAndPort, JenkinsUnitOfWork.Context);
+                    fixEngineJenkinsConfiguration = await JenkinsRepositiory.GetJenkinsConfigAsync(engineID, JenkinsUnitOfWork.Context);
                     var isRemoved = fixEngineJenkinsConfiguration != null ? JenkinsRepositiory.DeleteJenkinsConfigAsync(fixEngineJenkinsConfiguration, JenkinsUnitOfWork.Context) : true;
                    
                     if (isRemoved) 
                     {
-                        FixEngineJenkinsConfigurations.TryRemove(FixEngineIpAndPort, out removedFixEngineJenkinsConfiguration);
+                        FixEngineJenkinsConfigurations.TryRemove(engineID, out removedFixEngineJenkinsConfiguration);
                     }
                     
                     savechanges = await JenkinsUnitOfWork.SaveAsync();
@@ -171,23 +165,61 @@ namespace FIXMonitorBusinessLogicLayer.Services
             return await _JenkinsHandler.JenkinsTrigger(branchName, environment, "D:/jenkins_105/workspace/OMSServers/FixHub-Config-Using-Web/Http-Trigger-For-FixHub-Config-Deployment", "Dev_Local");
         }
 
-        public async Task<string> JenkinsTrigger(string branchName, string environment, string FixEngineIpAndPort)
+        public async Task<string> JenkinsTrigger(string branchName, string environment, string engineID)
         {
             IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
-            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(FixEngineIpAndPort);
+            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(engineID);
             
 
             if (fixEngineJenkinsConfiguration != null)
             {
-                var agentname = fixEngineJenkinsConfiguration.JenkinsAgentName;
+                var agentName = fixEngineJenkinsConfiguration.JenkinsAgentName;
                 var path = fixEngineJenkinsConfiguration.Path;
 
-                if (!string.IsNullOrEmpty(agentname) && !string.IsNullOrEmpty(path)) {
-                    return await _JenkinsHandler.JenkinsTrigger(branchName, environment, fixEngineJenkinsConfiguration.Path, fixEngineJenkinsConfiguration.JenkinsAgentName);
+                if (!string.IsNullOrEmpty(agentName) && !string.IsNullOrEmpty(path)) {
+                    return await _JenkinsHandler.JenkinsTrigger(branchName, environment, path, agentName);
                 }
             }
 
             return "Not Created";
+        }
+
+        public async Task<string> StartFixEngine(string engineID)
+        {
+            IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
+            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(engineID);
+
+            if(fixEngineJenkinsConfiguration != null)
+            {
+                var agentName = fixEngineJenkinsConfiguration.JenkinsAgentName;
+                var path = fixEngineJenkinsConfiguration.Path;
+
+                if (!string.IsNullOrEmpty(agentName) && !string.IsNullOrEmpty(path))
+                {
+                    return await _JenkinsHandler.StartFixEngine(path, agentName);
+                }
+            }
+
+            return "Please fill required field in Jenkins Configuration";
+        }
+
+        public async Task<string> StopFixEngine(string engineID)
+        {
+            IJenkinsHandler _JenkinsHandler = await JenkinsHandler.GetInstance();
+            var fixEngineJenkinsConfiguration = await GetJenkinsConfiguration(engineID);
+
+            if (fixEngineJenkinsConfiguration != null)
+            {
+                var agentName = fixEngineJenkinsConfiguration.JenkinsAgentName;
+                var path = fixEngineJenkinsConfiguration.Path;
+
+                if (!string.IsNullOrEmpty(agentName) && !string.IsNullOrEmpty(path))
+                {
+                    return await _JenkinsHandler.StopFixEngine(path, agentName);
+                }
+            }
+
+            return "Please fill required field in Jenkins Configuration";
         }
 
         public async Task<JenkinsJobStatus> GetJenkinsLatestJobStatus() 

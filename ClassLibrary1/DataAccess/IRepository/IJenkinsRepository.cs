@@ -11,7 +11,7 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.IRepository
     {
         Task<FixEngineJenkinsConfiguration> CreateJenkinsConfigAsync(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration, FIXMonitorContext fixMonitorContext);
         FixEngineJenkinsConfiguration UpdateJenkinsConfigAsync(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration, FIXMonitorContext fixMonitorContext);
-        Task<FixEngineJenkinsConfiguration> GetJenkinsConfigAsync(string FixEngineIpAndPort, FIXMonitorContext fixMonitorContext);
+        Task<FixEngineJenkinsConfiguration> GetJenkinsConfigAsync(string engineID, FIXMonitorContext fixMonitorContext);
         bool DeleteJenkinsConfigAsync(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration, FIXMonitorContext fixMonitorContext);
     }
 }

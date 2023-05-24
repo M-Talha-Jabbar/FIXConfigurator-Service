@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace FIXMonitorBusinessLogicLayer.Data
 {
-    public partial class Sessions
+    public partial class FixSessions
     {
         public string SessionId { get; set; }
         public string ToEmails { get; set; }

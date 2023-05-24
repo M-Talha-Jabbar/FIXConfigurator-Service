@@ -63,7 +63,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         }
         public async Task<string> JenkinsTrigger(string branchName, string environment)
         {
-
             try
             {
                 var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobTriggerUrl}?Branch={branchName}&Environment={environment}");
@@ -85,11 +84,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         public async Task<string> JenkinsTrigger(string branchName, string environment, string DeploymentPath, string AgentName)
         {
-
             try
             {
                 var isJenkinsAgentOnlineRes = await isJenkinsAgentOnline(AgentName);
-
                 if (!isJenkinsAgentOnlineRes) return $"Jenkins Node {AgentName} is Offline";
 
                 DeploymentPath = System.Web.HttpUtility.UrlEncode(DeploymentPath);
@@ -109,6 +106,60 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 return status_code;
 
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
+        }
+
+        public async Task<string> StartFixEngine(string path, string AgentName)
+        {
+            try
+            {
+                var isJenkinsAgentOnlineRes = await isJenkinsAgentOnline(AgentName);
+                if (!isJenkinsAgentOnlineRes) return $"Jenkins Node {AgentName} is Offline";
+
+                //var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStartFixEngineUrl}?Branch={branchName}&Environment={environment}&DeploymentPath={DeploymentPath}&AgentName={AgentName}");
+
+                //jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
+
+                //lastBuild = JenkinsLatestJobStatus();
+
+                //var triggerStatus = await client.SendAsync(jenkins_job_trigger);
+
+                //var status_code = triggerStatus.StatusCode.ToString();
+
+                //return status_code;
+
+                return "";
+            }
+            catch(Exception e)
+            {
+                return e.Message;
+            }
+        }
+
+        public async Task<string> StopFixEngine(string path, string AgentName)
+        {
+            try
+            {
+                var isJenkinsAgentOnlineRes = await isJenkinsAgentOnline(AgentName);
+                if (!isJenkinsAgentOnlineRes) return $"Jenkins Node {AgentName} is Offline";
+
+                //var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStopFixEngineUrl}?Branch={branchName}&Environment={environment}&DeploymentPath={DeploymentPath}&AgentName={AgentName}");
+
+                //jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
+
+                //lastBuild = JenkinsLatestJobStatus();
+
+                //var triggerStatus = await client.SendAsync(jenkins_job_trigger);
+
+                //var status_code = triggerStatus.StatusCode.ToString();
+
+                //return status_code;
+
+                return "";
             }
             catch (Exception e)
             {

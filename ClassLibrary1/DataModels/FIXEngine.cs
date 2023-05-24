@@ -44,7 +44,7 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
                 redisIpAddress = engine.redisIpAddress,
                 redisIpPort = engine.redisIpPort,
                 redisDB = (ulong)engine.redisDB,
-                FIXEngineIpAddress = engine.FIXEngineIpAddress,
+                FIXEngineIpAddress = engine.FIXEngineIpAddress == null ? "" : engine.FIXEngineIpAddress,
                 FIXEngineIpPort = engine.FIXEngineIpPort.ToString()
             };
         }

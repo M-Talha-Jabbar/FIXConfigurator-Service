@@ -65,14 +65,14 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
         }
 
         // jenkins config read
-        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfigAsync(string FixEngineIpAndPort, FIXMonitorContext fixMonitorContext)
+        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfigAsync(string engineID, FIXMonitorContext fixMonitorContext)
         {
             Logging.LogMessage(LOGTYPE.Info, $"Method name: GetJenkinsConfigAsync in JenkinsRepository started");
             FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration = null;
             try
             {
-                if (string.IsNullOrEmpty(FixEngineIpAndPort)) return fixEngineJenkinsConfiguration;
-                    fixEngineJenkinsConfiguration = await fixMonitorContext.FixEngineJenkinsConfiguration.FirstOrDefaultAsync(x => x.FixEngineIpAndPort == FixEngineIpAndPort);
+                if (string.IsNullOrEmpty(engineID)) return fixEngineJenkinsConfiguration;
+                    fixEngineJenkinsConfiguration = await fixMonitorContext.FixEngineJenkinsConfiguration.FirstOrDefaultAsync(x => x.EngineId == engineID);
 
                     Logging.LogMessage(LOGTYPE.Info, $"read configuration succcessfully");
                     return fixEngineJenkinsConfiguration;
@@ -97,9 +97,9 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
 
             try
             {
-                    var res = fixMonitorContext.FixEngineJenkinsConfiguration.Remove(fixEngineJenkinsConfiguration);
-                    Logging.LogMessage(LOGTYPE.Info, $"removed jenkins configuration succcessfully");
-                    return true;
+                var res = fixMonitorContext.FixEngineJenkinsConfiguration.Remove(fixEngineJenkinsConfiguration);
+                Logging.LogMessage(LOGTYPE.Info, $"removed jenkins configuration succcessfully");
+                return true;
                 
             }
             catch (Exception ex)

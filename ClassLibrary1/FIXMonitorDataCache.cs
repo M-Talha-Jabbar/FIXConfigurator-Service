@@ -262,10 +262,22 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return await _jenkinsService.JenkinsTrigger(branchName, environment);
         }
-        public async Task<string> TriggerJenkins(string branchName, string environment, string FixEngineIpAndPort)
+
+        public async Task<string> TriggerJenkins(string branchName, string environment, string engineID)
         {
-            return await _jenkinsService.JenkinsTrigger(branchName, environment, FixEngineIpAndPort);
+            return await _jenkinsService.JenkinsTrigger(branchName, environment, engineID);
         }
+
+        public async Task<string> StartFixEngine(string engineID)
+        {
+            return await _jenkinsService.StartFixEngine(engineID);
+        }
+
+        public async Task<string> StopFixEngine(string engineID)
+        {
+            return await _jenkinsService.StopFixEngine(engineID);
+        }
+
         public async Task<IEnumerable<string>> GetJenkinsSlaveNodes()
         {
             return await _jenkinsService.GetJenkinsSlaveNodes();
@@ -279,13 +291,13 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return await _jenkinsService.UpdateJenkinsConfiguration(fixEngineJenkinsConfiguration);
         }
-        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string FixEngineIpAndPort)
+        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string engineID)
         {
-            return await _jenkinsService.GetJenkinsConfiguration(FixEngineIpAndPort);
+            return await _jenkinsService.GetJenkinsConfiguration(engineID);
         }
-        public async Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort)
+        public async Task<bool> DeleteJenkinsConfiguration(string engineID)
         {
-            return await _jenkinsService.DeleteJenkinsConfiguration(FixEngineIpAndPort);
+            return await _jenkinsService.DeleteJenkinsConfiguration(engineID);
         }
 
         public async Task<JenkinsJobStatus> GetJenkinsLatestJobStatus()

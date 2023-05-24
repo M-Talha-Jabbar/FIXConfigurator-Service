@@ -13,7 +13,7 @@ using System.Reactive.Subjects;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
-    public class SocketHandler : IDisposable
+    public class SocketInitiator : IDisposable
     {
         //static int heartbeat = Convert.ToInt32(System.Configuration.ConfigurationManager.AppSettings["heartbeatIntervalForFixHub"].ToString());
         private int port;
@@ -25,23 +25,23 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private BehaviorSubject<bool> subject;
         private TcpClient tcpClient;
 
-        public SocketHandler(string hostname, int port, string fixEngineName)
+        public SocketInitiator(string hostname, int port, string fixEngineName)
         {
             this.hostname = hostname;
             this.port = port;
             this.fixEngineName = fixEngineName;
-            subject = new BehaviorSubject<bool>(isRunning);
-            tcpClient = new TcpClient();
+            this.subject = new BehaviorSubject<bool>(isRunning);
+            this.tcpClient = new TcpClient();
         }
 
-        public async Task CheckPortStatus()
+        public async Task CheckPortStatusAsync()
         {
             while (true)
             {
                 if (!isEngineExist)
                     break;
 
-                bool isPortOpen = await IsPortOpen();
+                bool isPortOpen = await IsPortOpenAsync();
                 string portStatus = isPortOpen ? "Open" : "Closed";
                 Logging.LogMessage(LOGTYPE.Info, $"FixEngine {fixEngineName} Port {port} is: {portStatus}");
 
@@ -58,11 +58,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     Logging.LogMessage(LOGTYPE.Info, $"FixEngine {fixEngineName} on {hostname}:{port} is NOT running");
                 }
 
-                Thread.Sleep(waitBeforeConnecting);
+                await Task.Delay(waitBeforeConnecting);
             }
         }
 
-        private async Task<bool> IsPortOpen()
+        private async Task<bool> IsPortOpenAsync()
         {
             try
             {
@@ -121,7 +121,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             isEngineExist = false;
         }
 
-        ~SocketHandler()
+        ~SocketInitiator()
         {
             Logging.LogMessage(LOGTYPE.Info, $"Disconnecting socket with FixEngine {fixEngineName} on {hostname}:{port}");
             tcpClient.Close();

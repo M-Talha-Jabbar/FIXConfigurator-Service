@@ -316,9 +316,19 @@ namespace FIXMonitorService
         {
             return this.DataCache.GetSessionStatusMessage();
         }
-        public async Task<string> TriggerJenkins(string branchName, string environment, string FixEngineIpAndPort)
+        public async Task<string> TriggerJenkins(string branchName, string environment, string engineID)
         {
-            return await DataCache.TriggerJenkins(branchName, environment, FixEngineIpAndPort);
+            return await DataCache.TriggerJenkins(branchName, environment, engineID);
+        }
+
+        public async Task<string> StartFixEngine(string engineID)
+        {
+            return await DataCache.StartFixEngine(engineID);
+        }
+
+        public async Task<string> StopFixEngine(string engineID)
+        {
+            return await DataCache.StopFixEngine(engineID);
         }
 
         public async Task<IEnumerable<string>> GetJenkinsSlaveNodes() 
@@ -337,14 +347,14 @@ namespace FIXMonitorService
             return await DataCache.UpdateJenkinsConfiguration(fixEngineJenkinsConfiguration);
         }
 
-        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string FixEngineIpAndPort)
+        public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string engineID)
         {
-            return await DataCache.GetJenkinsConfiguration(FixEngineIpAndPort);
+            return await DataCache.GetJenkinsConfiguration(engineID);
         }
 
-        public async Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort)
+        public async Task<bool> DeleteJenkinsConfiguration(string engineID)
         {
-            return await DataCache.DeleteJenkinsConfiguration(FixEngineIpAndPort);
+            return await DataCache.DeleteJenkinsConfiguration(engineID);
         }
         public async Task<JenkinsJobStatus> GetJenkinsLatestJobStatus()
         {
