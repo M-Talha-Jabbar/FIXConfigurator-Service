@@ -12,12 +12,12 @@ namespace FIXMonitorBusinessLogicLayer.Services
     {
         Task<bool> AddJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration);
         Task<bool> UpdateJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration);
-        Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string FixEngineIpAndPort);
-        Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort);
+        Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string engineID);
+        Task<bool> DeleteJenkinsConfiguration(string engineID);
         Task<string> JenkinsTrigger(string branchName, string environment);
-        Task<string> JenkinsTrigger(string branchName, string environment, string FixEngineIpAndPort);
-        Task<string> StartFixEngine(string FixEngineIpAndPort);
-        Task<string> StopFixEngine(string FixEngineIpAndPort);
+        Task<string> JenkinsTrigger(string branchName, string environment, string engineID);
+        Task<string> StartFixEngine(string engineID);
+        Task<string> StopFixEngine(string engineID);
         Task<IEnumerable<string>> GetJenkinsSlaveNodes();
         Task<JenkinsJobStatus> GetJenkinsLatestJobStatus();
     }

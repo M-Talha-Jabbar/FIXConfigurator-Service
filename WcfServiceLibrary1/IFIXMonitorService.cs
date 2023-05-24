@@ -115,13 +115,13 @@ namespace FIXMonitorService
         IEnumerable<string> GetSessionStatusMessage();
 
         [OperationContract]
-        Task<string> TriggerJenkins(string branchName, string environment, string FixEngineIpAndPort);
+        Task<string> TriggerJenkins(string branchName, string environment, string engineID);
 
         [OperationContract]
-        Task<string> StartFixEngine(string FixEngineIpAndPort);
+        Task<string> StartFixEngine(string engineID);
 
         [OperationContract]
-        Task<string> StopFixEngine(string FixEngineIpAndPort);
+        Task<string> StopFixEngine(string engineID);
 
         [OperationContract]
         Task<bool> AddJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration);
@@ -130,10 +130,10 @@ namespace FIXMonitorService
         Task<bool> UpdateJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration);
 
         [OperationContract]
-        Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string FixEngineIpAndPort);
+        Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string engineID);
 
         [OperationContract]
-        Task<bool> DeleteJenkinsConfiguration(string FixEngineIpAndPort);
+        Task<bool> DeleteJenkinsConfiguration(string engineID);
 
         [OperationContract]
         Task<IEnumerable<string>> GetJenkinsSlaveNodes();
