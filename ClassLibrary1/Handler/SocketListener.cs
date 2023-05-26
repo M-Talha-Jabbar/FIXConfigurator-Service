@@ -53,32 +53,41 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     byte[] buffer = new byte[256];
                     int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                    
+                    if (bytesRead == 0) // When 0 bytes is read, it means that the opposite party has disconnected the socket.
+                    {
+                        socketListener.isConnected = false;
+                        socketListener.subject.OnNext(socketListener.isConnected);
+
+                        // We will not remove socket instance from fixEngineSocketConnections collection in FixConfigurator on disconnection with a FixEngine socket.
+
+                        DisposeTcpInstanceNClosingTcpConnection(tcpClient);
+
+                        break;
+                    }
 
                     if (!isEngineIdReceived)
                     {
                         string fixEngineId = Encoding.ASCII.GetString(buffer, 0, bytesRead);
 
                         bool isInstanceCreated = fixEngineSocketConnections.TryGetValue(fixEngineId, out SocketListener value);
+
                         if (isInstanceCreated) // If Engine has already been created in FixConfigurator
-                        {
                             socketListener = value;
-                            socketListener.fixEngineId = fixEngineId;
-                            socketListener.tcpClient = tcpClient;
                             // On FixEngine Connection, status update will go through Redis Key-Subscription Design
-                        } 
+
                         else // If Engine has not yet created in FixConfigurator
-                        {
                             socketListener = new SocketListener(isConnected: true);
-                            socketListener.fixEngineId = fixEngineId;
-                            socketListener.tcpClient = tcpClient;
-                        }
+
+                        socketListener.fixEngineId = fixEngineId;
+                        socketListener.tcpClient = tcpClient;
 
                         fixEngineSocketConnections.TryAdd(fixEngineId, socketListener);
                         isEngineIdReceived = true;
                     }
                 }
             }
-            catch(Exception ex)
+            catch(Exception ex) // Exception is thrown when socket connection is forcbily closed. 
             {
                 Logging.LogMessage(LOGTYPE.Error, "Exception: " + ex.Message);
                 Logging.LogMessage(LOGTYPE.Error, "StackTrace: " + ex.StackTrace);
