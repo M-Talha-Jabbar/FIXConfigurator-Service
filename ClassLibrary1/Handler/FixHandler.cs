@@ -165,9 +165,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 GetSessionsForEngine(muxer, db, client, FIXEngine);
                 SubscribeAndFaliureCallback(FIXEngine, muxer, CacheKeyEvent); // Since its the start of the day, SubscribeAndFaliureCallback() is called after reading existing messages.
 
-                FixEngineSocketHandler(FIXEngine);
+                FixEngineSocketHandler(FIXEngine, client);
             }
-            //fixEngines.Add(new FIXEngine() { engineID = "ATS_FIX", engineName = "ATS_FIX", ipAddress = "192.168.0.1", port = 4044 });
         }
 
         public void LoadFixTagValueConfigurations()
@@ -180,7 +179,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        public void SubscribeFixEngineSocketUpdate(FIXEngine fixEngine)
+        public void SubscribeFixEngineSocketUpdate(FIXEngine fixEngine, IDatabase client)
         {
             SocketListener.fixEngineSocketConnections.TryGetValue(fixEngine.engineID, out SocketListener socketListener);
 
@@ -189,17 +188,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             IObservable<bool> data = socketListener.GetStatus();
             data.Subscribe(updates => // initial status update will be fired automatically
             {
-                UpdateSessionStatus(updates, fixEngine);
+                UpdateSessionStatus(updates, fixEngine, client);
             });
         }
 
-        public void FixEngineSocketHandler(FIXEngine fixEngine)
+        public void FixEngineSocketHandler(FIXEngine fixEngine, IDatabase client)
         {
             bool isInstanceCreated = SocketListener.fixEngineSocketConnections.TryGetValue(fixEngine.engineID, out SocketListener value);
             if (!isInstanceCreated) // If FixEngine has not yet connected to FixConfigurator
                 SocketListener.fixEngineSocketConnections.TryAdd(fixEngine.engineID, new SocketListener(isConnected: false));
 
-            SubscribeFixEngineSocketUpdate(fixEngine);
+            SubscribeFixEngineSocketUpdate(fixEngine, client);
         }
 
         private string GetRedisStreamLastEntryId(IDatabase client)
@@ -373,7 +372,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             try
             {
                 IDatabase client = muxer.GetDatabase(db);
-                //StreamEntry[] messages;
+
                 if (key == redisStreamName)
                 {
                     ReadMessages(client, fixEngine, realTimeMessage);
@@ -384,7 +383,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     FIXSession session = createFixSession(muxer.GetDatabase(db), fixEngine, key, key.Replace("-Config", ""));
                     SendFixSessionUpdates(session, fixEngine.engineID, "insert");
-                    //fixEngine.fixSessions.Add(session);
                 }
 
                 if (key.Contains("Status"))
@@ -409,8 +407,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 LogException(e);
             }
-
-            Logging.LogMessage("FINISHED READING...");
         }
 
         /*
@@ -794,7 +790,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     ReadMessages(client, fixEngine, existingMessage);
                 GetSessionsForEngine(muxer, db, client, fixEngine);
 
-                FixEngineSocketHandler(fixEngine);
+                FixEngineSocketHandler(fixEngine, client);
             }
             catch (Exception e)
             {
@@ -1246,15 +1242,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        private void UpdateSessionStatus(bool isConnected, FIXEngine fixEngine)
+        private void UpdateSessionStatus(bool isConnected, FIXEngine fixEngine, IDatabase client)
         {
             try
             {
+                bool statusInFixSessionsDropdownUpdate = false;
+
                 if (!isConnected)
                 {
-                    bool statusInFixSessionsDropdownUpdate = false;
-
-                    // only sending updates to individual fix engine
                     foreach (var session in fixEngine.fixSessions)
                     {
                         if (session.Status != "UNAVAILABLE")
@@ -1264,11 +1259,29 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                             statusInFixSessionsDropdownUpdate = true;
                         }
                     }
-
-                    if (statusInFixSessionsDropdownUpdate)
+                }
+                else
+                {
+                    foreach (var session in fixEngine.fixSessions)
                     {
-                        SendFixSessionUpdates(fixEngine.fixSessions[0], fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
+                        if (session.Status == "UNAVAILABLE")
+                        {
+                            string key = session.ConnectionID + "-Status";
+                            if (client.IsConnected(key))
+                            {
+                                HashEntry[] state = HGetAllAsync(client, key);
+                                if (state.Length > 0)
+                                {
+                                    SessionUpdates(key, state, fixEngine);
+                                }
+                            }
+                        }
                     }
+                }
+
+                if (statusInFixSessionsDropdownUpdate)
+                {
+                    SendFixSessionUpdates(fixEngine.fixSessions[0], fixEngine.engineID, "update_status_in_fix_sessions_dropdown");
                 }
             }
             catch (Exception e)

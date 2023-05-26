@@ -73,8 +73,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         bool isInstanceCreated = fixEngineSocketConnections.TryGetValue(fixEngineId, out SocketListener value);
 
                         if (isInstanceCreated) // If Engine has already been created in FixConfigurator
+                        {
                             socketListener = value;
-                            // On FixEngine Connection, status update will go through Redis Key-Subscription Design
+                            socketListener.isConnected = true;
+                            socketListener.subject.OnNext(socketListener.isConnected);
+                        }
 
                         else // If Engine has not yet created in FixConfigurator
                             socketListener = new SocketListener(isConnected: true);
