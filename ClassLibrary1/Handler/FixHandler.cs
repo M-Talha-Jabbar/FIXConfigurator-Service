@@ -1148,9 +1148,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                         session.Status = status.Status.ToString();
                         session.LastUpdated = DateTime.Now;
 
+                        SendFixSessionUpdates(session, engine.engineID, "update"); // To send InSeqNum & OutSeqNum.
+
                         if (sendEmail)
                         {
-                            SendFixSessionUpdates(session, engine.engineID, "update");
                             SendFixSessionUpdates(session, engine.engineID, "update_status_in_fix_sessions_dropdown");
 
                             using (var context = new FIXMonitorContext())
