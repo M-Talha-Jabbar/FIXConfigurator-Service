@@ -19,24 +19,21 @@ namespace FIXMonitorBusinessLogicLayer
 
         public IDisposable Subscribe(IObserver<Object> observer, string connectionId)
         {
-            if (observers.ContainsKey(connectionId))
-            {
-                //observers.Remove(connectionId);
-                observers.TryRemove(connectionId, out IObserver<object> value);
-            }
             Console.WriteLine("[Service Client] Client connected: " + connectionId);
-            //observers.Add(connectionId, observer);
+
             observers.TryAdd(connectionId, observer);
             _connectionId = connectionId;
+
             return Subscribe(observer);
         }
 
-        public bool IsSubscribed(string connectionId)
+        public static bool IsSubscribed(string connectionId)
         {
             if (observers.ContainsKey(connectionId))
             {
                 return true;
             }
+
             return false;
         }
 
@@ -113,7 +110,6 @@ namespace FIXMonitorBusinessLogicLayer
         {
             if (_observerConnectionId != null && _observers.ContainsKey(_observerConnectionId))
             {
-                //_observers.Remove(_observerConnectionId);
                 _observers.TryRemove(_observerConnectionId, out IObserver<object> value);
             }
         }
