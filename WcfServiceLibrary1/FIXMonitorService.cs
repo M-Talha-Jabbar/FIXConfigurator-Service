@@ -138,8 +138,7 @@ namespace FIXMonitorService
 
         public bool IsSubscribed(string connectionId)
         {
-            Observable orderObservable = new Observable();
-            return orderObservable.IsSubscribed(connectionId);
+            return Observable.IsSubscribed(connectionId);
         }
 
         public string GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)
