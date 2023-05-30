@@ -35,7 +35,7 @@ namespace FIXMonitorService
 
         public FIXMonitorDataCache DataCache
         {
-            get { return FIXMonitorDataCacheWrapper.GetInstance().GetATSDataCache(); }
+            get { return FIXMonitorDataCache.GetFIXMonitorDataCacheInstance(); }
         }
 
         public string GetData(int value)
@@ -120,8 +120,8 @@ namespace FIXMonitorService
         {
             return this.DataCache.ConnectToFixSession(engineID, fixSession);
         }
-       
-        public void Subscribe(string connectionId)
+
+        public void SendQueuedUpdates()
         {
             callback = OperationContext.Current.GetCallbackChannel<IFIXMonitorServiceCallback>();
 
@@ -130,6 +130,11 @@ namespace FIXMonitorService
             Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<ConfiguredFixMessage>(callback));
             Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionStatusUpdate>(callback));
             Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<JenkinsJobUpdate>(callback));
+        }
+
+        public void Subscribe(string connectionId)
+        {
+            SendQueuedUpdates();
 
             Observable orderObservable = new Observable();
             OrderObserver observer = new OrderObserver();
@@ -138,7 +143,12 @@ namespace FIXMonitorService
 
         public bool IsSubscribed(string connectionId)
         {
-            return Observable.IsSubscribed(connectionId);
+            bool isSubscribed = Observable.IsSubscribed(connectionId);
+
+            if (isSubscribed)
+                SendQueuedUpdates();
+
+            return isSubscribed;
         }
 
         public string GetFixMessages(string fixEngineID, string fixSessionConnectionID, string dataSourceLoadOptions)

@@ -366,9 +366,9 @@
     <Compile Include="DataAccess\IUnitOfWork\IUnitOfWork.cs" />
     <Compile Include="DataAccess\Repositories\JenkinsRepositiory.cs" />
     <Compile Include="PollingWorkers\PollingWorker.cs" />
-    <Compile Include="ResponseDataModels\JenkinsAgentInfo.cs" />
-    <Compile Include="ResponseDataModels\JenkinsAgentResponse.cs" />
-    <Compile Include="ResponseDataModels\JenkinsJobStatus.cs" />
+    <Compile Include="DataModels\JenkinsAgentInfo.cs" />
+    <Compile Include="DataModels\JenkinsAgentResponse.cs" />
+    <Compile Include="DataModels\JenkinsJobStatus.cs" />
     <Compile Include="Services\IJenkinsService.cs" />
     <Compile Include="Services\JenkinsService.cs" />
     <Compile Include="Utilities\TimeConverter.cs" />
@@ -385,12 +385,10 @@
     <Compile Include="Data\FIXMonitorContext.cs" />
     <Compile Include="Data\FixTagValues.cs" />
     <Compile Include="Data\FixSessions.cs" />
-    <Compile Include="FixEngineSocket.cs" />
     <!-- <Compile Include="FixMessageDirectory.cs" /> -->
     <Compile Include="FileStreamExport.cs" />
     <Compile Include="FixMessageLog.cs" />
     <Compile Include="FIXMonitorDataCache.cs" />
-    <Compile Include="FIXMonitorDataCacheWrapper.cs" />
     <Compile Include="DataModels\Account.cs" />
     <Compile Include="DataModels\AlertFlag.cs" />
     <Compile Include="DataModels\FIXEngine.cs" />
@@ -401,7 +399,6 @@
     <Compile Include="Handler\FixHandler.cs" />
     <Compile Include="Handler\SocketInitiator.cs" />
     <Compile Include="ICloneable\ICloneable.cs" />
-    <Compile Include="IComparers\FixMessageSorter.cs" />
     <Compile Include="IHandler\IEmailHandler.cs" />
     <Compile Include="IHandler\IFixHandler.cs" />
     <Compile Include="KeyedCollections\FixEnginesKeyedCollection.cs" />

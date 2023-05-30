@@ -31,7 +31,8 @@ namespace FIXMonitorServiceHost
                 serviceHost.Close();
             }
 
-            FIXMonitorDataCacheWrapper.GetInstance();
+            FIXMonitorDataCache.GetFIXMonitorDataCacheInstance();
+
             string address = ConfigurationManager.AppSettings["baseAddress"].ToString();
             Uri baseAddress = new Uri(address);
 
@@ -45,8 +46,8 @@ namespace FIXMonitorServiceHost
             Console.WriteLine("The service is ready at {0}", baseAddress);
             Console.WriteLine("Press <Enter> to stop the service.");
             Console.ReadLine();
-
         }
+
         protected override void OnStop()
         {
             if (serviceHost != null)
