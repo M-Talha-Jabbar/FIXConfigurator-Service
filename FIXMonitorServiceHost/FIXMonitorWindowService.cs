@@ -31,8 +31,6 @@ namespace FIXMonitorServiceHost
                 serviceHost.Close();
             }
 
-            FIXMonitorDataCache.GetFIXMonitorDataCacheInstance();
-
             string address = ConfigurationManager.AppSettings["baseAddress"].ToString();
             Uri baseAddress = new Uri(address);
 
@@ -42,6 +40,8 @@ namespace FIXMonitorServiceHost
             smb.MetadataExporter.PolicyVersion = PolicyVersion.Policy15;
             serviceHost.Description.Behaviors.Add(smb);
             serviceHost.Open();
+
+            FIXMonitorDataCache.GetFIXMonitorDataCacheInstance();
 
             Console.WriteLine("The service is ready at {0}", baseAddress);
             Console.WriteLine("Press <Enter> to stop the service.");
