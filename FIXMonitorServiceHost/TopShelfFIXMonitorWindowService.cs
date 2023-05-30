@@ -1,12 +1,9 @@
 ﻿using FIXMonitorBusinessLogicLayer;
 using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.ServiceModel;
 using System.ServiceModel.Description;
-using System.Text;
-using System.Threading.Tasks;
 using Topshelf;
 
 namespace FIXMonitorServiceHost
@@ -20,6 +17,7 @@ namespace FIXMonitorServiceHost
             {
                 serviceHost.Close();
             }
+
             string address = ConfigurationManager.AppSettings["baseAddress"].ToString();
             Uri baseAddress = new Uri(address);
 
@@ -31,7 +29,7 @@ namespace FIXMonitorServiceHost
 
             serviceHost.Open();
 
-            FIXMonitorDataCacheWrapper.GetInstance();
+            FIXMonitorDataCache.GetFIXMonitorDataCacheInstance();
 
             return true;
         }

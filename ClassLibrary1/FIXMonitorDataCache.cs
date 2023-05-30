@@ -4,25 +4,13 @@ using FIXMonitorBusinessLogicLayer.IHandler;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using CoreLogging;
 using Google.Protobuf.WellKnownTypes;
-using Grpc.Core;
-using Grpc.Core.Logging;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using NLog;
-using StackExchange.Redis;
+
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Threading;
 using System.Threading.Tasks;
-using RedisCacheService;
-using FIXMonitorBusinessLogicLayer.IComparers;
-using FIXMonitorBusinessLogicLayer.TcpConnection;
 using FIXMonitorBusinessLogicLayer.Services;
-using DevExtreme.AspNet.Data.ResponseModel;
 using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 
@@ -30,24 +18,24 @@ namespace FIXMonitorBusinessLogicLayer
 {
     public class FIXMonitorDataCache
     {
-        private static readonly DateTime epoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
-        //Use IList instead of list
+        private static FIXMonitorDataCache _FIXMonitorDataCache = new FIXMonitorDataCache();
         private IList<FIXConfiguration> fixConfiguration;
-        readonly Observable observable;
+        private readonly Observable observable;
         private IFixHandler fixHandler;
         private IEmailHandler emailHandler;
         private IJenkinsService _jenkinsService;
-
-        private readonly bool IsRunWithSampleData = Convert.ToBoolean(ConfigurationManager.AppSettings["isRunWithSampleData"].ToString());
-        private readonly int WaitBeforeConnecting = Convert.ToInt32(ConfigurationManager.AppSettings["waitBeforeConnecting"].ToString());
         private readonly int HeartbeatIntervalForWeb = Convert.ToInt32(ConfigurationManager.AppSettings["heartbeatIntervalForWeb"].ToString());
+
+        public static FIXMonitorDataCache GetFIXMonitorDataCacheInstance()
+        {
+            return _FIXMonitorDataCache;
+        }
 
         public FIXMonitorDataCache()
         {
             Logging.StartProcessing(false);
             observable = new Observable();
             InitAllCacheObjects();
-            LoadStartUpData();
             Task.Run(() => HeartbeatToWeb());
         }
 
@@ -60,13 +48,6 @@ namespace FIXMonitorBusinessLogicLayer
             }
         }
 
-        private void TriggerUIRefresh()
-        {
-            Logging.LogMessage("TriggerUIRefresh Starts");
-            InitAllCacheObjects();
-            Logging.LogMessage("TriggerUIRefresh Ends");
-        }
-
         private void InitAllCacheObjects()
         {
             fixConfiguration = new List<FIXConfiguration>();
@@ -75,41 +56,20 @@ namespace FIXMonitorBusinessLogicLayer
             _jenkinsService = new JenkinsService();
         }
 
-        #region DataLoading
-
-        private void LoadStartUpData()
-        {
-        }
-
-        #endregion
-
-        #region Inserting Data
-
         public void SaveFIXConfiguration(FIXConfiguration fixConfiguration)
         {
-            //Perform the insertion in the database
             this.fixConfiguration.Add(fixConfiguration);
-            //observable.SendFixSessionUpdate(fixConfiguration, fixConfiguration.SenderID, "insert");
         }
-
-        #endregion
-
-        #region ReturningData
 
         public IEnumerable<FIXConfiguration> GetFIXConfigurations()
         {
             return fixConfiguration;
         }
 
-
         public FixSessionKeyedCollection GetFixSessions(string FixEngineID)
         {
             return fixHandler.GetFixSession(FixEngineID);
         }
-
-        #endregion
-
-        #region GenerateMethods
         private IEnumerable<T> ParseListofObjects<T>(string location)
         {
             using (StreamReader sr = new StreamReader(location))
@@ -119,9 +79,6 @@ namespace FIXMonitorBusinessLogicLayer
             }
         }
 
-        #endregion
-
-        #region Fix
         public bool ConnectFixSession(FIXSession fixSession)
         {
             return fixHandler.ConnectFixSessionAsync(fixSession);
@@ -181,9 +138,6 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return fixHandler.GetFixMessagesHavingAnyConfiguredFixTagValuePair(sessionID);
         }
-        #endregion
-
-        #region Alerts
 
         public List<AlertFlag> GetAlertCache()
         {
@@ -193,8 +147,6 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return true;
         }
-
-        #endregion
 
         public SessionEmails GetSessionAlertConfiguration(string SessionId)
         {
@@ -254,7 +206,6 @@ namespace FIXMonitorBusinessLogicLayer
 
         public IEnumerable<string> GetSessionStatusMessage()
         {
-
             return fixHandler.GetSessionStatusMessage();
         }
 

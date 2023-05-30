@@ -1,4 +1,5 @@
-﻿using FIXMonitorBusinessLogicLayer.DataModels;
+﻿using CoreLogging;
+using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 using System;
 using System.Collections.Concurrent;
@@ -19,7 +20,7 @@ namespace FIXMonitorBusinessLogicLayer
 
         public IDisposable Subscribe(IObserver<Object> observer, string connectionId)
         {
-            Console.WriteLine("[Service Client] Client connected: " + connectionId);
+            Logging.LogMessage(LOGTYPE.Info, "[Observer] Client connected: " + connectionId);
 
             observers.TryAdd(connectionId, observer);
             _connectionId = connectionId;
