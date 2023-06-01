@@ -94,7 +94,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
                 ExceptionLoggingUtility.LogException(e);
                 DisposeTcpInstanceNClosingTcpConnection();
