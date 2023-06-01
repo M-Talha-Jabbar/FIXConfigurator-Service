@@ -5,10 +5,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Configuration;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace FIXMonitorBusinessLogicLayer
 {
@@ -23,7 +19,6 @@ namespace FIXMonitorBusinessLogicLayer
         // key is engineName+sessionid and values is filename. whenever will be file created we append to this dictionary
 
         private static ConcurrentDictionary<string, string> CreatedFiles = new ConcurrentDictionary<string, string>();
-        private static readonly ConcurrentDictionary<string, object> s_fileLocks = new ConcurrentDictionary<string, object>();
         private static string FixMessageLogDirectoryPath = ConfigurationManager.AppSettings["FixMessageLogDirectoryPath"];
         public static readonly LockObjectsManager locksforConcurrentFileAccess = new LockObjectsManager();
         public static Dictionary<string, string> logLastTimeStamps = new Dictionary<string, string>(); // FixMessages Logs Key

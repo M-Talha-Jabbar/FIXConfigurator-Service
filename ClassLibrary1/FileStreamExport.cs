@@ -8,6 +8,7 @@ using System.IO;
 using System.Threading;
 using FIXMonitorBusinessLogicLayer.LocksManager;
 using CoreLogging;
+using FIXMonitorBusinessLogicLayer.Utilities;
 
 namespace FIXMonitorBusinessLogicLayer
 {
@@ -33,10 +34,10 @@ namespace FIXMonitorBusinessLogicLayer
                     return fs;
                 }
 
-                catch (Exception ex)
-                    {
-
-                    Logging.LogMessage(LOGTYPE.Error, "Cannot read fix message log file" + ex.Message);
+                catch (Exception e)
+                {
+                    Logging.LogMessage(LOGTYPE.Error, "Cannot read fix message log file.");
+                    ExceptionLoggingUtility.LogException(e);
                     return null;
                 }
             }

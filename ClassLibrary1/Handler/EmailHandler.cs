@@ -182,7 +182,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                     if (updatedSessionConfiguration.EmailStatus)
                     {
-                        int intervalInMilliseconds = TimeConverter.GetTimeInMilliseconds(updatedSessionConfiguration.Timeout);
+                        int intervalInMilliseconds = TimeConverterUtility.GetTimeInMilliseconds(updatedSessionConfiguration.Timeout);
 
                         emailNotifier = new EmailNotifier(intervalInMilliseconds, updatedSessionConfiguration.SessionId, "DISCONNECTED", updatedSessionConfiguration);
                         EmailNotifier.emailTimer.Add(updatedSessionConfiguration.SessionId, emailNotifier.getTimerInstance());

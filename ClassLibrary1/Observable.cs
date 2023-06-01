@@ -20,7 +20,7 @@ namespace FIXMonitorBusinessLogicLayer
 
         public IDisposable Subscribe(IObserver<Object> observer, string connectionId)
         {
-            Logging.LogMessage(LOGTYPE.Info, "[Observer] Client connected: " + connectionId);
+            Logging.LogMessage(LOGTYPE.Info, "[Observer] Client subscribed: " + connectionId);
 
             observers.TryAdd(connectionId, observer);
             _connectionId = connectionId;

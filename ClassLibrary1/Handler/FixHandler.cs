@@ -1,7 +1,6 @@
 ﻿using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.IHandler;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
-using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -405,7 +404,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                LogException(e);
+                ExceptionLoggingUtility.LogException(e);
             }
         }
 
@@ -494,7 +493,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     }
                     catch (Exception e)
                     {
-                        LogException(e);
+                        ExceptionLoggingUtility.LogException(e);
                     }
                 }
             }
@@ -594,7 +593,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                LogException(e);
+                ExceptionLoggingUtility.LogException(e);
             }
 
             return isVerified;
@@ -629,7 +628,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
                 catch (Exception e)
                 {
-                    Logging.LogMessage(LOGTYPE.Fatal, e.Message + e.StackTrace);
+                    ExceptionLoggingUtility.LogException(e);
                 }
             }
 
@@ -693,9 +692,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             TimeSpan sessionStartDateTime = DateTime.ParseExact(fixSession.SessionStart, "HH:mm:ss", CultureInfo.InvariantCulture).TimeOfDay;
             TimeSpan dateTimeNow = DateTime.Now.TimeOfDay;
 
-            if (TimeConverter.CompareTimeDifference(sessionStartDateTime, dateTimeNow) >= 0)
+            if (TimeConverterUtility.CompareTimeDifference(sessionStartDateTime, dateTimeNow) >= 0)
             {
-                var totalTimeInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionStartDateTime - dateTimeNow);
+                var totalTimeInMilliseconds = TimeConverterUtility.GetTimeInMilliseconds(sessionStartDateTime - dateTimeNow);
                 emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixSession, sessionInfo: null);
             }
         }
@@ -729,7 +728,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                CoreLogging.Logging.LogMessage(CoreLogging.LOGTYPE.Error, $"Redis Get Connection: {e.Message}");
+                ExceptionLoggingUtility.LogException(e);
                 fixEngines.Remove(fixEngine);
                 throw e;
             }
@@ -794,8 +793,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                CoreLogging.Logging.LogMessage(CoreLogging.LOGTYPE.Error, $"Redis after connection : {e.Message}");
-                LogException(e);
+                ExceptionLoggingUtility.LogException(e);
             }
 
             return fixEngine;
@@ -950,7 +948,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
                 catch (Exception e)
                 {
-                    Logging.LogMessage("Exception in SendSampleFixMessage, message: " + e.Message + ", StackTrace" + e.StackTrace);
+                    ExceptionLoggingUtility.LogException(e);
                 }
                 Thread.Sleep(60000);
             }
@@ -1067,7 +1065,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                LogException(e);
+                ExceptionLoggingUtility.LogException(e);
             }
 
         }
@@ -1080,8 +1078,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         }
 
         public void PushFixSessionStatusMessage(string fixSessionStatusMessage)
-        {
-
+        { 
             Task.Run(() =>
             {
                 try
@@ -1089,9 +1086,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     sessionStatuses.Push(fixSessionStatusMessage);
                     Logging.LogMessage(LOGTYPE.Info, $"fix session status message stored  {fixSessionStatusMessage}");
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
-                    Logging.LogMessage(LOGTYPE.Fatal, $"Cant Add fix session status message {fixSessionStatusMessage} in store {ex.Message}");
+                    Logging.LogMessage(LOGTYPE.Error, $"Cant Add fix session status message {fixSessionStatusMessage} in store.");
+                    ExceptionLoggingUtility.LogException(e);
                 }
             });
         }
@@ -1108,10 +1106,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     SendFixSessionStatusMessage(fixSessionStatusMessage);
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
-
-                    Logging.LogMessage(LOGTYPE.Fatal, $"Cant Send fix session status message {fixSessionStatusMessage} to client. Exception : {ex.Message}");
+                    Logging.LogMessage(LOGTYPE.Error, $"Cant Send fix session status message {fixSessionStatusMessage} to client.");
+                    ExceptionLoggingUtility.LogException(e);
                 }
             }
         }
@@ -1178,7 +1176,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                     else if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
                                     {
-                                        int intervalInMilliseconds = TimeConverter.GetTimeInMilliseconds(sessionInfo.Timeout);
+                                        int intervalInMilliseconds = TimeConverterUtility.GetTimeInMilliseconds(sessionInfo.Timeout);
 
                                         emailNotifier = new EmailNotifier(intervalInMilliseconds, conId, session.Status, sessionInfo);
                                         EmailNotifier.emailTimer.Add(sessionInfo.SessionId, emailNotifier.getTimerInstance());
@@ -1209,7 +1207,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                LogException(e);
+                ExceptionLoggingUtility.LogException(e);
             }
         }
 
@@ -1287,18 +1285,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                LogException(e);
-            }
-        }
-
-        private static void LogException(Exception e)
-        {
-            Logging.LogMessage(LOGTYPE.Error, "Exception : " + e.Message);
-            Logging.LogMessage(LOGTYPE.Error, "StackTrace : " + e.StackTrace);
-            if (e.InnerException != null)
-            {
-                Logging.LogMessage(LOGTYPE.Error, "Inner Exception : " + e.InnerException.Message);
-                Logging.LogMessage(LOGTYPE.Error, "StackTrace Inner Exception : " + e.InnerException.StackTrace);
+                ExceptionLoggingUtility.LogException(e);
             }
         }
 
