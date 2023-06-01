@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace FIXMonitorBusinessLogicLayer.Converter
 {
-    static class TimeConverter
+    static class TimeConverterUtility
     {
         public static int GetTimeInMilliseconds(DateTime Timeout)
         {

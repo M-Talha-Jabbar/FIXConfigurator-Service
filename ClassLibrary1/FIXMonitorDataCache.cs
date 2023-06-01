@@ -3,8 +3,6 @@ using FIXMonitorBusinessLogicLayer.Handler;
 using FIXMonitorBusinessLogicLayer.IHandler;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using CoreLogging;
-using Google.Protobuf.WellKnownTypes;
-
 using System;
 using System.Collections.Generic;
 using System.Configuration;

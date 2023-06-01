@@ -123,7 +123,11 @@ namespace FIXMonitorService
 
         public void SendQueuedUpdates()
         {
-            callback = OperationContext.Current.GetCallbackChannel<IFIXMonitorServiceCallback>();
+            if (callback == null || ((IChannel)callback).State != CommunicationState.Opened)
+            {
+                Logging.LogMessage(LOGTYPE.Info, "Initializing Callback");
+                callback = OperationContext.Current.GetCallbackChannel<IFIXMonitorServiceCallback>();
+            }
 
             Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionUpdate>(callback));
             Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixMessageUpdate>(callback));
@@ -134,11 +138,11 @@ namespace FIXMonitorService
 
         public void Subscribe(string connectionId)
         {
-            SendQueuedUpdates();
-
             Observable orderObservable = new Observable();
             OrderObserver observer = new OrderObserver();
             orderObservable.Subscribe(observer, connectionId);
+
+            SendQueuedUpdates();
         }
 
         public bool IsSubscribed(string connectionId)
@@ -146,7 +150,9 @@ namespace FIXMonitorService
             bool isSubscribed = Observable.IsSubscribed(connectionId);
 
             if (isSubscribed)
-                SendQueuedUpdates();
+                Logging.LogMessage(LOGTYPE.Info, "[Observer] Client is connected: " + connectionId);
+            else
+                Logging.LogMessage(LOGTYPE.Error, "[Observer] Client is disconnected: " + connectionId);
 
             return isSubscribed;
         }

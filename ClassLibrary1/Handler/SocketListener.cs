@@ -1,4 +1,5 @@
 ﻿using CoreLogging;
+using FIXMonitorBusinessLogicLayer.Utilities;
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
@@ -90,12 +91,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     }
                 }
             }
-            catch(Exception ex) // Exception is thrown when socket connection is forcbily closed. 
+            catch(Exception e) // Exception is thrown when socket connection is forcbily closed. 
             {
-                Logging.LogMessage(LOGTYPE.Error, "Exception: " + ex.Message);
-                Logging.LogMessage(LOGTYPE.Error, "StackTrace: " + ex.StackTrace);
+                ExceptionLoggingUtility.LogException(e);
 
-                if(socketListener != null)
+                if (socketListener != null)
                 {
                     socketListener.isConnected = false;
                     socketListener.subject.OnNext(socketListener.isConnected);

@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Reactive;
 using System.Reactive.Subjects;
+using FIXMonitorBusinessLogicLayer.Utilities;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -93,10 +94,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, "Exception: " + ex.Message);
-                Logging.LogMessage(LOGTYPE.Error, "StackTrace: " + ex.StackTrace);
+                ExceptionLoggingUtility.LogException(e);
                 DisposeTcpInstanceNClosingTcpConnection();
                 return false;
             }
