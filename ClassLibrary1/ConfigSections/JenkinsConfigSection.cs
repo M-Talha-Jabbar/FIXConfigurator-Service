@@ -38,18 +38,25 @@ namespace FIXMonitorBusinessLogicLayer.ConfigSections
             set { this["JenkinsJobTriggerUrl"] = value; }
         }
 
-        [ConfigurationProperty("JenkinsJobStartFixEngineUrl", IsRequired = true)]
-        public string JenkinsJobStartFixEngineUrl
+        [ConfigurationProperty("JenkinsJobStartNStopFixEngineUrl", IsRequired = true)]
+        public string JenkinsJobStartNStopFixEngineUrl
         {
-            get { return (string)this["JenkinsJobStartFixEngineUrl"]; }
-            set { this["JenkinsJobStartFixEngineUrl"] = value; }
+            get { return (string)this["JenkinsJobStartNStopFixEngineUrl"]; }
+            set { this["JenkinsJobStartNStopFixEngineUrl"] = value; }
         }
 
-        [ConfigurationProperty("JenkinsJobStopFixEngineUrl", IsRequired = true)]
-        public string JenkinsJobStopFixEngineUrl
+        [ConfigurationProperty("JenkinsJobStartFixEngineScript", IsRequired = true)]
+        public string JenkinsJobStartFixEngineScript
         {
-            get { return (string)this["JenkinsJobStopFixEngineUrl"]; }
-            set { this["JenkinsJobStopFixEngineUrl"] = value; }
+            get { return (string)this["JenkinsJobStartFixEngineScript"]; }
+            set { this["JenkinsJobStartFixEngineScript"] = value; }
+        }
+
+        [ConfigurationProperty("JenkinsJobStopFixEngineScript", IsRequired = true)]
+        public string JenkinsJobStopFixEngineScript
+        {
+            get { return (string)this["JenkinsJobStopFixEngineScript"]; }
+            set { this["JenkinsJobStopFixEngineScript"] = value; }
         }
 
         [ConfigurationProperty("JenkinsMasterNodeDomain", IsRequired = true)]

@@ -16,7 +16,7 @@ namespace FIXMonitorBusinessLogicLayer
 {
     public class FIXMonitorDataCache
     {
-        private static FIXMonitorDataCache _FIXMonitorDataCache = new FIXMonitorDataCache();
+        private static FIXMonitorDataCache _FIXMonitorDataCache = null;
         private IList<FIXConfiguration> fixConfiguration;
         private readonly Observable observable;
         private IFixHandler fixHandler;
@@ -26,12 +26,14 @@ namespace FIXMonitorBusinessLogicLayer
 
         public static FIXMonitorDataCache GetFIXMonitorDataCacheInstance()
         {
+            if (_FIXMonitorDataCache == null)
+                _FIXMonitorDataCache = new FIXMonitorDataCache();
+
             return _FIXMonitorDataCache;
         }
 
         public FIXMonitorDataCache()
         {
-            Logging.StartProcessing(false);
             observable = new Observable();
             InitAllCacheObjects();
             Task.Run(() => HeartbeatToWeb());
