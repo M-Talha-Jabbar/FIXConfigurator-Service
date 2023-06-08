@@ -120,19 +120,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var isJenkinsAgentOnlineRes = await isJenkinsAgentOnline(AgentName);
                 if (!isJenkinsAgentOnlineRes) return $"Jenkins Node {AgentName} is Offline";
 
-                //var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStartFixEngineUrl}?Branch={branchName}&Environment={environment}&DeploymentPath={DeploymentPath}&AgentName={AgentName}");
+                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStartNStopFixEngineUrl}?Script_Path={path}&Script_Name={jenkinsConfigSection.JenkinsJobStartFixEngineScript}&AgentName={AgentName}");
 
-                //jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
+                jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
 
-                //lastBuild = JenkinsLatestJobStatus();
+                lastBuild = JenkinsLatestJobStatus();
 
-                //var triggerStatus = await client.SendAsync(jenkins_job_trigger);
+                var triggerStatus = await client.SendAsync(jenkins_job_trigger);
 
-                //var status_code = triggerStatus.StatusCode.ToString();
+                var status_code = triggerStatus.StatusCode.ToString();
 
-                //return status_code;
-
-                return "";
+                return status_code;
             }
             catch(Exception e)
             {
@@ -147,19 +145,17 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var isJenkinsAgentOnlineRes = await isJenkinsAgentOnline(AgentName);
                 if (!isJenkinsAgentOnlineRes) return $"Jenkins Node {AgentName} is Offline";
 
-                //var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStopFixEngineUrl}?Branch={branchName}&Environment={environment}&DeploymentPath={DeploymentPath}&AgentName={AgentName}");
+                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStartNStopFixEngineUrl}?Script_Path={path}&Script_Name={jenkinsConfigSection.JenkinsJobStopFixEngineScript}&AgentName={AgentName}");
 
-                //jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
+                jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
 
-                //lastBuild = JenkinsLatestJobStatus();
+                lastBuild = JenkinsLatestJobStatus();
 
-                //var triggerStatus = await client.SendAsync(jenkins_job_trigger);
+                var triggerStatus = await client.SendAsync(jenkins_job_trigger);
 
-                //var status_code = triggerStatus.StatusCode.ToString();
+                var status_code = triggerStatus.StatusCode.ToString();
 
-                //return status_code;
-
-                return "";
+                return status_code;
             }
             catch (Exception e)
             {

@@ -1,5 +1,4 @@
 ﻿using CoreLogging;
-using DevExtreme.AspNet.Data.ResponseModel;
 using FIXMonitorBusinessLogicLayer;
 using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.DataModels;
@@ -24,8 +23,9 @@ namespace FIXMonitorService
 
         readonly private static FIXMonitorService service = new FIXMonitorService();
 
-        private FIXMonitorService()
+        public FIXMonitorService()
         {
+            Logging.StartProcessing(false);
         }
 
         public static FIXMonitorService GetInstance()
@@ -127,13 +127,13 @@ namespace FIXMonitorService
             {
                 Logging.LogMessage(LOGTYPE.Info, "Initializing Callback");
                 callback = OperationContext.Current.GetCallbackChannel<IFIXMonitorServiceCallback>();
-            }
 
-            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionUpdate>(callback));
-            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixMessageUpdate>(callback));
-            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<ConfiguredFixMessage>(callback));
-            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionStatusUpdate>(callback));
-            Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<JenkinsJobUpdate>(callback));
+                Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionUpdate>(callback));
+                Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixMessageUpdate>(callback));
+                Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<ConfiguredFixMessage>(callback));
+                Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<FixSessionStatusUpdate>(callback));
+                Task.Run(() => ConcreteQueueCollectionsManager.SendQueuedUpdates<JenkinsJobUpdate>(callback));
+            }
         }
 
         public void Subscribe(string connectionId)
@@ -150,7 +150,11 @@ namespace FIXMonitorService
             bool isSubscribed = Observable.IsSubscribed(connectionId);
 
             if (isSubscribed)
+            {
+                SendQueuedUpdates();
                 Logging.LogMessage(LOGTYPE.Info, "[Observer] Client is connected: " + connectionId);
+            }
+                
             else
                 Logging.LogMessage(LOGTYPE.Error, "[Observer] Client is disconnected: " + connectionId);
 

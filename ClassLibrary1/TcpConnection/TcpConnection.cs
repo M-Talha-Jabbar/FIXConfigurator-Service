@@ -26,7 +26,7 @@ namespace FIXMonitorBusinessLogicLayer.TcpConnection
             try
             {
                 client.Connect(_ipAddress, _portNo);
-                Logging.LogMessage(LOGTYPE.Error, $"Tcp connection established with: {_ipAddress}:{_portNo}");
+                Logging.LogMessage(LOGTYPE.Info, $"Tcp connection established with: {_ipAddress}:{_portNo}");
                 return true;
             }
             catch (Exception ex)
