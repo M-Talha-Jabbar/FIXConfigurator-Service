@@ -140,6 +140,14 @@ namespace FIXMonitorBusinessLogicLayer.Data
 
                 entity.Property(e => e.EngineId).HasDefaultValueSql("(N'')");
 
+                entity.Property(e => e.FixEngineMachinePassword)
+                    .IsRequired()
+                    .HasDefaultValueSql("(N'')");
+
+                entity.Property(e => e.FixEngineMachineUsername)
+                    .IsRequired()
+                    .HasDefaultValueSql("(N'')");
+
                 entity.Property(e => e.JenkinsAgentName).IsRequired();
 
                 entity.Property(e => e.Path).IsRequired();

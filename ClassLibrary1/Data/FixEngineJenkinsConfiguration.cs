@@ -12,5 +12,7 @@ namespace FIXMonitorBusinessLogicLayer.Data
         public string Path { get; set; }
         public string JenkinsAgentName { get; set; }
         public string EngineId { get; set; }
+        public string FixEngineMachinePassword { get; set; }
+        public string FixEngineMachineUsername { get; set; }
     }
 }
