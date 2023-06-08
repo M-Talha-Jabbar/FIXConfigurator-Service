@@ -191,13 +191,7 @@ namespace FIXMonitorBusinessLogicLayer.Services
 
             if(fixEngineJenkinsConfiguration != null)
             {
-                var agentName = fixEngineJenkinsConfiguration.JenkinsAgentName;
-                var path = fixEngineJenkinsConfiguration.Path;
-
-                if (!string.IsNullOrEmpty(agentName) && !string.IsNullOrEmpty(path))
-                {
-                    return await _JenkinsHandler.StartFixEngine(path, agentName);
-                }
+                return await _JenkinsHandler.StartFixEngine(fixEngineJenkinsConfiguration);
             }
 
             return "Please fill required field in Jenkins Configuration";
@@ -210,13 +204,7 @@ namespace FIXMonitorBusinessLogicLayer.Services
 
             if (fixEngineJenkinsConfiguration != null)
             {
-                var agentName = fixEngineJenkinsConfiguration.JenkinsAgentName;
-                var path = fixEngineJenkinsConfiguration.Path;
-
-                if (!string.IsNullOrEmpty(agentName) && !string.IsNullOrEmpty(path))
-                {
-                    return await _JenkinsHandler.StopFixEngine(path, agentName);
-                }
+                return await _JenkinsHandler.StopFixEngine(fixEngineJenkinsConfiguration);
             }
 
             return "Please fill required field in Jenkins Configuration";

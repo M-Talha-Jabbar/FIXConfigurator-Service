@@ -14,5 +14,6 @@ namespace FIXMonitorBusinessLogicLayer.Data
         public string EngineId { get; set; }
         public string FixEngineMachinePassword { get; set; }
         public string FixEngineMachineUsername { get; set; }
+        public string EngineIp { get; set; }
     }
 }
