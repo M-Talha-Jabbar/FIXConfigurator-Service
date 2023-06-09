@@ -13,6 +13,7 @@ using FIXMonitorBusinessLogicLayer.DataAccess.IUnitOfWork;
 using FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork;
 using FIXMonitorBusinessLogicLayer.DataAccess.IRepository;
 using FIXMonitorBusinessLogicLayer.ResponseDataModels;
+using FIXMonitorBusinessLogicLayer.Utilities;
 
 namespace FIXMonitorBusinessLogicLayer.Services
 {
@@ -42,9 +43,10 @@ namespace FIXMonitorBusinessLogicLayer.Services
                    
                     return savechanges;
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
-                    Logging.LogMessage(LOGTYPE.Error, $"Method AddJenkinsConfiguration in Jenkins Service {ex.Message}");
+                    Logging.LogMessage(LOGTYPE.Error, "Method AddJenkinsConfiguration in Jenkins Service");
+                    ExceptionLoggingUtility.LogException(e);
                 }
                 return savechanges;
             }
@@ -79,9 +81,10 @@ namespace FIXMonitorBusinessLogicLayer.Services
                          return savechanges;
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception e)
                     {
-                        Logging.LogMessage(LOGTYPE.Error, $"Method UpdateJenkinsConfiguration in Jenkins Service {ex.Message}");
+                        Logging.LogMessage(LOGTYPE.Error, "Method UpdateJenkinsConfiguration in Jenkins Servic");
+                        ExceptionLoggingUtility.LogException(e);
                     }
                 return savechanges;
             }
@@ -111,9 +114,10 @@ namespace FIXMonitorBusinessLogicLayer.Services
                         FixEngineJenkinsConfigurations.TryAdd(engineID, fixEngineJenkinsConfiguration);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
-                    Logging.LogMessage(LOGTYPE.Error, $"Method GetJenkinsConfiguration in Jenkins Service {ex.Message}");
+                    Logging.LogMessage(LOGTYPE.Error, "Method GetJenkinsConfiguration in Jenkins Service");
+                    ExceptionLoggingUtility.LogException(e);
                 }
 
                 return fixEngineJenkinsConfiguration; // possibly null
@@ -143,11 +147,12 @@ namespace FIXMonitorBusinessLogicLayer.Services
 
                     return savechanges;
                     
-                    }
-                    catch (Exception ex)
-                    {
-                     Logging.LogMessage(LOGTYPE.Error, $"Method DeleteJenkinsConfiguration in Jenkins Service {ex.Message}");
-                     }
+                }
+                catch (Exception e)
+                {
+                    Logging.LogMessage(LOGTYPE.Error, "Method DeleteJenkinsConfiguration in Jenkins Service");
+                    ExceptionLoggingUtility.LogException(e);
+                }
 
                 return savechanges;
             }

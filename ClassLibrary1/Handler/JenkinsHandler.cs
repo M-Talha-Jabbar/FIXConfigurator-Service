@@ -150,7 +150,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 var scriptPath = System.Web.HttpUtility.UrlEncode(fixEngineJenkinsConfiguration.Path);
 
-                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStartNStopFixEngineUrl}?Script_Path={scriptPath}&Script_Name={jenkinsConfigSection.JenkinsJobStopFixEngineScript}&EngineIP={fixEngineJenkinsConfiguration.EngineIp}&AgentName={fixEngineJenkinsConfiguration.JenkinsAgentName}&UserName={fixEngineJenkinsConfiguration.FixEngineMachineUsername}&Password={fixEngineJenkinsConfiguration.FixEngineMachinePassword}");
+                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStartNStopFixEngineUrl}?ScriptPath={scriptPath}&ScriptName={jenkinsConfigSection.JenkinsJobStopFixEngineScript}&EngineIP={fixEngineJenkinsConfiguration.EngineIp}&AgentName={fixEngineJenkinsConfiguration.JenkinsAgentName}&Username={fixEngineJenkinsConfiguration.FixEngineMachineUsername}&Password={fixEngineJenkinsConfiguration.FixEngineMachinePassword}");
 
                 jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
 
