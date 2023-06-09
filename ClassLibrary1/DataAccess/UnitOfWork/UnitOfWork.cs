@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CoreLogging;
+using FIXMonitorBusinessLogicLayer.Utilities;
 
 namespace FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork
 {
@@ -28,9 +29,10 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork
                 Transaction = await Context.Database.BeginTransactionAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"Cannot CreateTransactionAsync transaction {ex.Message}");
+                Logging.LogMessage(LOGTYPE.Error, "Cannot CreateTransactionAsync transaction");
+                ExceptionLoggingUtility.LogException(e);
                 return false;
             }
             finally {
@@ -47,9 +49,10 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork
                 await Transaction.CommitAsync();
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"Cannot CommitAsync transaction {ex.Message}");
+                Logging.LogMessage(LOGTYPE.Error, "Cannot CommitAsync transaction");
+                ExceptionLoggingUtility.LogException(e);
                 return false;
             }
             finally
@@ -65,9 +68,10 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork
             {
                 await Transaction.RollbackAsync();
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"Cannot RollbackAsync transaction {ex.Message}");
+                Logging.LogMessage(LOGTYPE.Error, "Cannot RollbackAsync transaction");
+                ExceptionLoggingUtility.LogException(e);
             }
             finally
             {
@@ -83,9 +87,10 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork
                 var res = await Context.SaveChangesAsync();
                 return res > 0 ? true : false;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"Cannot SaveAsync transaction {ex.Message}");
+                Logging.LogMessage(LOGTYPE.Error, "Cannot SaveAsync transaction");
+                ExceptionLoggingUtility.LogException(e);
                 return false;
             }
             finally

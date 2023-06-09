@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using FIXMonitorBusinessLogicLayer.DataAccess.IRepository;
+using FIXMonitorBusinessLogicLayer.Utilities;
 
 namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
 {
@@ -26,9 +27,10 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
                     Logging.LogMessage(LOGTYPE.Info, $"JenkinsConfig added successfully");
                     return fixEngineJenkinsConfiguration;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"JenkinsConfig cannot be added {ex.Message}");
+                Logging.LogMessage(LOGTYPE.Error, "JenkinsConfig cannot be added");
+                ExceptionLoggingUtility.LogException(e);
                 return null;
             }
             finally
@@ -37,8 +39,6 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
             }
         }
 
-
-        // jenkins config update
         public FixEngineJenkinsConfiguration UpdateJenkinsConfigAsync(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration, FIXMonitorContext fixMonitorContext)
         {
             Logging.LogMessage(LOGTYPE.Info, $"Method name: UpdateJenkinsConfigAsync in JenkinsRepository started");
@@ -53,9 +53,10 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
                     return fixEngineJenkinsConfiguration;
                 
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"changes Updated successfully {ex.Message} {ex.StackTrace}");
+                Logging.LogMessage(LOGTYPE.Error, "Changes cannot be updated successfully");
+                ExceptionLoggingUtility.LogException(e);
                 return null;
             }
             finally
@@ -64,7 +65,6 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
             }
         }
 
-        // jenkins config read
         public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfigAsync(string engineID, FIXMonitorContext fixMonitorContext)
         {
             Logging.LogMessage(LOGTYPE.Info, $"Method name: GetJenkinsConfigAsync in JenkinsRepository started");
@@ -77,9 +77,10 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
                     Logging.LogMessage(LOGTYPE.Info, $"read configuration succcessfully");
                     return fixEngineJenkinsConfiguration;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"cannot read {ex.Message}");
+                Logging.LogMessage(LOGTYPE.Error, "cannot read");
+                ExceptionLoggingUtility.LogException(e);
                 return fixEngineJenkinsConfiguration;
             }
             finally
@@ -102,9 +103,10 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
                 return true;
                 
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"cannot delete configuration {ex.Message}");
+                Logging.LogMessage(LOGTYPE.Error, $"cannot delete configuration");
+                ExceptionLoggingUtility.LogException(e);
                 return false;
             }
             finally

@@ -15,6 +15,7 @@ using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 using FIXMonitorBusinessLogicLayer.PollingWorkers;
 using System.Threading;
 using FIXMonitorBusinessLogicLayer.ConfigSections;
+using FIXMonitorBusinessLogicLayer.Data;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -113,14 +114,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        public async Task<string> StartFixEngine(string path, string AgentName)
+        public async Task<string> StartFixEngine(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
         {
             try
             {
-                var isJenkinsAgentOnlineRes = await isJenkinsAgentOnline(AgentName);
-                if (!isJenkinsAgentOnlineRes) return $"Jenkins Node {AgentName} is Offline";
+                var isJenkinsAgentOnlineRes = await isJenkinsAgentOnline(fixEngineJenkinsConfiguration.JenkinsAgentName);
+                if (!isJenkinsAgentOnlineRes) return $"Jenkins Node {fixEngineJenkinsConfiguration.JenkinsAgentName} is Offline";
 
-                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStartNStopFixEngineUrl}?Script_Path={path}&Script_Name={jenkinsConfigSection.JenkinsJobStartFixEngineScript}&AgentName={AgentName}");
+                var scriptPath = System.Web.HttpUtility.UrlEncode(fixEngineJenkinsConfiguration.Path);
+
+                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStartNStopFixEngineUrl}?ScriptPath={scriptPath}&ScriptName={jenkinsConfigSection.JenkinsJobStartFixEngineScript}&EngineIP={fixEngineJenkinsConfiguration.EngineIp}&AgentName={fixEngineJenkinsConfiguration.JenkinsAgentName}&Username={fixEngineJenkinsConfiguration.FixEngineMachineUsername}&Password={fixEngineJenkinsConfiguration.FixEngineMachinePassword}");
 
                 jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
 
@@ -138,14 +141,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
         }
 
-        public async Task<string> StopFixEngine(string path, string AgentName)
+        public async Task<string> StopFixEngine(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
         {
             try
             {
-                var isJenkinsAgentOnlineRes = await isJenkinsAgentOnline(AgentName);
-                if (!isJenkinsAgentOnlineRes) return $"Jenkins Node {AgentName} is Offline";
+                var isJenkinsAgentOnlineRes = await isJenkinsAgentOnline(fixEngineJenkinsConfiguration.JenkinsAgentName);
+                if (!isJenkinsAgentOnlineRes) return $"Jenkins Node {fixEngineJenkinsConfiguration.JenkinsAgentName} is Offline";
 
-                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStartNStopFixEngineUrl}?Script_Path={path}&Script_Name={jenkinsConfigSection.JenkinsJobStopFixEngineScript}&AgentName={AgentName}");
+                var scriptPath = System.Web.HttpUtility.UrlEncode(fixEngineJenkinsConfiguration.Path);
+
+                var jenkins_job_trigger = new HttpRequestMessage(HttpMethod.Post, $"{jenkinsConfigSection.JenkinsJobStartNStopFixEngineUrl}?ScriptPath={scriptPath}&ScriptName={jenkinsConfigSection.JenkinsJobStopFixEngineScript}&EngineIP={fixEngineJenkinsConfiguration.EngineIp}&AgentName={fixEngineJenkinsConfiguration.JenkinsAgentName}&Username={fixEngineJenkinsConfiguration.FixEngineMachineUsername}&Password={fixEngineJenkinsConfiguration.FixEngineMachinePassword}");
 
                 jenkins_job_trigger.Headers.Add(crumb_token[0], crumb_token[1]);
 

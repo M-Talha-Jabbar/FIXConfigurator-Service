@@ -1,4 +1,5 @@
-﻿using FIXMonitorBusinessLogicLayer.ResponseDataModels;
+﻿using FIXMonitorBusinessLogicLayer.Data;
+using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,8 +11,8 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
     public interface IJenkinsHandler
     {
         Task<string> JenkinsTrigger(string branchName, string environment, string DeploymentPath, string AgentName);
-        Task<string> StartFixEngine(string path, string AgentName);
-        Task<string> StopFixEngine(string path, string AgentName);
+        Task<string> StartFixEngine(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration);
+        Task<string> StopFixEngine(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration);
         Task<IEnumerable<string>> GetJenkinsSlaveNodes();
         bool AbortJenkinsLastJob();
         JenkinsJobStatus JenkinsLatestJobStatus();
