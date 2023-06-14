@@ -35,7 +35,7 @@ namespace FIXMonitorService
 
         public FIXMonitorDataCache DataCache
         {
-            get { return FIXMonitorDataCache.GetFIXMonitorDataCacheInstance(); }
+            get { return FIXMonitorDataCache.GetInstance(); }
         }
 
         public string GetData(int value)
