@@ -14,9 +14,10 @@ using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 
 namespace FIXMonitorBusinessLogicLayer
 {
-    public class FIXMonitorDataCache
+    public sealed class FIXMonitorDataCache
     {
-        private static FIXMonitorDataCache _FIXMonitorDataCache = new FIXMonitorDataCache();
+        private static FIXMonitorDataCache _FIXMonitorDataCache = null;
+        private static readonly object Instancelock = new object();
         private IList<FIXConfiguration> fixConfiguration;
         private readonly Observable observable;
         private IFixHandler fixHandler;
@@ -24,12 +25,21 @@ namespace FIXMonitorBusinessLogicLayer
         private IJenkinsService _jenkinsService;
         private readonly int HeartbeatIntervalForWeb = Convert.ToInt32(ConfigurationManager.AppSettings["heartbeatIntervalForWeb"].ToString());
 
-        public static FIXMonitorDataCache GetFIXMonitorDataCacheInstance()
+        public static FIXMonitorDataCache GetInstance()
         {
+            if(_FIXMonitorDataCache == null)
+            {
+                lock (Instancelock)
+                {
+                    if (_FIXMonitorDataCache == null)
+                        _FIXMonitorDataCache = new FIXMonitorDataCache();
+                }
+            }
+
             return _FIXMonitorDataCache;
         }
 
-        public FIXMonitorDataCache()
+        private FIXMonitorDataCache()
         {
             observable = new Observable();
             InitAllCacheObjects();

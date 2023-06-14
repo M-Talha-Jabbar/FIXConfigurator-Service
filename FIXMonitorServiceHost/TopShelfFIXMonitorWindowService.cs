@@ -29,7 +29,7 @@ namespace FIXMonitorServiceHost
 
             serviceHost.Open();
 
-            FIXMonitorDataCache.GetFIXMonitorDataCacheInstance();
+            FIXMonitorDataCache.GetInstance();
 
             return true;
         }
