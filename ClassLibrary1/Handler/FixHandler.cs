@@ -29,8 +29,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private FixEnginesKeyedCollection fixEngines;
         private Dictionary<string, int> fixEnginesDB;
 
-        public static Dictionary<string, string> fixMsgTypes = new Dictionary<string, string>();
-        public static Dictionary<string, string> fixTagValues = new Dictionary<string, string>();
+        public static Dictionary<string, string> fixMsgTypes;
+        public static List<string> fixMsgTypesFilter;
+        public static Dictionary<string, string> fixTagValues;
 
         Observable observable = new Observable();
         private readonly bool sendSampleFixUpdate = Convert.ToBoolean(System.Configuration.ConfigurationManager.AppSettings["sendSampleFixUpdate"].ToString());
@@ -125,9 +126,14 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             locksForHandlingStreamRead = new LockObjectsManager();
             sessionUpdatesLocks = new LockObjectsManager();
             sessionStatuses = new ConcurrentStack<string>();
+            fixMsgTypes = new Dictionary<string, string>();
+            fixMsgTypesFilter = new List<string>();
+            fixTagValues = new Dictionary<string, string>();
 
             string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
             GenerateDictionary(fixMsgTypes, msgTypes);
+
+            fixMsgTypesFilter = File.ReadAllLines("fixMessageTypesFilter.csv").ToList();
 
             string[] fixTags = File.ReadAllLines("fixTagValuePair.csv");
             GenerateDictionary(fixTagValues, fixTags);
@@ -1034,6 +1040,11 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)
         {
             return fixEngines[FixEngineID].fixSessions;
+        }
+
+        public IEnumerable<string> GetFixMessageTypesFilter()
+        {
+            return fixMsgTypesFilter;
         }
 
         public FIXMessage getObjectFromFixMessage(string fixMessage)

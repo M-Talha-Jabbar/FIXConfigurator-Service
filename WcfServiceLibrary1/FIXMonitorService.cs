@@ -71,6 +71,11 @@ namespace FIXMonitorService
             return this.DataCache.GetFixSessions(FixEngineID);
         }
 
+        public IEnumerable<string> GetFixMessageTypesFilter()
+        {
+            return this.DataCache.GetFixMessageTypesFilter();
+        }
+
         public IEnumerable<FIXSessionsConnectivityStatus> GetFixSessionsConnectivityStatus()
         {
             return this.DataCache.GetFixSessionsConnectivityStatus();
