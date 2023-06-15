@@ -77,6 +77,12 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return fixHandler.GetFixSession(FixEngineID);
         }
+
+        public IEnumerable<string> GetFixMessageTypesFilter()
+        {
+            return fixHandler.GetFixMessageTypesFilter();
+        }
+
         private IEnumerable<T> ParseListofObjects<T>(string location)
         {
             using (StreamReader sr = new StreamReader(location))
