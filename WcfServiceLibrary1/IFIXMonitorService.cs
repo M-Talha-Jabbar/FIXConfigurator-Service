@@ -34,6 +34,9 @@ namespace FIXMonitorService
         IEnumerable<string> GetFixMessageTypesFilter();
 
         [OperationContract]
+        Dictionary<string, List<string>> GetFixTagValuePairFilter();
+
+        [OperationContract]
         IEnumerable<FIXSessionsConnectivityStatus> GetFixSessionsConnectivityStatus();
 
         [OperationContract]

@@ -76,6 +76,11 @@ namespace FIXMonitorService
             return this.DataCache.GetFixMessageTypesFilter();
         }
 
+        public Dictionary<string, List<string>> GetFixTagValuePairFilter()
+        {
+            return this.DataCache.GetFixTagValuePairFilter();
+        }
+
         public IEnumerable<FIXSessionsConnectivityStatus> GetFixSessionsConnectivityStatus()
         {
             return this.DataCache.GetFixSessionsConnectivityStatus();

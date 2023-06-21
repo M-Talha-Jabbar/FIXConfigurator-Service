@@ -83,6 +83,11 @@ namespace FIXMonitorBusinessLogicLayer
             return fixHandler.GetFixMessageTypesFilter();
         }
 
+        public Dictionary<string, List<string>> GetFixTagValuePairFilter()
+        {
+            return fixHandler.GetFixTagValuePairFilter();
+        }
+
         private IEnumerable<T> ParseListofObjects<T>(string location)
         {
             using (StreamReader sr = new StreamReader(location))
