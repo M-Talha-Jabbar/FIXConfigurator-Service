@@ -132,16 +132,29 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             fixTagValues = new Dictionary<string, string>();
             fixTagValuesFilter = new Dictionary<string, List<string>>();
 
-            string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
-            GenerateDictionary(fixMsgTypes, msgTypes);
+            if (File.Exists("fixMessageTypes.csv"))
+            {
+                string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
+                GenerateDictionary(fixMsgTypes, msgTypes);
+            }
 
-            fixMsgTypesFilter = File.ReadAllLines("fixMessageTypesFilter.csv").ToList();
+            if (File.Exists("fixMessageTypesFilter.csv"))
+            {
+                fixMsgTypesFilter = File.ReadAllLines("fixMessageTypesFilter.csv").ToList();
+                fixMsgTypesFilter.Remove("");
+            }
 
-            string[] fixTags = File.ReadAllLines("fixTagValuePair.csv");
-            GenerateDictionary(fixTagValues, fixTags);
+            if (File.Exists("fixTagValuePair.csv"))
+            {
+                string[] fixTags = File.ReadAllLines("fixTagValuePair.csv");
+                GenerateDictionary(fixTagValues, fixTags);
+            }
 
-            string[] fixTagsFilter = File.ReadAllLines("fixTagValuePairFilter.csv");
-            GenerateDictionary(fixTagValuesFilter, fixTagsFilter);
+            if (File.Exists("fixTagValuePairFilter.csv"))
+            {
+                string[] fixTagsFilter = File.ReadAllLines("fixTagValuePairFilter.csv");
+                GenerateDictionary(fixTagValuesFilter, fixTagsFilter);
+            } 
 
             LoadFixTagValueConfigurations();
         }
@@ -1241,23 +1254,31 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             for (int i = 0; i < lines.Length; i++)
             {
-                var data = lines[i].Split(',');
-                dic.Add(data[0], data[1]);
+                if (!string.IsNullOrEmpty(lines[i]))
+                {
+                    var data = lines[i].Split(',');
+                    dic.Add(data[0], data[1]);
+                }
             }
+            dic.Remove("");
         }
 
         private void GenerateDictionary(Dictionary<string, List<string>> dic, string[] lines)
         {
             for (int i = 0; i < lines.Length; i++)
             {
-                var data = lines[i].Split(',');
+                if (!string.IsNullOrEmpty(lines[i]))
+                {
+                    var data = lines[i].Split(',');
 
-                if (dic.ContainsKey(data[0]))
-                    dic[data[0]].Add(data[1]);
+                    if (dic.ContainsKey(data[0]))
+                        dic[data[0]].Add(data[1]);
 
-                else
-                    dic.Add(data[0], new List<string>() { data[1] });
+                    else
+                        dic.Add(data[0], new List<string>() { data[1] });
+                }
             }
+            dic.Remove("");
         }
 
         private void UpdateStreamPosition(IDatabase client, StreamEntry[] streamValues, string engineName)
