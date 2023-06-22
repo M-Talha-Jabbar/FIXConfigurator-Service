@@ -12,5 +12,6 @@ namespace FIXMonitorBusinessLogicLayer.DataModels
         public string engineName { get; set; }
         public string ConnectionID { get; set; }
         public string Status { get; set; }
+        public string Mode { get; set; }
     }
 }
