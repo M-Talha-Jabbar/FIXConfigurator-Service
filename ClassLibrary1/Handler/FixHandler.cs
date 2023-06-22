@@ -1039,7 +1039,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 engineID = engine.engineID,
                 engineName = engine.engineName,
                 ConnectionID = session.ConnectionID,
-                Status = session.Status
+                Status = session.Status,
+                Mode = session.Mode
             }));
 
             return fixSessionsConnectivityStatusList;
