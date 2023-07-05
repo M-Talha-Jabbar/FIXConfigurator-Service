@@ -389,5 +389,25 @@ namespace FIXMonitorService
         {
             return await this.DataCache.GetJenkinsLatestJobStatus();
         }
+
+        public async Task<EngineConfiguration> GetEngineConfiguration(string EngineId)
+        {
+            return await this.DataCache.GetEngineConfiguration(EngineId);
+        }
+
+        public async Task<bool> AddEngineConfiguration(EngineConfiguration engineConfiguration)
+        {
+            return await this.DataCache.AddEngineConfiguration(engineConfiguration);
+        }
+
+        public async Task<bool> DeleteEngineConfiguration(string EngineId)
+        {
+            return await this.DataCache.DeleteEngineConfiguration(EngineId);
+        }
+
+        public async Task<List<EngineConfiguration>> GetAllEnginesConfiguration()
+        {
+            return await this.DataCache.GetAllEnginesConfiguration();
+        }
     }
 }

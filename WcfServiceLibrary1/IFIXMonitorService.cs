@@ -147,7 +147,17 @@ namespace FIXMonitorService
         [OperationContract]
         Task<JenkinsJobStatus> GetJenkinsLatestJobStatus();
 
-        // TODO: Add your service operations here
+        [OperationContract]
+        Task<EngineConfiguration> GetEngineConfiguration(string EngineId);
+
+        [OperationContract]
+        Task<bool> AddEngineConfiguration(EngineConfiguration engineConfiguration);
+
+        [OperationContract]
+        Task<bool> DeleteEngineConfiguration(string EngineId);
+
+        [OperationContract]
+        Task<List<EngineConfiguration>> GetAllEnginesConfiguration();
     }
 
     public interface IFIXMonitorServiceCallback
