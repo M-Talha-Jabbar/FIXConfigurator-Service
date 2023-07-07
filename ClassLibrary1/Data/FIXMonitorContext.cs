@@ -152,6 +152,10 @@ namespace FIXMonitorBusinessLogicLayer.Data
                     .IsRequired()
                     .HasDefaultValueSql("(N'')");
 
+                entity.Property(e => e.FixEngineRepoPath)
+                    .IsRequired()
+                    .HasDefaultValueSql("(N'')");
+
                 entity.Property(e => e.JenkinsAgentName).IsRequired();
 
                 entity.Property(e => e.Path).IsRequired();
