@@ -35,7 +35,7 @@ namespace FIXMonitorService
 
         public FIXMonitorDataCache DataCache
         {
-            get { return FIXMonitorDataCache.GetFIXMonitorDataCacheInstance(); }
+            get { return FIXMonitorDataCache.GetInstance(); }
         }
 
         public string GetData(int value)
@@ -69,6 +69,16 @@ namespace FIXMonitorService
         public FixSessionKeyedCollection GetFixSessions(string FixEngineID)
         {
             return this.DataCache.GetFixSessions(FixEngineID);
+        }
+
+        public IEnumerable<string> GetFixMessageTypesFilter()
+        {
+            return this.DataCache.GetFixMessageTypesFilter();
+        }
+
+        public Dictionary<string, List<string>> GetFixTagValuePairFilter()
+        {
+            return this.DataCache.GetFixTagValuePairFilter();
         }
 
         public IEnumerable<FIXSessionsConnectivityStatus> GetFixSessionsConnectivityStatus()
@@ -378,6 +388,26 @@ namespace FIXMonitorService
         public async Task<JenkinsJobStatus> GetJenkinsLatestJobStatus()
         {
             return await this.DataCache.GetJenkinsLatestJobStatus();
+        }
+
+        public async Task<EngineConfiguration> GetEngineConfiguration(string EngineId)
+        {
+            return await this.DataCache.GetEngineConfiguration(EngineId);
+        }
+
+        public async Task<bool> AddEngineConfiguration(EngineConfiguration engineConfiguration)
+        {
+            return await this.DataCache.AddEngineConfiguration(engineConfiguration);
+        }
+
+        public async Task<bool> DeleteEngineConfiguration(string EngineId)
+        {
+            return await this.DataCache.DeleteEngineConfiguration(EngineId);
+        }
+
+        public async Task<List<EngineConfiguration>> GetAllEnginesConfiguration()
+        {
+            return await this.DataCache.GetAllEnginesConfiguration();
         }
     }
 }

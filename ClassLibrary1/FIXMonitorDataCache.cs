@@ -14,22 +14,33 @@ using FIXMonitorBusinessLogicLayer.ResponseDataModels;
 
 namespace FIXMonitorBusinessLogicLayer
 {
-    public class FIXMonitorDataCache
+    public sealed class FIXMonitorDataCache
     {
-        private static FIXMonitorDataCache _FIXMonitorDataCache = new FIXMonitorDataCache();
+        private static FIXMonitorDataCache _FIXMonitorDataCache = null;
+        private static readonly object Instancelock = new object();
         private IList<FIXConfiguration> fixConfiguration;
         private readonly Observable observable;
         private IFixHandler fixHandler;
         private IEmailHandler emailHandler;
         private IJenkinsService _jenkinsService;
+        private IEnginesHandler enginesHandler;
         private readonly int HeartbeatIntervalForWeb = Convert.ToInt32(ConfigurationManager.AppSettings["heartbeatIntervalForWeb"].ToString());
 
-        public static FIXMonitorDataCache GetFIXMonitorDataCacheInstance()
+        public static FIXMonitorDataCache GetInstance()
         {
+            if(_FIXMonitorDataCache == null)
+            {
+                lock (Instancelock)
+                {
+                    if (_FIXMonitorDataCache == null)
+                        _FIXMonitorDataCache = new FIXMonitorDataCache();
+                }
+            }
+
             return _FIXMonitorDataCache;
         }
 
-        public FIXMonitorDataCache()
+        private FIXMonitorDataCache()
         {
             observable = new Observable();
             InitAllCacheObjects();
@@ -51,6 +62,7 @@ namespace FIXMonitorBusinessLogicLayer
             fixHandler = new FixHandler();
             emailHandler = new EmailHandler();
             _jenkinsService = new JenkinsService();
+            enginesHandler = new EnginesHandler();
         }
 
         public void SaveFIXConfiguration(FIXConfiguration fixConfiguration)
@@ -67,6 +79,17 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return fixHandler.GetFixSession(FixEngineID);
         }
+
+        public IEnumerable<string> GetFixMessageTypesFilter()
+        {
+            return fixHandler.GetFixMessageTypesFilter();
+        }
+
+        public Dictionary<string, List<string>> GetFixTagValuePairFilter()
+        {
+            return fixHandler.GetFixTagValuePairFilter();
+        }
+
         private IEnumerable<T> ParseListofObjects<T>(string location)
         {
             using (StreamReader sr = new StreamReader(location))
@@ -235,14 +258,17 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return await _jenkinsService.AddJenkinsConfiguration(fixEngineJenkinsConfiguration);
         }
+
         public async Task<bool> UpdateJenkinsConfiguration(FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration)
         {
             return await _jenkinsService.UpdateJenkinsConfiguration(fixEngineJenkinsConfiguration);
         }
+
         public async Task<FixEngineJenkinsConfiguration> GetJenkinsConfiguration(string engineID)
         {
             return await _jenkinsService.GetJenkinsConfiguration(engineID);
         }
+
         public async Task<bool> DeleteJenkinsConfiguration(string engineID)
         {
             return await _jenkinsService.DeleteJenkinsConfiguration(engineID);
@@ -251,6 +277,26 @@ namespace FIXMonitorBusinessLogicLayer
         public async Task<JenkinsJobStatus> GetJenkinsLatestJobStatus()
         {
             return await _jenkinsService.GetJenkinsLatestJobStatus();
+        }
+
+        public async Task<EngineConfiguration> GetEngineConfiguration(string EngineId)
+        {
+            return await enginesHandler.GetEngineConfiguration(EngineId);
+        }
+
+        public async Task<bool> AddEngineConfiguration(EngineConfiguration engineConfiguration)
+        {
+            return await enginesHandler.AddEngineConfiguration(engineConfiguration);
+        }
+
+        public async Task<bool> DeleteEngineConfiguration(string EngineId)
+        {
+            return await enginesHandler.DeleteEngineConfiguration(EngineId);
+        }
+
+        public async Task<List<EngineConfiguration>> GetAllEnginesConfiguration()
+        {
+            return await enginesHandler.GetAllEnginesConfiguration();
         }
     }
 }

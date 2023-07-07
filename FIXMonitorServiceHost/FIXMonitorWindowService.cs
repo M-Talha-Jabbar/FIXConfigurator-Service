@@ -41,7 +41,7 @@ namespace FIXMonitorServiceHost
             serviceHost.Description.Behaviors.Add(smb);
             serviceHost.Open();
 
-            FIXMonitorDataCache.GetFIXMonitorDataCacheInstance();
+            FIXMonitorDataCache.GetInstance();
 
             Console.WriteLine("The service is ready at {0}", baseAddress);
             Console.WriteLine("Press <Enter> to stop the service.");

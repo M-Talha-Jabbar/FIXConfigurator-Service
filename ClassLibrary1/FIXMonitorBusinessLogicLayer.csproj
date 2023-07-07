@@ -358,9 +358,13 @@
   <ItemGroup>
     <Compile Include="ConfigSections\JenkinsConfigSection.cs" />
     <Compile Include="DataAccess\UnitOfWork\UnitOfWork.cs" />
+    <Compile Include="DataModels\EngineConfiguration.cs" />
     <Compile Include="Data\FixEngineJenkinsConfiguration.cs" />
+    <Compile Include="Data\FixEngines.cs" />
+    <Compile Include="Handler\EnginesHandler.cs" />
     <Compile Include="Handler\JenkinsHandler.cs" />
     <Compile Include="Handler\SocketListener.cs" />
+    <Compile Include="IHandler\IEnginesHandler.cs" />
     <Compile Include="IHandler\IJenkinsHandler.cs" />
     <Compile Include="DataAccess\IRepository\IJenkinsRepository.cs" />
     <Compile Include="DataAccess\IUnitOfWork\IUnitOfWork.cs" />

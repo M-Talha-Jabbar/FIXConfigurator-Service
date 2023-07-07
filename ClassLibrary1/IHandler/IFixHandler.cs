@@ -30,6 +30,8 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         //string GetFixTagValue(string fixMessage, string tag);
         IEnumerable<FIXSessionsConnectivityStatus> GetFixSessionsConnectivityStatus();
         FixSessionKeyedCollection GetFixSession(string FixEngineID);
+        IEnumerable<string> GetFixMessageTypesFilter();
+        Dictionary<string, List<string>> GetFixTagValuePairFilter();
         FIXMessage getObjectFromFixMessage(string msg);
         void SessionUpdates(string key, HashEntry[] result,FIXEngine fixEngine);
         void GetFixMessagesFromRedis(ConnectionMultiplexer muxer, RedisChannel channel, RedisValue message, FIXEngine fixEngine);

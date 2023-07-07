@@ -27,6 +27,7 @@ namespace FIXMonitorBusinessLogicLayer.Data
         public virtual DbSet<AspNetUserTokens> AspNetUserTokens { get; set; }
         public virtual DbSet<AspNetUsers> AspNetUsers { get; set; }
         public virtual DbSet<FixEngineJenkinsConfiguration> FixEngineJenkinsConfiguration { get; set; }
+        public virtual DbSet<FixEngines> FixEngines { get; set; }
         public virtual DbSet<FixSessions> FixSessions { get; set; }
         public virtual DbSet<FixTagValues> FixTagValues { get; set; }
 
@@ -159,6 +160,19 @@ namespace FIXMonitorBusinessLogicLayer.Data
                 entity.Property(e => e.JenkinsAgentName).IsRequired();
 
                 entity.Property(e => e.Path).IsRequired();
+            });
+
+            modelBuilder.Entity<FixEngines>(entity =>
+            {
+                entity.HasKey(e => e.EngineId);
+
+                entity.Property(e => e.EngineName).IsRequired();
+
+                entity.Property(e => e.RedisDb).HasColumnName("RedisDB");
+
+                entity.Property(e => e.RedisPort).IsRequired();
+
+                entity.Property(e => e.RedisServer).IsRequired();
             });
 
             modelBuilder.Entity<FixSessions>(entity =>

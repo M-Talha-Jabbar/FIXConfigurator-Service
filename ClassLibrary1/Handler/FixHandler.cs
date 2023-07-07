@@ -29,8 +29,10 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private FixEnginesKeyedCollection fixEngines;
         private Dictionary<string, int> fixEnginesDB;
 
-        public static Dictionary<string, string> fixMsgTypes = new Dictionary<string, string>();
-        public static Dictionary<string, string> fixTagValues = new Dictionary<string, string>();
+        public static Dictionary<string, string> fixMsgTypes;
+        public static List<string> fixMsgTypesFilter;
+        public static Dictionary<string, string> fixTagValues;
+        public static Dictionary<string, List<string>> fixTagValuesFilter;
 
         Observable observable = new Observable();
         private readonly bool sendSampleFixUpdate = Convert.ToBoolean(System.Configuration.ConfigurationManager.AppSettings["sendSampleFixUpdate"].ToString());
@@ -125,12 +127,34 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             locksForHandlingStreamRead = new LockObjectsManager();
             sessionUpdatesLocks = new LockObjectsManager();
             sessionStatuses = new ConcurrentStack<string>();
+            fixMsgTypes = new Dictionary<string, string>();
+            fixMsgTypesFilter = new List<string>();
+            fixTagValues = new Dictionary<string, string>();
+            fixTagValuesFilter = new Dictionary<string, List<string>>();
 
-            string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
-            GenerateDictionary(fixMsgTypes, msgTypes);
+            if (File.Exists("fixMessageTypes.csv"))
+            {
+                string[] msgTypes = File.ReadAllLines("fixMessageTypes.csv");
+                GenerateDictionary(fixMsgTypes, msgTypes);
+            }
 
-            string[] fixTags = File.ReadAllLines("fixTagValuePair.csv");
-            GenerateDictionary(fixTagValues, fixTags);
+            if (File.Exists("fixMessageTypesFilter.csv"))
+            {
+                fixMsgTypesFilter = File.ReadAllLines("fixMessageTypesFilter.csv").ToList();
+                fixMsgTypesFilter.Remove("");
+            }
+
+            if (File.Exists("fixTagValuePair.csv"))
+            {
+                string[] fixTags = File.ReadAllLines("fixTagValuePair.csv");
+                GenerateDictionary(fixTagValues, fixTags);
+            }
+
+            if (File.Exists("fixTagValuePairFilter.csv"))
+            {
+                string[] fixTagsFilter = File.ReadAllLines("fixTagValuePairFilter.csv");
+                GenerateDictionary(fixTagValuesFilter, fixTagsFilter);
+            } 
 
             LoadFixTagValueConfigurations();
         }
@@ -1015,7 +1039,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 engineID = engine.engineID,
                 engineName = engine.engineName,
                 ConnectionID = session.ConnectionID,
-                Status = session.Status
+                Status = session.Status,
+                Mode = session.Mode
             }));
 
             return fixSessionsConnectivityStatusList;
@@ -1034,6 +1059,16 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         public FixSessionKeyedCollection GetFixSession(string FixEngineID)
         {
             return fixEngines[FixEngineID].fixSessions;
+        }
+
+        public IEnumerable<string> GetFixMessageTypesFilter()
+        {
+            return fixMsgTypesFilter;
+        }
+
+        public Dictionary<string, List<string>> GetFixTagValuePairFilter()
+        {
+            return fixTagValuesFilter;
         }
 
         public FIXMessage getObjectFromFixMessage(string fixMessage)
@@ -1220,9 +1255,31 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         {
             for (int i = 0; i < lines.Length; i++)
             {
-                var data = lines[i].Split(',');
-                dic.Add(data[0], data[1]);
+                if (!string.IsNullOrEmpty(lines[i]))
+                {
+                    var data = lines[i].Split(',');
+                    dic.Add(data[0], data[1]);
+                }
             }
+            dic.Remove("");
+        }
+
+        private void GenerateDictionary(Dictionary<string, List<string>> dic, string[] lines)
+        {
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (!string.IsNullOrEmpty(lines[i]))
+                {
+                    var data = lines[i].Split(',');
+
+                    if (dic.ContainsKey(data[0]))
+                        dic[data[0]].Add(data[1]);
+
+                    else
+                        dic.Add(data[0], new List<string>() { data[1] });
+                }
+            }
+            dic.Remove("");
         }
 
         private void UpdateStreamPosition(IDatabase client, StreamEntry[] streamValues, string engineName)
