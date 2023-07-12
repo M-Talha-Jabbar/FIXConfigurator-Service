@@ -36,6 +36,8 @@ namespace FIXMonitorBusinessLogicLayer.Services
                 bool savechanges = false;
                 try
                 {
+                    fixEngineJenkinsConfiguration.FixEngineMachinePassword = EncryptDecryptUtility.EncryptString(fixEngineJenkinsConfiguration.FixEngineMachinePassword);
+
                     var res = await JenkinsRepositiory.CreateJenkinsConfigAsync(fixEngineJenkinsConfiguration, JenkinsUnitOfWork.Context);
                      savechanges = await JenkinsUnitOfWork.SaveAsync();
                     if(savechanges)
@@ -61,6 +63,8 @@ namespace FIXMonitorBusinessLogicLayer.Services
                 bool savechanges = false;
                 try
                 {
+                    fixEngineJenkinsConfiguration.FixEngineMachinePassword = EncryptDecryptUtility.EncryptString(fixEngineJenkinsConfiguration.FixEngineMachinePassword);
+
                     var res = JenkinsRepositiory.UpdateJenkinsConfigAsync(fixEngineJenkinsConfiguration, JenkinsUnitOfWork.Context);
 
                     savechanges = await JenkinsUnitOfWork.SaveAsync();
@@ -101,17 +105,15 @@ namespace FIXMonitorBusinessLogicLayer.Services
                 try
                 {
                     var res = FixEngineJenkinsConfigurations.TryGetValue(engineID, out fixEngineJenkinsConfiguration);
-                    if (res)
+                    if(!res)
                     {
-                        return fixEngineJenkinsConfiguration;
-                    }
+                        fixEngineJenkinsConfiguration = await JenkinsRepositiory.GetJenkinsConfigAsync(engineID, JenkinsUnitOfWork.Context);
 
-                    fixEngineJenkinsConfiguration = await JenkinsRepositiory.GetJenkinsConfigAsync(engineID, JenkinsUnitOfWork.Context);
-
-                    if (fixEngineJenkinsConfiguration != null &&
-                       !FixEngineJenkinsConfigurations.ContainsKey(fixEngineJenkinsConfiguration.EngineId))
-                    {
-                        FixEngineJenkinsConfigurations.TryAdd(engineID, fixEngineJenkinsConfiguration);
+                        if (fixEngineJenkinsConfiguration != null &&
+                           !FixEngineJenkinsConfigurations.ContainsKey(fixEngineJenkinsConfiguration.EngineId))
+                        {
+                            FixEngineJenkinsConfigurations.TryAdd(engineID, fixEngineJenkinsConfiguration);
+                        }
                     }
                 }
                 catch (Exception e)
@@ -120,7 +122,9 @@ namespace FIXMonitorBusinessLogicLayer.Services
                     ExceptionLoggingUtility.LogException(e);
                 }
 
-                return fixEngineJenkinsConfiguration; // possibly null
+                var fixEngineJenkinsConfigurationCopy = fixEngineJenkinsConfiguration.GetClone();
+                fixEngineJenkinsConfigurationCopy.FixEngineMachinePassword = EncryptDecryptUtility.DecryptString(fixEngineJenkinsConfigurationCopy.FixEngineMachinePassword);
+                return fixEngineJenkinsConfigurationCopy; 
             }
         }
 
