@@ -375,6 +375,7 @@
     <Compile Include="DataModels\JenkinsJobStatus.cs" />
     <Compile Include="Services\IJenkinsService.cs" />
     <Compile Include="Services\JenkinsService.cs" />
+    <Compile Include="Utilities\EncryptDecryptUtility.cs" />
     <Compile Include="Utilities\ExceptionLoggingUtility.cs" />
     <Compile Include="Utilities\TimeConverterUtility.cs" />
     <Compile Include="DataModels\FIXSessionsConnectivityStatus.cs" />
