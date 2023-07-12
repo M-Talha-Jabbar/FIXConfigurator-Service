@@ -122,8 +122,14 @@ namespace FIXMonitorBusinessLogicLayer.Services
                     ExceptionLoggingUtility.LogException(e);
                 }
 
-                var fixEngineJenkinsConfigurationCopy = fixEngineJenkinsConfiguration.GetClone();
-                fixEngineJenkinsConfigurationCopy.FixEngineMachinePassword = EncryptDecryptUtility.DecryptString(fixEngineJenkinsConfigurationCopy.FixEngineMachinePassword);
+                dynamic fixEngineJenkinsConfigurationCopy = null;
+
+                if (fixEngineJenkinsConfiguration != null)
+                {
+                    fixEngineJenkinsConfigurationCopy = fixEngineJenkinsConfiguration.GetClone();
+                    fixEngineJenkinsConfigurationCopy.FixEngineMachinePassword = EncryptDecryptUtility.DecryptString(fixEngineJenkinsConfigurationCopy.FixEngineMachinePassword);
+                }
+                
                 return fixEngineJenkinsConfigurationCopy; 
             }
         }
