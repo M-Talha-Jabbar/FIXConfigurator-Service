@@ -10,7 +10,7 @@ namespace FIXMonitorBusinessLogicLayer.Utilities
 {
     static class EncryptDecryptUtility
     {
-        private static string key = System.Configuration.ConfigurationManager.AppSettings["AesEncryptionKey"].ToString(); // 32 bytes equal to 256 bit key
+        private static string key = System.Configuration.ConfigurationManager.AppSettings["AesEncryptionKey"].ToString(); // 16 bytes equal to 128 bit key
 
         private static byte[] iv = new byte[16]
         {

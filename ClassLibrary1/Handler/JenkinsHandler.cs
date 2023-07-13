@@ -16,7 +16,6 @@ using FIXMonitorBusinessLogicLayer.PollingWorkers;
 using System.Threading;
 using FIXMonitorBusinessLogicLayer.ConfigSections;
 using FIXMonitorBusinessLogicLayer.Data;
-using FIXMonitorBusinessLogicLayer.Utilities;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
