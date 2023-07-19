@@ -32,7 +32,7 @@ namespace FIXMonitorBusinessLogicLayer.TcpConnection
             }
             catch (Exception e)
             {
-                ExceptionLoggingUtility.LogException(e, $"Cannot Estalish Tcp connection with: {_ipAddress}:{_portNo}");
+                ExceptionLoggingUtility.LogException(e, $"Cannot establish Tcp connection with: {_ipAddress}:{_portNo}");
                 return false;
             }
             finally
