@@ -31,8 +31,7 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork
             }
             catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, "Cannot CreateTransactionAsync transaction");
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Cannot CreateTransactionAsync transaction");
                 return false;
             }
             finally {
@@ -51,8 +50,7 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork
             }
             catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, "Cannot CommitAsync transaction");
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Cannot CommitAsync transaction");
                 return false;
             }
             finally
@@ -70,8 +68,7 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork
             }
             catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, "Cannot RollbackAsync transaction");
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Cannot RollbackAsync transaction");
             }
             finally
             {
@@ -89,8 +86,7 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.UnitOfWork
             }
             catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, "Cannot SaveAsync transaction");
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Cannot SaveAsync transaction");
                 return false;
             }
             finally

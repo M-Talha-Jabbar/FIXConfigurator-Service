@@ -1,4 +1,5 @@
 ﻿using CoreLogging;
+using FIXMonitorBusinessLogicLayer.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,9 +30,9 @@ namespace FIXMonitorBusinessLogicLayer.TcpConnection
                 Logging.LogMessage(LOGTYPE.Info, $"Tcp connection established with: {_ipAddress}:{_portNo}");
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"Cannot Estalish Tcp connection with: {_ipAddress}:{_portNo} , error : {ex.Message}");
+                ExceptionLoggingUtility.LogException(e, $"Cannot Estalish Tcp connection with: {_ipAddress}:{_portNo}");
                 return false;
             }
             finally

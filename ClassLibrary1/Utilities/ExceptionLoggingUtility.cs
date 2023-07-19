@@ -9,12 +9,17 @@ namespace FIXMonitorBusinessLogicLayer.Utilities
 {
     public static class ExceptionLoggingUtility
     {
-        public static void LogException(Exception e)
+        public static void LogException(Exception e, string msg)
         {
+            if (!string.IsNullOrEmpty(msg))
+            {
+                Logging.LogMessage(LOGTYPE.Error, msg);
+            }
+
             Logging.LogMessage(LOGTYPE.Error, "Exception : " + e.Message);
             Logging.LogMessage(LOGTYPE.Error, "StackTrace : " + e.StackTrace);
 
-            if (e.InnerException != null)
+            if (e.InnerException != null) 
             {
                 Logging.LogMessage(LOGTYPE.Error, "Inner Exception : " + e.InnerException.Message);
                 Logging.LogMessage(LOGTYPE.Error, "StackTrace Inner Exception : " + e.InnerException.StackTrace);
