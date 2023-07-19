@@ -29,8 +29,7 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
             }
             catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, "JenkinsConfig cannot be added");
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "JenkinsConfig cannot be added");
                 return null;
             }
             finally
@@ -55,8 +54,7 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
             }
             catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, "Changes cannot be updated successfully");
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Changes cannot be updated successfully");
                 return null;
             }
             finally
@@ -79,8 +77,7 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
             }
             catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, "cannot read");
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Cannot read");
                 return fixEngineJenkinsConfiguration;
             }
             finally
@@ -105,8 +102,7 @@ namespace FIXMonitorBusinessLogicLayer.DataAccess.Repositories
             }
             catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"cannot delete configuration");
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Cannot delete configuration");
                 return false;
             }
             finally

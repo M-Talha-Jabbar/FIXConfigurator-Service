@@ -93,7 +93,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch(Exception e) // Exception is thrown when socket connection is forcbily closed. 
             {
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, null);
 
                 if (socketListener != null)
                 {

@@ -16,6 +16,7 @@ using FIXMonitorBusinessLogicLayer.PollingWorkers;
 using System.Threading;
 using FIXMonitorBusinessLogicLayer.ConfigSections;
 using FIXMonitorBusinessLogicLayer.Data;
+using FIXMonitorBusinessLogicLayer.Utilities;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -186,9 +187,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                 return agents;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"cant fetch jenkins agent list {ex.Message}");
+                ExceptionLoggingUtility.LogException(e, "Can't fetch jenkins agent list");
                 return new List<string>();
             }
 
@@ -206,9 +207,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var AgentInfo = JsonConvert.DeserializeObject<JenkinsAgentInfo>(content);
                 return !AgentInfo.offline;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Error, $"cant fetch jenkins agents online status {ex.Message}");
+                ExceptionLoggingUtility.LogException(e, "Can't fetch jenkins agents online status");
                 return false;
             }
         }
@@ -227,9 +228,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 Logging.LogMessage(LOGTYPE.Info, $"Method {methodName}: request successfull with {status_code}");
                 return status_code; // 200 if success
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Info, $"Method {methodName}: request failed {ex.Message}");
+                ExceptionLoggingUtility.LogException(e, $"Method { methodName}: request failed");
                 return false;
             }
             finally
@@ -251,9 +252,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var jenkinsJobStatus = JsonConvert.DeserializeObject<JenkinsJobStatus>(content);
                 return jenkinsJobStatus;
             }
-            catch(Exception ex) 
+            catch(Exception e) 
             {
-                Logging.LogMessage(LOGTYPE.Info, $"Method {methodName}: request failed {ex.Message}");
+                ExceptionLoggingUtility.LogException(e, $"Method { methodName}: request failed");
                 return null;
             }
             finally
@@ -276,9 +277,9 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 var jenkinsJobStatus = JsonConvert.DeserializeObject<JenkinsJobStatus>(content);
                 return jenkinsJobStatus;
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                Logging.LogMessage(LOGTYPE.Info, $"Method {methodName}: request failed {ex.Message}");
+                ExceptionLoggingUtility.LogException(e, $"Method { methodName}: request failed");
                 return null;
             }
             finally
