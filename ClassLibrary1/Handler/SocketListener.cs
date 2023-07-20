@@ -18,7 +18,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private string fixEngineId;
         private TcpClient tcpClient;
         private BehaviorSubject<bool> subject = null;
-        private bool isConnected;
+        public bool isConnected;
 
         public SocketListener(bool isConnected)
         {
