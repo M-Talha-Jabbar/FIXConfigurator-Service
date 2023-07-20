@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace FIXMonitorBusinessLogicLayer.LocksManager
-{ 
+{
     class LockObjectsManager
     {
         private readonly ConcurrentDictionary<string, object> LockObj = new ConcurrentDictionary<string, object>();
@@ -23,7 +23,7 @@ namespace FIXMonitorBusinessLogicLayer.LocksManager
                 lockForThisFile = new object();
                 LockObj.TryAdd(filePath, lockForThisFile);
             }
-            
+
             return lockForThisFile;
         }
     }

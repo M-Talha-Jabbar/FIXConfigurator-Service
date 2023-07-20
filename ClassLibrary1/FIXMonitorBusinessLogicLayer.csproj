@@ -369,6 +369,7 @@
     <Compile Include="DataAccess\IRepository\IJenkinsRepository.cs" />
     <Compile Include="DataAccess\IUnitOfWork\IUnitOfWork.cs" />
     <Compile Include="DataAccess\Repositories\JenkinsRepositiory.cs" />
+    <Compile Include="LocksManager\LockObjectsManager.cs" />
     <Compile Include="PollingWorkers\PollingWorker.cs" />
     <Compile Include="DataModels\JenkinsAgentInfo.cs" />
     <Compile Include="DataModels\JenkinsAgentResponse.cs" />
@@ -409,7 +410,6 @@
     <Compile Include="IHandler\IFixHandler.cs" />
     <Compile Include="KeyedCollections\FixEnginesKeyedCollection.cs" />
     <Compile Include="KeyedCollections\FixSessionKeyedCollection.cs" />
-    <Compile Include="LocksManager\LockObjectsManager.cs" />
     <Compile Include="Notifier\EmailNotifier.cs" />
     <Compile Include="Observable.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
