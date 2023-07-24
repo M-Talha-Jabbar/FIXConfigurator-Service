@@ -1372,7 +1372,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 catch (Exception e)
                 {
                     Logging.LogMessage(LOGTYPE.Error, $"Cant clear fix session status message  on {DateTime.Now} .");
-                    ExceptionLoggingUtility.LogException(e);
+                    ExceptionLoggingUtility.LogException(e,null);
                     isCleared = false;
                 }
             });
