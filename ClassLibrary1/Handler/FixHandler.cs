@@ -724,25 +724,31 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
         private void SetScheduler(FIXSession fixSession) // For FixSession Status Email
         {
-            TimeSpan sessionStartDateTime = DateTime.ParseExact(fixSession.SessionStart, "HH:mm:ss", CultureInfo.InvariantCulture).TimeOfDay;
-            TimeSpan dateTimeNow = DateTime.Now.TimeOfDay;
-
-            if (TimeConverterUtility.CompareTimeDifference(sessionStartDateTime, dateTimeNow) >= 0)
+            if (!string.IsNullOrEmpty(fixSession.SessionStart))
             {
-                var totalTimeInMilliseconds = TimeConverterUtility.GetTimeInMilliseconds(sessionStartDateTime - dateTimeNow);
-                emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixSession, sessionInfo: null);
+                TimeSpan sessionStartDateTime = DateTime.ParseExact(fixSession.SessionStart, "HH:mm:ss", CultureInfo.InvariantCulture).TimeOfDay;
+                TimeSpan dateTimeNow = DateTime.Now.TimeOfDay;
+
+                if (TimeConverterUtility.CompareTimeDifference(sessionStartDateTime, dateTimeNow) >= 0)
+                {
+                    var totalTimeInMilliseconds = TimeConverterUtility.GetTimeInMilliseconds(sessionStartDateTime - dateTimeNow);
+                    emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixSession, sessionInfo: null);
+                }
             }
         }
 
         private void SetScheduler() // For FixEngines Status Email
         {
-            TimeSpan scheduledEmailDateTime = DateTime.ParseExact(timeForFixEnginesStatusEmail, "HH:mm:ss", CultureInfo.InvariantCulture).TimeOfDay;
-            TimeSpan dateTimeNow = DateTime.Now.TimeOfDay;
-
-            if (TimeConverterUtility.CompareTimeDifference(scheduledEmailDateTime, dateTimeNow) >= 0)
+            if (!string.IsNullOrEmpty(timeForFixEnginesStatusEmail))
             {
-                var totalTimeInMilliseconds = TimeConverterUtility.GetTimeInMilliseconds(scheduledEmailDateTime - dateTimeNow);
-                emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixEngines);
+                TimeSpan scheduledEmailDateTime = DateTime.ParseExact(timeForFixEnginesStatusEmail, "HH:mm:ss", CultureInfo.InvariantCulture).TimeOfDay;
+                TimeSpan dateTimeNow = DateTime.Now.TimeOfDay;
+
+                if (TimeConverterUtility.CompareTimeDifference(scheduledEmailDateTime, dateTimeNow) >= 0)
+                {
+                    var totalTimeInMilliseconds = TimeConverterUtility.GetTimeInMilliseconds(scheduledEmailDateTime - dateTimeNow);
+                    emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixEngines);
+                }
             }
         }
 
