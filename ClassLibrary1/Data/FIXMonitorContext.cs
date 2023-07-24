@@ -145,6 +145,10 @@ namespace FIXMonitorBusinessLogicLayer.Data
                     .IsRequired()
                     .HasDefaultValueSql("(N'')");
 
+                entity.Property(e => e.FixEngineGitHubBranch)
+                    .IsRequired()
+                    .HasDefaultValueSql("(N'')");
+
                 entity.Property(e => e.FixEngineMachinePassword)
                     .IsRequired()
                     .HasDefaultValueSql("(N'')");

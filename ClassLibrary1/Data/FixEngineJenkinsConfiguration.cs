@@ -21,5 +21,7 @@ namespace FIXMonitorBusinessLogicLayer.Data
             FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration = (FixEngineJenkinsConfiguration)this.MemberwiseClone();
             return fixEngineJenkinsConfiguration;
         }
+      
+        public string FixEngineGitHubBranch { get; set; }
     }
 }
