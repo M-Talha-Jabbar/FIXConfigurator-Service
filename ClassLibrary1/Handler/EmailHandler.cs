@@ -6,10 +6,10 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using FIXMonitorBusinessLogicLayer.Converter;
-//using EmailSender;
 using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.IHandler;
+using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using FIXMonitorBusinessLogicLayer.Notifier;
 using GEmail;
 
@@ -17,20 +17,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 {
     class EmailHandler : IEmailHandler
     {
-        //private EmailService emailService;
-        //private readonly string FromEmail = System.Configuration.ConfigurationManager.AppSettings["FromEmail"].ToString();
-        //private readonly string EmailApiKey = System.Configuration.ConfigurationManager.AppSettings["EmailApiKey"].ToString();
-
         private readonly string DefaultCommaSeperatedToEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedToEmails"].ToString();
         private readonly string DefaultCommaSeperatedCCEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedCCEmails"].ToString();
         private readonly string Environment = System.Configuration.ConfigurationManager.AppSettings["Environment"].ToString();
 
         private EmailNotifier emailNotifier;
-        public EmailHandler()
-        {
-            //emailService = new EmailService(EmailApiKey);
-            //GEmailUtil.ConfigureMail();
-        }
+        public EmailHandler() {}
 
         public void DispatchEmail(EmailData emailData)
         {
@@ -60,20 +52,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
 
             Task.Run(() => DispatchEmail(emailData));
-
-            //emailData.EmailSubject = $"Session {sessionId} status changed";
-            //emailData.EmailBody = $"Session {sessionId} status changed to {status} -> {Environment} Environment";
-
-            //Thread thread = new Thread(() =>
-            //{
-            //    var EmailSubject = $"Session {sessionId} status changed";
-            //    var EmailBody = $"Session {sessionId} status changed to {status} -> {Environment} Environment";
-            //    GEmailUtil.SendEmail(EmailSubject, EmailBody, null);
-            //});
-            //thread.Start();
-
-            //SendEmail
-            //emailService.SendEmailAsync(emailData);
         }
 
         public void SendEmail(string sessionId, FixTagValues fixTagValues)
@@ -96,6 +74,33 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
 
             Task.Run(() => DispatchEmail(emailData));
+        }
+
+        public void SendEmail(FixEnginesKeyedCollection FIXEngines)
+        {
+            EmailData emailData = new EmailData();
+
+            emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
+            emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
+            emailData.Subject = "FixEngines Status Alert";
+            emailData.Body = FIXEngines.Count > 0 ? createTemplateForFixEnginesStatusAlert(FIXEngines) : "No Engines are there in FIXConfigurator";
+
+            Task.Run(() => DispatchEmail(emailData));
+        }
+
+        private string createTemplateForFixEnginesStatusAlert(FixEnginesKeyedCollection FIXEngines)
+        {
+            string template = "";
+
+            foreach(var engine in FIXEngines)
+            {
+                bool instance = SocketListener.fixEngineSocketConnections.TryGetValue(engine.engineID, out SocketListener value);
+                string status = value.isConnected ? "Running" : "Stopped";
+
+                template += $"Engine Name : {engine.engineName}\nEngine Status : {status}\n\n\n";
+            }
+
+            return template;
         }
 
         public SessionEmails GetSessionAlertConfiguration(string SessionId)

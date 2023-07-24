@@ -1,6 +1,7 @@
 ﻿using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.Handler;
+using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,7 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         private string status;
         private FixSessions sessionInfo;
         private FIXSession FIXSession;
+        private FixEnginesKeyedCollection FIXEngines;
         private FixTagValues fixTagValues; 
 
         public static Dictionary<string, Timer> emailTimer = new Dictionary<string, Timer>();
@@ -46,15 +48,26 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             timer.Start();
         }
 
-        public EmailNotifier(int interval, FIXSession fixSession, FixSessions sessionInfo) // Scheduled Check
+        public EmailNotifier(int interval, FIXSession fixSession, FixSessions sessionInfo) // Scheduled Check for FixSession Status
         {
             timer = new Timer(interval);
-            timer.Elapsed += OnScheduledCheckExecution;
+            timer.Elapsed += OnFixSessionScheduledCheckExecution;
             timer.AutoReset = false;
 
             this.conId = fixSession.ConnectionID;
             this.sessionInfo = sessionInfo;
             this.FIXSession = fixSession;
+
+            timer.Start();
+        }
+
+        public EmailNotifier(int interval, FixEnginesKeyedCollection FIXEngines) // Scheduled Check for FixEngines Status
+        {
+            timer = new Timer(interval);
+            timer.Elapsed += OnFixEnginesScheduledCheckExecution;
+            timer.AutoReset = false;
+
+            this.FIXEngines = FIXEngines;
 
             timer.Start();
         }
@@ -67,7 +80,7 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
 
         private void OnEventExecution(Object sender, ElapsedEventArgs eventArgs)
         {
-            SendEmail();
+            SendEmail(Email.FixSession);
 
             if (!(bool)sessionInfo.Recurring)
                 emailTimer.Remove(conId);
@@ -75,31 +88,38 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
                 recurringEmailsCount[conId]++;
         }
 
-        private void OnScheduledCheckExecution(Object sender, ElapsedEventArgs eventArgs)
+        private void OnFixSessionScheduledCheckExecution(Object sender, ElapsedEventArgs eventArgs)
         {
             if(FIXSession.Status.Equals("Disconnected", StringComparison.OrdinalIgnoreCase))
             {
                 this.status = FIXSession.Status;
-                SendEmail();
+                SendEmail(Email.FixSession);
             }
         }
 
-        public EmailNotifier SendEmail()
+        private void OnFixEnginesScheduledCheckExecution(Object sender, ElapsedEventArgs eventArgs) => SendEmail(Email.FixEngines);
+
+        public EmailNotifier SendEmail(Email emailEnum)
         {
-            emailHandler.SendEmail(conId, status, sessionInfo);
+            switch (emailEnum)
+            {
+                case Email.FixEngines:
+                    emailHandler.SendEmail(FIXEngines);
+                    break;
+
+                case Email.FixSession:
+                    emailHandler.SendEmail(conId, status, sessionInfo);
+                    break;
+
+                case Email.FixMessageReject:
+                    emailHandler.SendEmail(conId, fixTagValues);
+                    break;
+            }
+
             return this;
         }
 
-        public EmailNotifier SendEmailForFIXMessageReject()
-        {
-            emailHandler.SendEmail(conId, fixTagValues);
-            return this;
-        }
-
-        public Timer getTimerInstance()
-        {
-            return timer;
-        }
+        public Timer getTimerInstance() => timer;
 
         public static void DisposeEmailTimer(string sessionId)
         {
@@ -109,6 +129,13 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             timer.Dispose();
 
             emailTimer.Remove(sessionId);
+        }
+
+        public enum Email
+        {
+            FixEngines,
+            FixSession,
+            FixMessageReject
         }
     }
 }

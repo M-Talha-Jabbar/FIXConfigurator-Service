@@ -18,7 +18,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private string fixEngineId;
         private TcpClient tcpClient;
         private BehaviorSubject<bool> subject = null;
-        private bool isConnected;
+        public bool isConnected;
 
         public SocketListener(bool isConnected)
         {
@@ -93,7 +93,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch(Exception e) // Exception is thrown when socket connection is forcbily closed. 
             {
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, null);
 
                 if (socketListener != null)
                 {

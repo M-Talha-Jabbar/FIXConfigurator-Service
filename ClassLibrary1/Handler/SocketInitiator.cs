@@ -96,7 +96,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, $"Connection with FixEngine {fixEngineName} on {hostname}:{port} has been closed");
                 DisposeTcpInstanceNClosingTcpConnection();
                 return false;
             }

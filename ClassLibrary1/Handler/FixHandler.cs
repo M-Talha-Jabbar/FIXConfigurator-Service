@@ -21,6 +21,7 @@ using FIXMonitorBusinessLogicLayer.Converter;
 using FIXMonitorBusinessLogicLayer.LocksManager;
 using FIXMonitorBusinessLogicLayer.Utilities;
 using System.Globalization;
+using static FIXMonitorBusinessLogicLayer.Notifier.EmailNotifier;
 
 namespace FIXMonitorBusinessLogicLayer.Handler
 {
@@ -46,6 +47,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private ConcurrentStack<string> sessionStatuses;
 
         private EmailNotifier emailNotifier;
+        private readonly string timeForFixEnginesStatusEmail = System.Configuration.ConfigurationManager.AppSettings["TimeForFixEnginesStatusEmail"].ToString();
 
         private LockObjectsManager locksForHandlingStreamRead;
         private LockObjectsManager sessionUpdatesLocks;
@@ -71,6 +73,8 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
             //Save The updated configuration to the file 
             PersistFixEngineConfig();
+
+            Task.Run(() => SetScheduler());
         }
 
         private void EnginePersistence()
@@ -235,18 +239,25 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 if (TimeStampUtility.CompareTimeStamps(streamLastReadTimeStamps[FIXEngine.engineName], GetRedisStreamLastEntryId(client)))
                 {
-                    var result = client.StreamRead(redisStreamName, streamLastReadTimeStamps[FIXEngine.engineName]);
-
-                    ProcessAndSendMessages(result, "", FIXEngine, existingOrRealTime);
-                    UpdateStreamPosition(client, result, FIXEngine.engineName); // Updating Stream Position for a FixEngine both on its Dictionary in Service and on Redis Key.
-                    UpdateLogPosition(client, result); // Update Log Position for a FixEngine only on Redis Key, not on its Dictionary in Service. Its Dictionary will only get updated at the time of FixEngine creations (creation at both start & middle of the day).
-
-                    // Send Acknowledgement
-                    Task.Run(() =>
+                    try
                     {
-                        var streamValuesIds = result.Select(streamValue => streamValue.Id).ToArray();
-                        if (streamValuesIds.Length > 0) client.StreamAcknowledgeAsync(redisStreamName, "", streamValuesIds);
-                    });
+                        var result = client.StreamRead(redisStreamName, streamLastReadTimeStamps[FIXEngine.engineName]);
+
+                        ProcessAndSendMessages(result, "", FIXEngine, existingOrRealTime);
+                        UpdateStreamPosition(client, result, FIXEngine.engineName); // Updating Stream Position for a FixEngine both on its Dictionary in Service and on Redis Key.
+                        UpdateLogPosition(client, result); // Update Log Position for a FixEngine only on Redis Key, not on its Dictionary in Service. Its Dictionary will only get updated at the time of FixEngine creations (creation at both start & middle of the day).
+
+                        // Send Acknowledgement
+                        Task.Run(() =>
+                        {
+                            var streamValuesIds = result.Select(streamValue => streamValue.Id).ToArray();
+                            if (streamValuesIds.Length > 0) client.StreamAcknowledgeAsync(redisStreamName, "", streamValuesIds);
+                        });
+                    }
+                    catch(Exception e)
+                    {
+                        ExceptionLoggingUtility.LogException(e, "Error on FixHandler->ReadMessages method");
+                    }
                 }
             }
         }
@@ -428,7 +439,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Error on FixHandler->GetFixMessagesFromRedis method");
             }
         }
 
@@ -517,7 +528,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                     }
                     catch (Exception e)
                     {
-                        ExceptionLoggingUtility.LogException(e);
+                        ExceptionLoggingUtility.LogException(e, "Error on FixHandler->ProcessAndSendMessages method");
                     }
                 }
             }
@@ -617,7 +628,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Error on FixHandler->PerformGivenActionToRedis method");
             }
 
             return isVerified;
@@ -652,7 +663,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
                 catch (Exception e)
                 {
-                    ExceptionLoggingUtility.LogException(e);
+                    ExceptionLoggingUtility.LogException(e, "Error on FixHandler->GetFixMessagesAsync method");
                 }
             }
 
@@ -711,7 +722,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         }
         */
 
-        private void SetScheduler(FIXSession fixSession)
+        private void SetScheduler(FIXSession fixSession) // For FixSession Status Email
         {
             TimeSpan sessionStartDateTime = DateTime.ParseExact(fixSession.SessionStart, "HH:mm:ss", CultureInfo.InvariantCulture).TimeOfDay;
             TimeSpan dateTimeNow = DateTime.Now.TimeOfDay;
@@ -720,6 +731,18 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             {
                 var totalTimeInMilliseconds = TimeConverterUtility.GetTimeInMilliseconds(sessionStartDateTime - dateTimeNow);
                 emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixSession, sessionInfo: null);
+            }
+        }
+
+        private void SetScheduler() // For FixEngines Status Email
+        {
+            TimeSpan scheduledEmailDateTime = DateTime.ParseExact(timeForFixEnginesStatusEmail, "HH:mm:ss", CultureInfo.InvariantCulture).TimeOfDay;
+            TimeSpan dateTimeNow = DateTime.Now.TimeOfDay;
+
+            if (TimeConverterUtility.CompareTimeDifference(scheduledEmailDateTime, dateTimeNow) >= 0)
+            {
+                var totalTimeInMilliseconds = TimeConverterUtility.GetTimeInMilliseconds(scheduledEmailDateTime - dateTimeNow);
+                emailNotifier = new EmailNotifier(totalTimeInMilliseconds, fixEngines);
             }
         }
 
@@ -752,7 +775,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Error on FixHandler->ConnectToFixEngine method : Unable to connect with Redis");
                 fixEngines.Remove(fixEngine);
                 throw e;
             }
@@ -817,7 +840,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Error on FixHandler->ConnectToFixEngine method");
             }
 
             return fixEngine;
@@ -972,7 +995,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
                 catch (Exception e)
                 {
-                    ExceptionLoggingUtility.LogException(e);
+                    ExceptionLoggingUtility.LogException(e, "Error on FixHandler->SendSampleFixMessages method");
                 }
                 Thread.Sleep(60000);
             }
@@ -1009,7 +1032,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 {
                     if (isRealTime && res.EmailStatus)
                     {
-                        emailNotifier = new EmailNotifier(sessionID, res).SendEmailForFIXMessageReject();
+                        emailNotifier = new EmailNotifier(sessionID, res).SendEmail(Email.FixMessageReject);
                         Logging.LogMessage(LOGTYPE.Info, $"Fix Message Email sent for Configured Tag/Value Pair {desc.Item1}/{desc.Item3} in it");
                     }
 
@@ -1084,27 +1107,6 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             return fixMessageObj;
         }
 
-        public void isConnected(string key, FIXSession fixSession)
-        {
-            try
-            {
-                string subkey = "Status";
-                var engine = fixEngines.FirstOrDefault(x => x.fixSessions.SingleOrDefault(y => y.ConnectionID == key) != null);
-                key = key + "-" + subkey;
-                var muxer = RedisConnectorHelper.GetConnection($"{engine.redisIpAddress}:{engine.redisIpPort}");
-                int db = fixEnginesDB[$"{engine.engineID}"];
-                var hash = RedisCacheClient.getHashSet(muxer, key, db);
-                hash.Wait();
-                var result = hash.Result;
-                SessionUpdates(key, result, engine);
-            }
-            catch (Exception e)
-            {
-                ExceptionLoggingUtility.LogException(e);
-            }
-
-        }
-
         public string CreateFixSessionUpdateMessage(string fixEngineName, string fixSessionID, string fixSessionStatus)
         {
             string sessionStatusMessage = $"[{fixEngineName}] {fixSessionID} is {fixSessionStatus} at {DateTime.Now}";
@@ -1123,8 +1125,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
                 catch (Exception e)
                 {
-                    Logging.LogMessage(LOGTYPE.Error, $"Cant Add fix session status message {fixSessionStatusMessage} in store.");
-                    ExceptionLoggingUtility.LogException(e);
+                    ExceptionLoggingUtility.LogException(e, $"Cant Add fix session status message {fixSessionStatusMessage} in store");
                 }
             });
         }
@@ -1143,8 +1144,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                 }
                 catch (Exception e)
                 {
-                    Logging.LogMessage(LOGTYPE.Error, $"Cant Send fix session status message {fixSessionStatusMessage} to client.");
-                    ExceptionLoggingUtility.LogException(e);
+                    ExceptionLoggingUtility.LogException(e, $"Cant Send fix session status message {fixSessionStatusMessage} to client");
                 }
             }
         }
@@ -1194,7 +1194,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                                 if (sessionInfo != null && sessionInfo.EmailStatus) // If email alert has been enabled for a particular session
                                 {
                                     if (!EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
-                                        emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+                                        emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail(Email.FixSession);
 
                                     else if (EmailNotifier.emailTimer.ContainsKey(sessionInfo.SessionId) && session.Status.Equals("Connected", StringComparison.OrdinalIgnoreCase))
                                     {
@@ -1203,7 +1203,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
                                         if ((bool)sessionInfo.Recurring)
                                         {
                                             if (EmailNotifier.recurringEmailsCount[sessionInfo.SessionId] > 0)
-                                                emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail();
+                                                emailNotifier = new EmailNotifier(conId, session.Status, sessionInfo).SendEmail(Email.FixSession);
 
                                             EmailNotifier.recurringEmailsCount.Remove(sessionInfo.SessionId);
                                         }
@@ -1229,7 +1229,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 
                                     Logging.LogMessage(LOGTYPE.Info, $"FixHandler -> SessionUpdates -> {session.ConnectionID} -> {session.Status}");
 
-                                    emailNotifier = new EmailNotifier(conId, session.Status, new FixSessions() { SessionId = session.ConnectionID }).SendEmail();
+                                    emailNotifier = new EmailNotifier(conId, session.Status, new FixSessions() { SessionId = session.ConnectionID }).SendEmail(Email.FixSession);
 
                                     Logging.LogMessage(LOGTYPE.Info, "Default Email Settings used");
                                 }
@@ -1242,7 +1242,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Error on FixHandler->SessionUpdates method");
             }
         }
 
@@ -1342,7 +1342,7 @@ namespace FIXMonitorBusinessLogicLayer.Handler
             }
             catch (Exception e)
             {
-                ExceptionLoggingUtility.LogException(e);
+                ExceptionLoggingUtility.LogException(e, "Error on FixHandler->UpdateSessionStatus method");
             }
         }
 

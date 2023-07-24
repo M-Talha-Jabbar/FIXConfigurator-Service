@@ -7,7 +7,7 @@ using System.Collections.Generic;
 
 namespace FIXMonitorBusinessLogicLayer.Data
 {
-    public partial class FixEngineJenkinsConfiguration
+    public class FixEngineJenkinsConfiguration
     {
         public string Path { get; set; }
         public string JenkinsAgentName { get; set; }
@@ -15,6 +15,13 @@ namespace FIXMonitorBusinessLogicLayer.Data
         public string FixEngineMachinePassword { get; set; }
         public string FixEngineMachineUsername { get; set; }
         public string EngineIp { get; set; }
+
+        public FixEngineJenkinsConfiguration GetClone()
+        {
+            FixEngineJenkinsConfiguration fixEngineJenkinsConfiguration = (FixEngineJenkinsConfiguration)this.MemberwiseClone();
+            return fixEngineJenkinsConfiguration;
+        }
+      
         public string FixEngineGitHubBranch { get; set; }
     }
 }
