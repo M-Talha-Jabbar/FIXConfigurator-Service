@@ -2,10 +2,12 @@
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.Handler;
 using FIXMonitorBusinessLogicLayer.KeyedCollections;
+using GEmail;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Timers;
 
 namespace FIXMonitorBusinessLogicLayer.Notifier
@@ -18,12 +20,17 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         private string status;
         private FixSessions sessionInfo;
         private FIXSession FIXSession;
+        private FIXEngine fixEngine;
         private FixEnginesKeyedCollection FIXEngines;
         private FixTagValues fixTagValues; 
 
         public static Dictionary<string, Timer> emailTimer = new Dictionary<string, Timer>();
         public static Dictionary<string, int> recurringEmailsCount = new Dictionary<string, int>();
         public static List<FixTagValues> fixTagValueConfigurations = new List<FixTagValues>();
+
+        private readonly string DefaultCommaSeperatedToEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedToEmails"].ToString();
+        private readonly string DefaultCommaSeperatedCCEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedCCEmails"].ToString();
+        private readonly string Environment = System.Configuration.ConfigurationManager.AppSettings["Environment"].ToString();
 
         public EmailNotifier(string conId, string status, FixSessions sessionInfo) // Email Alert without Timer
         {
@@ -72,6 +79,11 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
             timer.Start();
         }
 
+        public EmailNotifier(FIXEngine fixEngine) // Email Alert for Redis Disconnect & then on Reconnect
+        {
+            this.fixEngine = fixEngine;
+        }
+
         public EmailNotifier(string conId, FixTagValues fixTagValues) // Email Alert for Fix Message Having Any Configured Tag/Value Pair
         {
             this.conId = conId;
@@ -101,22 +113,93 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
 
         public EmailNotifier SendEmail(Email emailEnum)
         {
+            EmailData emailData = new EmailData();
+
             switch (emailEnum)
             {
                 case Email.FixEngines:
-                    emailHandler.SendEmail(FIXEngines);
+
+                    emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
+                    emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
+                    emailData.Subject = "FixEngines Status Alert";
+                    emailData.Body = FIXEngines.Count > 0 ? createTemplateForFixEnginesStatusAlert() : "No Engines are there in FIXConfigurator";
+
                     break;
 
                 case Email.FixSession:
-                    emailHandler.SendEmail(conId, status, sessionInfo);
+
+                    if (sessionInfo == null || string.IsNullOrEmpty(sessionInfo.ToEmails))
+                    {
+                        emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
+                        emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
+                        emailData.Subject = $"Session {conId} status changed";
+                        emailData.Body = $"Session {conId} status changed to {status} -> {Environment} Environment";
+                    }
+                    else
+                    {
+                        emailData.CommaSeperatedToEmails = sessionInfo.ToEmails;
+                        emailData.CommaSeperatedCCEmails = sessionInfo.CcEmails;
+                        emailData.Subject = string.IsNullOrEmpty(sessionInfo.Subject) ? $"Session {conId} status changed" : Regex.Replace(Regex.Replace(Regex.Replace(sessionInfo.Subject, "{sessionId}", conId, RegexOptions.IgnoreCase), "{status}", status, RegexOptions.IgnoreCase), "{environment}", Environment, RegexOptions.IgnoreCase);
+                        emailData.Body = string.IsNullOrEmpty(sessionInfo.Body) ? $"Session {conId} status changed to {status} -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(sessionInfo.Body, "{sessionId}", conId, RegexOptions.IgnoreCase), "{status}", status, RegexOptions.IgnoreCase), "{environment}", Environment, RegexOptions.IgnoreCase);
+                    }
+
                     break;
 
                 case Email.FixMessageReject:
-                    emailHandler.SendEmail(conId, fixTagValues);
+
+                    if (string.IsNullOrEmpty(fixTagValues.ToEmails))
+                    {
+                        emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
+                        emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
+                        emailData.Subject = $"Session {conId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue})";
+                        emailData.Body = $"Session {conId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue}) -> {Environment} Environment";
+                    }
+                    else
+                    {
+                        emailData.CommaSeperatedToEmails = fixTagValues.ToEmails;
+                        emailData.CommaSeperatedCCEmails = fixTagValues.CcEmails;
+                        emailData.Subject = string.IsNullOrEmpty(fixTagValues.Subject) ? $"Session {conId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue})" : Regex.Replace(Regex.Replace(Regex.Replace(fixTagValues.Subject, "{sessionId}", conId, RegexOptions.IgnoreCase), "{FixTag}", fixTagValues.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixTagValues.FixValue, RegexOptions.IgnoreCase);
+                        emailData.Body = string.IsNullOrEmpty(fixTagValues.Body) ? $"Session {conId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixTagValues.Body, "{sessionId}", conId, RegexOptions.IgnoreCase), "{FixTag}", fixTagValues.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixTagValues.FixValue, RegexOptions.IgnoreCase);
+                    }
+
+                    break;
+
+                case Email.RedisDisconnect:
+
+                    emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
+                    emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
+                    emailData.Subject = $"{fixEngine.engineName} Redis Disconnected";
+                    emailData.Body = $"{fixEngine.engineName} has lost subscription to Redis.\nRedis IP: {fixEngine.redisIpAddress}\nRedis Port: {fixEngine.redisIpPort}\nRedis DB: {fixEngine.redisDB}";
+
+                    break;
+
+                case Email.RedisReconnect:
+
+                    emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
+                    emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
+                    emailData.Subject = $"{fixEngine.engineName} Redis Reconnected";
+                    emailData.Body = $"{fixEngine.engineName} has resubscribed to Redis.\nRedis IP: {fixEngine.redisIpAddress}\nRedis Port: {fixEngine.redisIpPort}\nRedis DB: {fixEngine.redisDB}";
+
                     break;
             }
 
+            emailHandler.DispatchEmail(emailData);
+
             return this;
+        }
+        private string createTemplateForFixEnginesStatusAlert()
+        {
+            string template = "";
+
+            foreach (var engine in FIXEngines)
+            {
+                bool instance = SocketListener.fixEngineSocketConnections.TryGetValue(engine.engineID, out SocketListener value);
+                string status = value.isConnected ? "Running" : "Stopped";
+
+                template += $"Engine Name : {engine.engineName}\nEngine Status : {status}\n\n\n";
+            }
+
+            return template;
         }
 
         public Timer getTimerInstance() => timer;
@@ -135,7 +218,9 @@ namespace FIXMonitorBusinessLogicLayer.Notifier
         {
             FixEngines,
             FixSession,
-            FixMessageReject
+            FixMessageReject,
+            RedisDisconnect,
+            RedisReconnect
         }
     }
 }
