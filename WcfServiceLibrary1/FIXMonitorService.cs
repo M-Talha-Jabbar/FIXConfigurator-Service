@@ -409,5 +409,9 @@ namespace FIXMonitorService
         {
             return await this.DataCache.GetAllEnginesConfiguration();
         }
+        public async Task<bool> DeleteFixSessionHistory()
+        {
+            return await DataCache.DeleteFixSessionHistory();
+        }
     }
 }

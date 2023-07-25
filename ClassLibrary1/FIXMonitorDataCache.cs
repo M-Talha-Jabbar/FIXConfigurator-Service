@@ -298,5 +298,9 @@ namespace FIXMonitorBusinessLogicLayer
         {
             return await enginesHandler.GetAllEnginesConfiguration();
         }
+        public async Task<bool> DeleteFixSessionHistory()
+        {
+            return await fixHandler.ClearFixSessionStatusMessage();
+        }
     }
 }

@@ -37,5 +37,6 @@ namespace FIXMonitorBusinessLogicLayer.IHandler
         void GetFixMessagesFromRedis(ConnectionMultiplexer muxer, RedisChannel channel, RedisValue message, FIXEngine fixEngine);
         FIXEngine GetFixEngine(string engineID);
         IEnumerable<string> GetSessionStatusMessage();
+        System.Threading.Tasks.Task<bool> ClearFixSessionStatusMessage();
     }
 }

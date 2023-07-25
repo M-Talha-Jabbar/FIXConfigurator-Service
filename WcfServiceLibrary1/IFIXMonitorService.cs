@@ -158,6 +158,9 @@ namespace FIXMonitorService
 
         [OperationContract]
         Task<List<EngineConfiguration>> GetAllEnginesConfiguration();
+
+        [OperationContract]
+        Task<bool> DeleteFixSessionHistory();
     }
 
     public interface IFIXMonitorServiceCallback
