@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
 using FIXMonitorBusinessLogicLayer.Converter;
 using FIXMonitorBusinessLogicLayer.Data;
 using FIXMonitorBusinessLogicLayer.DataModels;
 using FIXMonitorBusinessLogicLayer.IHandler;
-using FIXMonitorBusinessLogicLayer.KeyedCollections;
 using FIXMonitorBusinessLogicLayer.Notifier;
 using GEmail;
 
@@ -17,90 +13,12 @@ namespace FIXMonitorBusinessLogicLayer.Handler
 {
     class EmailHandler : IEmailHandler
     {
-        private readonly string DefaultCommaSeperatedToEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedToEmails"].ToString();
-        private readonly string DefaultCommaSeperatedCCEmails = System.Configuration.ConfigurationManager.AppSettings["CommaSeperatedCCEmails"].ToString();
-        private readonly string Environment = System.Configuration.ConfigurationManager.AppSettings["Environment"].ToString();
-
         private EmailNotifier emailNotifier;
         public EmailHandler() {}
 
         public void DispatchEmail(EmailData emailData)
         {
-            GEmailUtil.SendEmail(emailData);
-        }
-
-        public void SendEmail(string sessionId, string status, FixSessions sessionInfo)
-        {
-            EmailData emailData = new EmailData();
-
-            if (sessionInfo == null || string.IsNullOrEmpty(sessionInfo.ToEmails))
-            {
-                emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
-                emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
-                emailData.Subject = $"Session {sessionId} status changed";
-                emailData.Body = $"Session {sessionId} status changed to {status} -> {Environment} Environment";
-            }
-            else
-            {
-                emailData.CommaSeperatedToEmails = sessionInfo.ToEmails;
-                emailData.CommaSeperatedCCEmails = sessionInfo.CcEmails;
-                
-                emailData.Subject = string.IsNullOrEmpty(sessionInfo.Subject) ? $"Session {sessionId} status changed" : Regex.Replace(Regex.Replace(Regex.Replace(sessionInfo.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{status}", status, RegexOptions.IgnoreCase), "{environment}", Environment, RegexOptions.IgnoreCase);
-
-                emailData.Body = string.IsNullOrEmpty(sessionInfo.Body) ? $"Session {sessionId} status changed to {status} -> {Environment} Environment" :
-                    Regex.Replace(Regex.Replace(Regex.Replace(sessionInfo.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{status}", status, RegexOptions.IgnoreCase), "{environment}", Environment, RegexOptions.IgnoreCase);
-            }
-
-            Task.Run(() => DispatchEmail(emailData));
-        }
-
-        public void SendEmail(string sessionId, FixTagValues fixTagValues)
-        {
-            EmailData emailData = new EmailData();
-
-            if (string.IsNullOrEmpty(fixTagValues.ToEmails))
-            {
-                emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
-                emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
-                emailData.Subject = $"Session {sessionId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue})";
-                emailData.Body = $"Session {sessionId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue}) -> {Environment} Environment";
-            }
-            else
-            {
-                emailData.CommaSeperatedToEmails = fixTagValues.ToEmails;
-                emailData.CommaSeperatedCCEmails = fixTagValues.CcEmails;
-                emailData.Subject = string.IsNullOrEmpty(fixTagValues.Subject) ? $"Session {sessionId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue})" : Regex.Replace(Regex.Replace(Regex.Replace(fixTagValues.Subject, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixTagValues.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixTagValues.FixValue, RegexOptions.IgnoreCase);
-                emailData.Body = string.IsNullOrEmpty(fixTagValues.Body) ? $"Session {sessionId} received a message with Tag/Value ({fixTagValues.FixTag}={fixTagValues.FixValue}) -> {Environment} Environment" : Regex.Replace(Regex.Replace(Regex.Replace(fixTagValues.Body, "{sessionId}", sessionId, RegexOptions.IgnoreCase), "{FixTag}", fixTagValues.FixTag, RegexOptions.IgnoreCase), "{FixValue}", fixTagValues.FixValue, RegexOptions.IgnoreCase);
-            }
-
-            Task.Run(() => DispatchEmail(emailData));
-        }
-
-        public void SendEmail(FixEnginesKeyedCollection FIXEngines)
-        {
-            EmailData emailData = new EmailData();
-
-            emailData.CommaSeperatedToEmails = DefaultCommaSeperatedToEmails;
-            emailData.CommaSeperatedCCEmails = DefaultCommaSeperatedCCEmails;
-            emailData.Subject = "FixEngines Status Alert";
-            emailData.Body = FIXEngines.Count > 0 ? createTemplateForFixEnginesStatusAlert(FIXEngines) : "No Engines are there in FIXConfigurator";
-
-            Task.Run(() => DispatchEmail(emailData));
-        }
-
-        private string createTemplateForFixEnginesStatusAlert(FixEnginesKeyedCollection FIXEngines)
-        {
-            string template = "";
-
-            foreach(var engine in FIXEngines)
-            {
-                bool instance = SocketListener.fixEngineSocketConnections.TryGetValue(engine.engineID, out SocketListener value);
-                string status = value.isConnected ? "Running" : "Stopped";
-
-                template += $"Engine Name : {engine.engineName}\nEngine Status : {status}\n\n\n";
-            }
-
-            return template;
+            Task.Run(() => GEmailUtil.SendEmail(emailData));
         }
 
         public SessionEmails GetSessionAlertConfiguration(string SessionId)

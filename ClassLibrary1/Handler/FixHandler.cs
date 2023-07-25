@@ -877,14 +877,26 @@ namespace FIXMonitorBusinessLogicLayer.Handler
         private void SubscribeAndFaliureCallback(FIXEngine fixEngine, ConnectionMultiplexer muxer, string CacheKeyEvent)
         {
             SubscribeToKeyEvent(fixEngine, muxer, CacheKeyEvent);
+
             muxer.ConnectionFailed += (sender, args) =>
             {
-                Logging.LogMessage("Lost Connection with REDIS");
+                if(args.ConnectionType == ConnectionType.Subscription)
+                {
+                    emailNotifier = new EmailNotifier(fixEngine).SendEmail(Email.RedisDisconnect);
+
+                    Logging.LogMessage($"{fixEngine.engineName} has lost connection with Redis {fixEngine.engineID}");
+                }
             };
+
             muxer.ConnectionRestored += (sender, args) =>
             {
-                Logging.LogMessage("Connection Restored with REDIS");
-                Logging.LogMessage("{0} Subscribed");
+                if (args.ConnectionType == ConnectionType.Subscription) 
+                {
+                    emailNotifier = new EmailNotifier(fixEngine).SendEmail(Email.RedisReconnect);
+
+                    Logging.LogMessage($"{fixEngine.engineName} has restored connection with Redis {fixEngine.engineID}");
+                    Logging.LogMessage("Re-subscribed");
+                }   
             };
         }
 
