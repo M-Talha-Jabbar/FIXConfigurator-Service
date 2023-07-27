@@ -1,0 +1,1 @@
+fbec --csharp --input=proto.fbe --output=.\FBE

@@ -1,0 +1,126 @@
+/*
+   Protocol description
+*/
+
+// Domain declaration
+domain com.chronoxor
+
+// Package declaration
+package proto
+
+// Protocol version
+version 1.0
+
+enum OrderStatus : uint64
+{
+	NEW = 0;
+	PARTIALLY_FILLED = 1;
+	FILLED = 2;
+	DONE_FOR_DAY = 3;
+	CANCELED = 4;
+	PENDING_CANCEL = 6;
+	STOPPED = 7;
+	REJECTED = 8;
+	SUSPENDED = 9;
+	PENDING_NEW = 10;
+	CALCULATED = 11;
+	EXPIRED = 12;
+	ACCEPTED_FOR_BIDDING = 13;
+	PENDING_REPLACE = 14;
+}
+
+enum Action : char
+{
+	CONNECT = 1;
+	DISCONNECT = 2;
+	SET_SENDER_SEQUENCE = 3;
+	SET_TARGET_SEQUENCE = 4;
+	RESET_TARGET_SEQUENCE = 5;
+	RESET_SENDER_SEQUENCE = 6;
+}
+
+enum MessageStatus : char
+{
+	CONNECTED = 1;
+	DISCONNECTED = 2;
+	UNAVAILABLE = 3;
+}
+
+enum Signature : char
+{
+	FIXHUB = 1;
+	FIXMONITOR = 2;
+}
+
+struct Header
+{
+    string ConnectionID;
+	MessageStatus Status;
+	string SenderID;
+	string TargetID;
+	uint64 InSeqNum;
+	uint64 OutSeqNum;
+	Action Action;
+	Signature Signature;
+}
+struct Body
+{
+   	string FIXMessage;
+	string MessageType;
+	string SendingTime;
+	string ConnectionID;
+}
+
+struct Config
+{
+	string ConnectionID;
+	MessageStatus Status;
+	string SenderCompID;
+	string TargetCompID;
+	string IPAddress;
+	string BackUpIPAddress;
+	uint64 Port;
+	uint64 BackUpPort;
+	bool Validate;
+	bool HandleResend;
+	uint64 HeartBeatInterval;
+	uint64 MaxLatency;
+	bool ResetConnection;
+	bool EnableConnection;
+	string FIXVersion;
+	string InternalFIXVersion;
+	string Mode;
+	bool DBEnabled;
+	bool LatencyEnabled;
+	bool AutoConnect;
+	bool AutoReconnect;
+	uint64 ReconnectDelay;
+	uint64 ConnectRetry;
+	string LogonRawData;
+	bool MilliSecondTime;
+	bool QEnabled;
+	string SessionStart;
+	string SessionEnd;
+	string TaskReset;
+	uint64 InSeqNum;
+	uint64 OutSeqNum;
+	uint64 LastUpdated;
+}
+
+struct Engine
+{
+	string engineID;
+	string engineName;
+	uint64 redisDB;
+	string redisIpAddress;
+	string redisIpPort;
+	string FIXEngineIpAddress;
+	string FIXEngineIpPort;
+}
+
+struct EngineId
+{
+	string redisIpAddress;
+	string redisIpPort; 
+	uint64 redisDB;
+}
