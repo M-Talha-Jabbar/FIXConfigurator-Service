@@ -1,0 +1,93 @@
+0,Heartbeat
+1,Test Request
+2,Resend Request
+3,Reject
+4,Sequence Reset
+5,Logout
+6,IOI
+7,Advertisement
+8,Execution Report
+9,Order Cancel Reject
+a,Quote Status Request
+A,Logon
+AA,Derivative Security List
+AB,New Order Multileg
+AC,Multileg Order Cancel/Replace
+AD,Trade Capture Report Request
+AE,Trade Capture Report
+AF,Order Mass Status Request
+AG,Quote Request Reject
+AH,RFQ Request
+AI,Quote Status Report
+AJ,Quote Response
+AK,Confirmation
+AL,Position Maintenance Request
+AM,Position Maintenance Report
+AN,Request For Positions
+AO,Request for Positions Ack
+AP,Position Report
+AQ,Trade Capture Report Request Ack
+AR,Trade Capture Report Ack
+AS,Allocation Report
+AT,Allocation Report Ack
+AU,Confirmation Ack
+AV,Settlement Instruction Request
+AW,Assignment Report
+AX,Collateral Request
+AY,Collateral Assignment
+AZ,Collateral Response
+b,Mass Quote Acknowledgement
+B,News
+BA,Collateral Report
+BB,Collateral Inquiry
+BC,Network Counterparty System Status Request
+BD,Network Counterparty System Status Response
+BE,User Request
+BF,User Response
+BG,Collateral Inquiry Ack
+BH,Confirmation Request
+c,Security Definition Request
+C,mail
+d,Security Definition
+D,New Order Single
+e,Security Status Request
+E,New Order List
+f,Security Status
+F,Order Cancel Request
+g,Trading Session Status Request
+G,Order Cancel/Replace Request
+h,Trading Session Status
+H,Order Status Request
+i,Mass Quote
+j,Business Message Reject
+J,Allocation Instruction
+k,Bid Request
+K,List Cancel Request
+l,Bid Response
+L,List Execute
+m,List Strike Price
+M,List Status Request
+n,XML Message
+N,List Status
+o,Registration Instructions
+p,Registration Instructions Response
+P,Allocation Instruction Ack
+q,Order Mass Cancel Request
+Q,Don't Know Trade
+r,Order Mass Cancel Report
+R,Quote Request
+s,New Order Cross
+S,Quote
+t,Cross Order Cancel/Replace Request
+T,Settlement Instructions
+u,Cross Order Cancel Request
+v,Security Type Request
+V,Market Data Request
+w,Security Types
+W,Market Data - Snapshot/Full Refresh
+x,Security List Request
+X,Market Data - Incremental Refresh
+y,Security List
+Y,Market Data Request Reject
+z,Derivative Security List Request
+Z,Quote Cancel
